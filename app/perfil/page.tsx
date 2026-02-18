@@ -1,157 +1,201 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function PerfilPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
-
-  // Campos do formulário
+  
+  const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function loadProfile() {
+    const loadProfile = async () => {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
+      if (user) {
+        setUserId(user.id);
+        setEmail(user.email || "");
+        setUsername(user.user_metadata?.username || user.email?.split('@')[0] || "");
+        setFullName(user.user_metadata?.full_name || "");
+        setAvatarUrl(user.user_metadata?.avatar_url || "");
+      } else {
         router.push("/login");
-        return;
       }
-
-      setEmail(user.email || "");
-      // Puxa os dados salvos no "bolso" do Supabase (metadata)
-      setUsername(user.user_metadata?.username || "");
-      setFullName(user.user_metadata?.full_name || "");
       setLoading(false);
-    }
-
+    };
+    loadInit();
     loadProfile();
   }, [router]);
 
-  const handleSave = async (e: React.FormEvent) => {
+  const loadInit = async () => {} // Dummy pra não quebrar padrão
+
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 4000);
+  };
+
+  const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setUploading(true);
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error("Você deve selecionar uma imagem.");
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split(".").pop();
+      // Cria um nome único pra imagem não sobrepor de outro usuário sem querer
+      const filePath = `${userId}-${Math.random()}.${fileExt}`;
+
+      // 1. Sobe a imagem pro Balde (Bucket) "avatars"
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Pega a URL pública da imagem que acabou de subir
+      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
+      const newAvatarUrl = data.publicUrl;
+
+      // 3. Atualiza o cadastro do usuário com a nova URL
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: { avatar_url: newAvatarUrl }
+      });
+
+      if (updateError) throw updateError;
+
+      setAvatarUrl(newAvatarUrl);
+      showToast("Foto de perfil atualizada com sucesso!");
+    } catch (error: any) {
+      showToast(error.message, "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSalvarPerfil = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setMessage({ text: "", type: "" });
-
-    // Atualiza os metadados do usuário logado
+    
+    // Atualiza os dados de nome do usuário
     const { error } = await supabase.auth.updateUser({
       data: { 
-        username: username,
-        full_name: fullName 
+        full_name: fullName,
+        username: username 
       }
     });
 
     if (error) {
-      setMessage({ text: "Erro ao salvar: " + error.message, type: "error" });
+      showToast("Erro ao salvar: " + error.message, "error");
     } else {
-      setMessage({ text: "Perfil atualizado com sucesso!", type: "success" });
-      // Limpa a mensagem de sucesso depois de 3 segundos
-      setTimeout(() => setMessage({ text: "", type: "" }), 3000);
+      showToast("Perfil atualizado com sucesso!");
     }
     setSaving(false);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Pega a primeira letra do username ou email para fazer um Avatar falso
-  const initialLetter = username ? username.charAt(0).toUpperCase() : email.charAt(0).toUpperCase();
+  // Pega a inicial pra mostrar caso não tenha foto
+  const initialLetter = username ? username.charAt(0).toUpperCase() : (email ? email.charAt(0).toUpperCase() : "?");
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
-      {/* Barra de Navegação Simples */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Meu Perfil</h1>
-        <button 
-          onClick={() => router.push("/dashboard")}
-          className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
-        >
-          Voltar ao Dashboard
-        </button>
+      {toast.show && (<div className={`fixed bottom-6 right-6 z-[100] px-6 py-4 rounded-xl shadow-2xl font-bold text-white flex items-center gap-3 animate-in slide-in-from-right-8 fade-in duration-300 ${toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'}`}><span className="text-xl">{toast.type === 'success' ? '✓' : '!'}</span>{toast.message}</div>)}
+
+      <nav className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 flex justify-between items-center relative z-10">
+        <h1 className="text-xl font-black text-blue-600 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Meu Perfil
+        </h1>
+        <button onClick={() => router.push("/dashboard")} className="text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">Voltar ao Dashboard</button>
       </nav>
 
-      <main className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-sm border border-gray-100">
-        
-        {/* Cabeçalho do Perfil com Avatar */}
-        <div className="flex items-center gap-6 border-b border-gray-100 pb-8 mb-8">
-          <div className="h-24 w-24 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-3xl font-bold text-white shadow-lg">
-            {initialLetter}
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{fullName || "Sem nome"}</h2>
-            <p className="text-gray-500">@{username || "usuario"}</p>
-          </div>
-        </div>
+      <main className="max-w-2xl mx-auto mt-10 p-6">
+        <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden">
+          
+          {/* O FUNDO BLUR VIP QUE VOCÊ CURTIU NA TELA DE LOGIN */}
+          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-600 to-purple-600 opacity-90 blur-sm"></div>
 
-        {/* Formulário de Edição */}
-        <form onSubmit={handleSave} className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Email (Não editável)</label>
-            <input
-              type="email"
-              disabled
-              value={email}
-              className="block w-full rounded-xl border border-gray-200 bg-gray-100 p-3 text-gray-500 cursor-not-allowed sm:text-sm"
-            />
-          </div>
+          {loading ? (
+            <div className="flex justify-center p-20 relative z-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+          ) : (
+            <div className="relative z-10 flex flex-col items-center mt-8">
+              
+              {/* ÁREA DA FOTO DE PERFIL */}
+              <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                <div className="w-32 h-32 rounded-full border-4 border-white shadow-xl overflow-hidden bg-gray-100 flex items-center justify-center relative">
+                  {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-5xl font-black text-blue-600">{initialLetter}</span>
+                  )}
+                  
+                  {/* OVERLAY DE HOVER */}
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                  </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Username</label>
-            <input
-              type="text"
-              required
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-900 transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/20 sm:text-sm"
-              placeholder="Ex: henricadas"
-            />
-          </div>
+                  {uploading && (
+                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* INPUT INVISÍVEL */}
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  accept="image/*" 
+                  onChange={uploadAvatar} 
+                  className="hidden" 
+                  disabled={uploading}
+                />
+                
+                <div className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-lg border-2 border-white group-hover:scale-110 transition-transform">
+                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m18 5-3-3H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2"/><path d="M8 18h1"/><path d="M18.4 9.6a2 2 0 1 1 3 3L17 17l-4 1 1-4Z"/></svg>
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Nome Completo</label>
-            <input
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-900 transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/20 sm:text-sm"
-              placeholder="Seu nome e sobrenome"
-            />
-          </div>
+              <div className="text-center mt-4 mb-8">
+                <h2 className="text-2xl font-black text-gray-900">{fullName || username}</h2>
+                <p className="text-sm font-bold text-gray-500">{email}</p>
+              </div>
 
-          {message.text && (
-            <div className={`p-4 rounded-xl text-sm font-medium transition-all ${message.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
-              {message.text}
+              {/* FORMULÁRIO DE DADOS */}
+              <form onSubmit={handleSalvarPerfil} className="w-full space-y-5">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Apelido (Username)</label>
+                    <input type="text" required value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Ex: henricadas" className="block w-full rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm font-bold text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all" />
+                  </div>
+                  <div className="flex-[2]">
+                    <label className="block text-xs font-bold text-gray-700 mb-1 uppercase tracking-wider">Nome Completo</label>
+                    <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Seu nome completo" className="block w-full rounded-xl border border-gray-300 bg-gray-50 p-3 text-sm font-bold text-gray-900 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all" />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button type="submit" disabled={saving} className="w-full py-4 rounded-xl text-white bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-wide transition-all shadow-lg shadow-blue-600/30 active:scale-95 flex justify-center items-center gap-2">
+                    {saving ? "Salvando..." : "Salvar Alterações"}
+                  </button>
+                </div>
+              </form>
+              
             </div>
           )}
-
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="w-full sm:w-auto px-8 py-3 rounded-xl bg-blue-600 text-white font-bold transition-all hover:bg-blue-700 hover:shadow-lg active:scale-95 disabled:opacity-70 flex justify-center items-center gap-2"
-            >
-              {saving ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  Salvando...
-                </>
-              ) : (
-                "Salvar Alterações"
-              )}
-            </button>
-          </div>
-        </form>
+        </div>
       </main>
     </div>
   );

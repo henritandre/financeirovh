@@ -6,173 +6,108 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
-  
-  // Estados do formulário
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState(""); // Novo campo de username
-  
-  // Estados de controle e animação
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: "", type: "" });
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage({ text: "", type: "" });
+    setError(null);
 
-    if (!isLogin) {
-      // --- MODO CADASTRO ---
-      // Salvando o email, senha e mandando o Username para os metadados do Supabase
-      const { error } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            username: username,
-          }
-        }
-      });
-      
-      if (error) {
-        setMessage({ text: error.message, type: "error" });
-      } else {
-        setMessage({ text: "Boa! Conta criada com sucesso.", type: "success" });
-        // Pequena animação antes de voltar pro modo login
-        setTimeout(() => toggleMode(), 2000); 
-      }
+    // Agora o formulário SÓ faz Login, não tem mais função de Cadastro
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError("E-mail ou senha incorretos.");
+      setLoading(false);
     } else {
-      // --- MODO LOGIN ---
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        setMessage({ text: "Email ou senha incorretos. Tenta aí de novo!", type: "error" });
-      } else {
-        setMessage({ text: "Acesso liberado! Entrando...", type: "success" });
-        // Animação de sucesso (espera 800ms antes de jogar pro painel)
-        setTimeout(() => router.push("/dashboard"), 800);
-      }
+      router.push("/dashboard");
     }
-    setLoading(false);
-  };
-
-  // Função para animar a troca entre Login e Cadastro
-  const toggleMode = () => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      setIsLogin(!isLogin);
-      setMessage({ text: "", type: "" });
-      setIsAnimating(false);
-    }, 300); // Tempo para o form sumir antes de trocar
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-200 p-4 transition-colors duration-500">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       
-      {/* Container Principal com efeito de flutuação e sombra suave */}
-      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(8,_112,_184,_0.12)] border border-gray-100/50">
-        
-        <div className="text-center transform transition-all duration-500">
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-            {isLogin ? "Bem-vindo de volta" : "Crie sua conta"}
-          </h2>
-          <p className="mt-2 text-sm text-gray-500">
-            {isLogin ? "Acesse para gerenciar suas finanças" : "Vamos organizar essa grana juntos"}
-          </p>
+      {/* Efeitos de Luz no Fundo */}
+      <div className="absolute inset-0 z-0 flex justify-center items-center pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center">
+          <div className="h-16 w-16 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 transform transition-transform hover:scale-105">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
+          </div>
         </div>
+        <h2 className="mt-6 text-center text-3xl font-black text-gray-900 tracking-tight">
+          Acesse sua conta
+        </h2>
+        <p className="mt-2 text-center text-sm font-bold text-gray-500 uppercase tracking-widest">
+          Controle Financeiro
+        </p>
+      </div>
 
-        {/* Formulário com animação de Fade In/Out na troca de telas */}
-        <form 
-          onSubmit={handleAuth} 
-          className={`mt-8 space-y-6 transition-all duration-300 transform ${isAnimating ? 'opacity-0 scale-95 translate-y-4' : 'opacity-100 scale-100 translate-y-0'}`}
-        >
-          <div className="space-y-5">
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
+          
+          <form className="space-y-6" onSubmit={handleLogin}>
             
-            {/* Campo Username (Aparece com animação só no Cadastro) */}
-            <div className={`transition-all duration-500 overflow-hidden ${isLogin ? 'max-h-0 opacity-0' : 'max-h-24 opacity-100'}`}>
-              <label className="block text-sm font-semibold text-gray-700 mb-1" htmlFor="username">Username</label>
-              <input
-                id="username"
-                type="text"
-                required={!isLogin}
-                className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-900 transition-all duration-300 focus:-translate-y-1 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/20 sm:text-sm"
-                placeholder="Ex: henricadas"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
+            {/* Mensagem de Erro */}
+            {error && (
+              <div className="bg-red-50 border border-red-100 p-4 rounded-xl flex items-center gap-3 animate-in fade-in zoom-in-95 duration-200">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-500 shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                <p className="text-sm font-bold text-red-700">{error}</p>
+              </div>
+            )}
 
-            {/* Campo Email */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1" htmlFor="email">Email</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">E-mail</label>
               <input
-                id="email"
                 type="email"
                 required
-                className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-900 transition-all duration-300 focus:-translate-y-1 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/20 sm:text-sm"
-                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm font-bold text-gray-900 transition-all"
+                placeholder="seu@email.com"
               />
             </div>
 
-            {/* Campo Senha */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1" htmlFor="password">Senha</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">Senha</label>
               <input
-                id="password"
                 type="password"
                 required
-                className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-gray-900 transition-all duration-300 focus:-translate-y-1 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/20 sm:text-sm"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 sm:text-sm font-bold text-gray-900 transition-all"
+                placeholder="••••••••"
               />
             </div>
-          </div>
 
-          {/* Alertas Animados */}
-          {message.text && (
-            <div className={`p-4 rounded-xl text-sm font-medium text-center transition-all animate-pulse ${message.type === 'error' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-green-50 text-green-600 border border-green-100'}`}>
-              {message.text}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-md text-sm font-black uppercase tracking-wide text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-500/30 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Entrando...
+                  </>
+                ) : (
+                  "Entrar no Sistema"
+                )}
+              </button>
             </div>
-          )}
+          </form>
 
-          {/* Botão Principal com Efeito de Escala e Brilho */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="group relative w-full flex justify-center rounded-xl bg-blue-600 px-4 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(37,_99,_235,_0.4)] hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-70 disabled:hover:scale-100 disabled:hover:translate-y-0 overflow-hidden"
-          >
-            {/* Efeito de brilho passando no botão (Shine effect) */}
-            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-            
-            <span className="relative">
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  Processando...
-                </span>
-              ) : isLogin ? "Entrar no Sistema" : "Criar Minha Conta"}
-            </span>
-          </button>
-        </form>
-
-        {/* Botão de Rodapé para Alternar Telas */}
-        <div className="text-center mt-6">
-          <button
-            type="button"
-            onClick={toggleMode}
-            className="text-sm font-semibold text-gray-500 transition-colors hover:text-blue-600 active:scale-95"
-          >
-            {isLogin ? (
-              <span>Ainda não tem conta? <span className="text-blue-600 underline decoration-blue-300 underline-offset-4">Clique aqui para criar</span></span>
-            ) : (
-              <span>Já tem uma conta? <span className="text-blue-600 underline decoration-blue-300 underline-offset-4">Faça login aqui</span></span>
-            )}
-          </button>
         </div>
       </div>
     </div>
