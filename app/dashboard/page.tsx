@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
+import { Analytics } from "@vercel/analytics/next";
 
 export default function DashboardPage() {
   const router = useRouter();
