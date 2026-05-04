@@ -590,7 +590,7 @@ export default function DashboardPage() {
           </div>
 
           {/* 1. SEÇÃO DE FILTROS - COM A ONDA (DELAY 0s) */}
-          <div className={`bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col space-y-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
+          <div className={`relative z-30 bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col space-y-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
             <div className="flex flex-col lg:flex-row gap-5 items-start lg:items-center">
               <div className="relative w-full lg:w-1/3 shrink-0">
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1.5 ml-1">Período (Digite o Atalho)</label>
@@ -784,28 +784,60 @@ export default function DashboardPage() {
 
           {/* 4. ÁREA DE CARTÕES DE CRÉDITO - COM A ONDA (DELAY 0.2s) */}
           <div className={`bg-purple-50/40 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl shadow-sm border border-purple-100 dark:border-purple-900/30 flex flex-col w-full mt-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-purple-100/50 dark:border-purple-800/30 pb-6">
-              <div className="flex items-center gap-3">
-                <div>
-                  <h3 className="text-sm text-purple-800 dark:text-purple-400 font-black uppercase tracking-wider flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 
-                    Faturas (Cartão de Crédito)
-                  </h3>
-                  <p className="text-xs text-purple-600/70 dark:text-purple-400/70 font-bold mt-1">Dívida total em aberto</p>
+            
+            {(() => {
+              // Lógica para calcular os 3 grandes totais do cabeçalho
+              let globalGastoCredito = 0;
+              let globalFechado = 0;
+              let globalAtrasado = 0;
+
+              cartoesCredito.forEach(cartao => {
+                if (cartao.ativo !== false && usuariosSelecionados.includes(cartao.autor_nome)) {
+                  const { faturasAbertas } = obterFaturasDoCartao(cartao.id);
+                  faturasAbertas.forEach(f => {
+                    globalGastoCredito += f.valorAberto;
+                    if (f.status === 'Fechada') globalFechado += f.valorAberto;
+                    if (f.status === 'Atrasada') globalAtrasado += f.valorAberto;
+                  });
+                }
+              });
+
+              return (
+                <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-5 border-b border-purple-100/50 dark:border-purple-800/30 pb-6">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="text-sm text-purple-800 dark:text-purple-400 font-black uppercase tracking-wider flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 
+                        Faturas (Cartão de Crédito)
+                      </h3>
+                      <p className="text-xs text-purple-600/70 dark:text-purple-400/70 font-bold mt-1">Dívida total acumulada</p>
+                    </div>
+                    <button onClick={() => toggleVisibilidadeBloco('cartoes')} className="text-purple-400 hover:text-purple-600 dark:hover:text-purple-200 transition-colors focus:outline-none mb-1">
+                      {visibilidade.cartoes ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3 w-full xl:w-auto">
+                    <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-red-100 dark:border-red-900/30 text-center xl:text-right">
+                      <span className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider block mb-0.5">Em Atraso</span>
+                      <span className="text-lg font-black text-red-600 dark:text-red-400">{formatarMoeda(globalAtrasado, visibilidade.cartoes)}</span>
+                    </div>
+                    <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-blue-100 dark:border-blue-900/30 text-center xl:text-right">
+                      <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider block mb-0.5">Fatura Fechada</span>
+                      <span className="text-lg font-black text-blue-600 dark:text-blue-400">{formatarMoeda(globalFechado, visibilidade.cartoes)}</span>
+                    </div>
+                    <div className="flex-1 xl:flex-none bg-purple-600 dark:bg-purple-500 px-4 py-2.5 rounded-xl shadow-sm border border-purple-500 dark:border-purple-400 text-center xl:text-right min-w-[170px]">
+                      <span className="text-[10px] font-bold text-purple-100 uppercase tracking-wider block mb-0.5">Total Gasto em Crédito</span>
+                      <span className="text-xl font-black text-white">{formatarMoeda(globalGastoCredito, visibilidade.cartoes)}</span>
+                    </div>
+                  </div>
                 </div>
-                <button onClick={() => toggleVisibilidadeBloco('cartoes')} className="text-purple-400 hover:text-purple-600 dark:hover:text-purple-200 transition-colors focus:outline-none mb-1">
-                  {visibilidade.cartoes ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                  )}
-                </button>
-              </div>
-              <div className="bg-white dark:bg-gray-800 px-6 py-3 rounded-xl shadow-sm border border-purple-100 dark:border-purple-800/30 w-full sm:w-auto text-center sm:text-right">
-                <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-0.5">Total Geral a Pagar</span>
-                <span className="text-2xl font-black text-purple-700 dark:text-purple-400">{formatarMoeda(totalCartoesGeral, visibilidade.cartoes)}</span>
-              </div>
-            </div>
+              )
+            })()}
             
             {cartoesCredito.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -814,6 +846,12 @@ export default function DashboardPage() {
                   if ((!usuariosSelecionados.includes(cartao.autor_nome) && totalGeral <= 0) || (cartao.ativo === false && totalGeral <= 0)) return null;
                   
                   const fotoCartao = mapPerfis[cartao.autor_nome];
+
+                  // Identifica a fatura ATUAL (A primeira "Em Aberto" em ordem cronológica de vencimento)
+                  const faturasOrdenadas = [...faturasAbertas].sort((a, b) => a.dataVencimento.getTime() - b.dataVencimento.getTime());
+                  const faturaAtual = faturasOrdenadas.find(f => f.status === 'Em Aberto');
+                  const chaveFaturaAtual = faturaAtual ? faturaAtual.chave : null;
+
                   return (
                     <div key={cartao.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-purple-100 dark:border-purple-800/30 shadow-sm flex flex-col hover:border-purple-300 dark:hover:border-purple-600 transition-colors group">
                       <div className="flex justify-between items-start mb-4">
@@ -831,22 +869,53 @@ export default function DashboardPage() {
                       </div>
                       
                       <div className="mb-4">
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Total em Aberto</p>
+                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Total do Cartão</p>
                         <p className="text-3xl font-black text-purple-700 dark:text-purple-400">{formatarMoeda(totalGeral, visibilidade.cartoes)}</p>
                       </div>
 
                       {faturasAbertas.length > 0 && (
-                        <div className="mt-auto pt-4 border-t border-purple-100 dark:border-purple-900/30 space-y-2">
-                          <p className="text-[10px] font-black text-purple-400/80 dark:text-purple-500 uppercase tracking-wider mb-2">Faturas por Mês:</p>
-                          {faturasAbertas.map(f => (
-                            <div key={f.chave} className="flex justify-between items-center bg-purple-50 dark:bg-purple-900/20 p-2.5 rounded-lg border border-purple-100/50 dark:border-purple-800/20">
-                              <div className="flex flex-col">
-                                <span className="text-[11px] font-bold text-purple-800 dark:text-purple-300">Venc. {f.labelVencimento}</span>
-                                <span className={`text-[9px] font-black uppercase tracking-wider ${f.status === 'Atrasada' ? 'text-red-600 dark:text-red-400' : f.status === 'Fechada' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{f.status}</span>
+                        <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 space-y-3">
+                          <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Faturas por Mês:</p>
+                          
+                          {faturasAbertas.map(f => {
+                            const isAtrasada = f.status === 'Atrasada';
+                            const isFechada = f.status === 'Fechada';
+                            const isAtual = f.chave === chaveFaturaAtual;
+                            const isFutura = f.status === 'Em Aberto' && !isAtual;
+                            
+                            // Lógica do Calendário (Transforma "2026-05" em "MAI" e "05")
+                            const mesFatura = f.chave.split('-')[1];
+                            const mesesAbrev = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
+                            const mesNome = mesesAbrev[parseInt(mesFatura) - 1];
+
+                            return (
+                              <div key={f.chave} className={`flex justify-between items-center p-2.5 rounded-xl border transition-all ${isAtual ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50 shadow-sm' : isAtrasada ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700/50'}`}>
+                                
+                                <div className="flex items-center gap-3">
+                                  {/* NOVO: ÍCONE DE CALENDÁRIO DINÂMICO */}
+                                  <div className={`flex flex-col items-center justify-center w-9 h-9 rounded-lg border shadow-sm relative overflow-hidden shrink-0 ${isAtrasada ? 'bg-white dark:bg-gray-800 border-red-200 dark:border-red-800' : isFechada ? 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800' : isAtual ? 'bg-white dark:bg-gray-800 border-emerald-300 dark:border-emerald-600' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
+                                    <div className={`w-full h-3.5 flex items-center justify-center text-[7px] font-black uppercase text-white tracking-widest ${isAtrasada ? 'bg-red-500' : isFechada ? 'bg-blue-500' : isAtual ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                                      {mesNome}
+                                    </div>
+                                    <div className={`flex-1 flex items-center justify-center text-xs font-black ${isAtrasada ? 'text-red-700 dark:text-red-400' : isFechada ? 'text-blue-700 dark:text-blue-400' : isAtual ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                      {mesFatura}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="flex flex-col">
+                                    <span className={`text-[11px] font-bold ${isAtual ? 'text-emerald-900 dark:text-emerald-300' : isAtrasada ? 'text-red-900 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'}`}>Venc. {f.labelVencimento}</span>
+                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isAtrasada ? 'text-red-600 dark:text-red-400' : isFechada ? 'text-blue-600 dark:text-blue-400' : isAtual ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                      {isAtual ? 'Fatura Atual (Aberta)' : isFutura ? 'Fatura Futura' : f.status}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <span className={`text-sm font-black ${isAtual ? 'text-emerald-700 dark:text-emerald-400' : isAtrasada ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                  {formatarMoeda(f.valorAberto, visibilidade.cartoes)}
+                                </span>
                               </div>
-                              <span className="text-sm font-black text-purple-700 dark:text-purple-400">{formatarMoeda(f.valorAberto, visibilidade.cartoes)}</span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
