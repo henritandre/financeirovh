@@ -5,54 +5,54 @@ import { createContext, useContext, useEffect, useState } from "react";
 type ThemeContextType = {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  isWaving: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isWaving, setIsWaving] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
     const savedTheme = localStorage.getItem("theme");
+    // CORRIGIDO: window.matchMedia (sem o Match duplicado)
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
     if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
       setIsDarkMode(true);
       document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
     }
   }, []);
 
   const toggleTheme = () => {
     setIsDarkMode((prev) => {
-      const newMode = !prev;
-      if (newMode) {
+      const newTheme = !prev;
+      if (newTheme) {
         document.documentElement.classList.add("dark");
         localStorage.setItem("theme", "dark");
       } else {
         document.documentElement.classList.remove("dark");
         localStorage.setItem("theme", "light");
       }
-      return newMode;
+      return newTheme;
     });
+
+    setIsWaving(false);
+    setTimeout(() => setIsWaving(true), 10);
+    setTimeout(() => setIsWaving(false), 800);
   };
 
-  // CORREÇÃO: O Provider agora sempre abraça o children. 
-  // O truque de esconder a tela para não piscar fica na div interna.
   return (
-    <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-      <div style={{ visibility: mounted ? "visible" : "hidden" }}>
-        {children}
-      </div>
+    <ThemeContext.Provider value={{ isDarkMode, toggleTheme, isWaving }}>
+      {children}
     </ThemeContext.Provider>
   );
 }
 
-export const useTheme = () => {
+export function useTheme() {
   const context = useContext(ThemeContext);
-  if (!context) throw new Error("useTheme deve ser usado dentro de um ThemeProvider");
+  if (context === undefined) {
+    throw new Error("useTheme must be used within a ThemeProvider");
+  }
   return context;
-};
+}

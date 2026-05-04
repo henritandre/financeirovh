@@ -5,21 +5,22 @@ import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
 
-export default function LoginPage() {
+export default function ResetPasswordPage() {
   const router = useRouter();
-  const { isDarkMode, toggleTheme } = useTheme();
   
-  const [email, setEmail] = useState("");
+  // ==========================================
+  // CÉREBRO DO TEMA E ANIMAÇÃO DA MOLA
+  // ==========================================
+  const { isDarkMode, toggleTheme, isWaving } = useTheme();
+  
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // Estados para as animações do Formulário
-  const [isWaving, setIsWaving] = useState(false);
+
+  // Estados para as animações da Senha
+  const [showPassword, setShowPassword] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const [isShaking, setIsShaking] = useState(false);
   const [isRevealing, setIsRevealing] = useState(false);
-  
+
   // ==========================================
   // DYNAMIC ISLAND 2.0 (LIQUID GLASS + BALLOON)
   // ==========================================
@@ -41,33 +42,6 @@ export default function LoginPage() {
     }, 3600);
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      setLoading(false);
-      setIsShaking(true);
-      showIsland("E-mail ou senha incorretos", "error", "🛑");
-      setTimeout(() => setIsShaking(false), 500);
-    } else {
-      showIsland("Acesso concedido!", "success", "🔓");
-      setTimeout(() => router.push("/dashboard"), 1500);
-    }
-  };
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-    setIsWaving(false);
-    setTimeout(() => setIsWaving(true), 10);
-    setTimeout(() => setIsWaving(false), 800); 
-  };
-
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     setIsTyping(false);
@@ -87,39 +61,19 @@ export default function LoginPage() {
     }, 300);
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      showIsland("Digite seu e-mail primeiro", "info", "ℹ️");
-      return;
-    }
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-
-    try {
-      const { data: userExists } = await supabase
-        .from("profiles")
-        .select("email")
-        .eq("email", email.toLowerCase())
-        .single();
-
-      if (!userExists) {
-        showIsland("E-mail não cadastrado no sistema", "error", "🛑");
-        setLoading(false);
-        return;
-      }
-
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (resetError) {
-        showIsland("Erro ao enviar o link de recuperação", "error", "🛑");
-      } else {
-        showIsland("Link enviado! Verifique seu e-mail", "success", "📧");
-      }
-    } catch (err) {
-      showIsland("Erro de conexão", "error", "🛑");
-    }
     
+    // Atualiza a senha do usuário que está logado via link do e-mail
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      showIsland("Erro ao atualizar: " + error.message, "error", "🛑");
+    } else {
+      showIsland("Senha alterada com sucesso!", "success", "🔑");
+      setTimeout(() => router.push("/dashboard"), 2000);
+    }
     setLoading(false);
   };
 
@@ -152,16 +106,13 @@ export default function LoginPage() {
           100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0 0 rgba(255,255,255,0); }
         }
 
-        /* Bolas flutuantes */
-        @keyframes float1 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(15vw, 15vh) scale(1.2); } 66% { transform: translate(-10vw, 20vh) scale(0.8); } 100% { transform: translate(0, 0) scale(1); } }
-        @keyframes float2 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-15vw, -20vh) scale(1.1); } 66% { transform: translate(15vw, -10vh) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
-        @keyframes float3 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(20vw, -15vh) scale(0.9); } 66% { transform: translate(-20vw, 10vh) scale(1.2); } 100% { transform: translate(0, 0) scale(1); } }
-        .animate-float-1 { animation: float1 15s infinite ease-in-out alternate; }
-        .animate-float-2 { animation: float2 18s infinite ease-in-out alternate; }
-        .animate-float-3 { animation: float3 20s infinite ease-in-out alternate; }
-
-        /* Mac Dock Wave */
-        @keyframes macDockWave { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-16px) scale(1.03); } 70% { transform: translateY(4px) scale(0.98); } 100% { transform: translateY(0) scale(1); } }
+        /* EFEITO MAC DOCK WAVE */
+        @keyframes macDockWave { 
+          0% { transform: translateY(0) scale(1); } 
+          40% { transform: translateY(-16px) scale(1.03); } 
+          70% { transform: translateY(4px) scale(0.98); } 
+          100% { transform: translateY(0) scale(1); } 
+        }
         .mac-dock-item { will-change: transform; }
         .mac-dock-animate { animation: macDockWave 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
 
@@ -169,11 +120,7 @@ export default function LoginPage() {
         @keyframes typePulse { 0% { transform: scale(1); } 50% { transform: scale(1.015); } 100% { transform: scale(1); } }
         .animate-type-pulse { animation: typePulse 0.15s ease-out; }
 
-        /* Shake de Erro (Formulário) */
-        @keyframes shakeError { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
-        .animate-shake { animation: shakeError 0.4s ease-in-out; }
-
-        /* EFEITO GLASS REVEAL */
+        /* EFEITO GLASS REVEAL (SENHA) */
         @keyframes revealPulse {
           0% { opacity: 1; filter: blur(0px); transform: scale(1); }
           50% { opacity: 0; filter: blur(4px); transform: scale(0.98); }
@@ -181,15 +128,22 @@ export default function LoginPage() {
         }
         .animate-reveal { animation: revealPulse 0.3s ease-in-out; }
 
+        /* EFEITO GIRO DO OLHO */
         @keyframes iconPop {
           0% { transform: scale(1) rotate(0deg); opacity: 1; }
           50% { transform: scale(0.5) rotate(-45deg); opacity: 0; }
           100% { transform: scale(1) rotate(0deg); opacity: 1; }
         }
         .animate-icon-pop { animation: iconPop 0.3s ease-in-out; }
+
+        /* BOLAS FLUTUANTES */
+        @keyframes float1 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(15vw, 15vh) scale(1.2); } 66% { transform: translate(-10vw, 20vh) scale(0.8); } 100% { transform: translate(0, 0) scale(1); } }
+        @keyframes float2 { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(-15vw, -20vh) scale(1.1); } 66% { transform: translate(15vw, -10vh) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
+        .animate-float-1 { animation: float1 15s infinite ease-in-out alternate; }
+        .animate-float-2 { animation: float2 18s infinite ease-in-out alternate; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-700">
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col justify-center py-12 px-6 relative overflow-hidden transition-colors duration-700">
         
         {/* DYNAMIC ISLAND CENTRALIZADA (LIQUID GLASS + EMOJI) */}
         {island.show && (
@@ -207,68 +161,45 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* BOTÃO DE TEMA */}
         <div className="absolute top-6 right-6 z-50">
-          <button onClick={handleThemeToggle} className="relative inline-flex items-center h-8 w-16 rounded-full bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-lg transition-colors focus:outline-none hover:scale-105 active:scale-95">
+          <button onClick={toggleTheme} className="relative inline-flex items-center h-8 w-16 rounded-full bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-lg transition-colors focus:outline-none hover:scale-105 active:scale-95">
             <span className="absolute left-2.5 text-[12px]">🌙</span>
             <span className="absolute right-2.5 text-[12px]">☀️</span>
             <span className={`inline-block w-6 h-6 transform rounded-full bg-white shadow-md transition-transform z-10 ${isDarkMode ? "translate-x-9" : "translate-x-1"}`} />
           </button>
         </div>
 
+        {/* FUNDO ANIMADO */}
         <div className="absolute inset-0 z-0 flex justify-center items-center pointer-events-none overflow-hidden">
           <div className="absolute top-[-5%] left-[-5%] w-[600px] h-[600px] bg-blue-500/40 dark:bg-blue-600/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[120px] animate-float-1"></div>
           <div className="absolute bottom-[-5%] right-[-5%] w-[550px] h-[550px] bg-purple-500/40 dark:bg-purple-600/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[120px] animate-float-2"></div>
-          <div className="absolute top-[20%] left-[20%] w-[400px] h-[400px] bg-pink-400/40 dark:bg-pink-600/20 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] animate-float-3"></div>
         </div>
 
         <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
-          <div className={`flex justify-center mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
-            <div className="h-20 w-20 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-500/40 transform transition-transform hover:rotate-6 border border-white/30 dark:border-white/10 backdrop-blur-md">
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
-            </div>
-          </div>
-          <h2 className={`mt-8 text-4xl font-black text-gray-900 dark:text-white tracking-tight mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.05s' }}>
-            Acesse sua conta
+          <h2 className={`text-3xl font-black text-gray-900 dark:text-white tracking-tight mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
+            Nova Senha
           </h2>
-          <p className={`mt-3 text-sm font-bold text-gray-600 dark:text-gray-400 uppercase tracking-[0.3em] mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
-            Controle Financeiro
+          <p className={`mt-2 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.05s' }}>
+            Defina seu novo acesso
           </p>
         </div>
 
-        <div className="mt-10 mx-4 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-          <div className={`bg-white/40 dark:bg-black/30 backdrop-blur-3xl py-10 px-6 sm:px-12 shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-[2.5rem] border border-white/60 dark:border-white/10 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''} ${isShaking ? 'animate-shake' : ''}`} style={{ animationDelay: '0.15s' }}>
-            
-            <form className="space-y-6" onSubmit={handleLogin}>
-              
-              <div className={`mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
-                <label className="block text-xs font-bold text-gray-800 dark:text-gray-300 mb-2 uppercase tracking-wider ml-1">E-mail</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="appearance-none block w-full px-5 py-4 bg-white/50 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl placeholder-gray-500/70 dark:placeholder-gray-400/70 focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500/50 sm:text-sm font-bold text-gray-900 dark:text-white transition-all shadow-inner backdrop-blur-md"
-                  placeholder="seu@email.com"
-                />
-              </div>
+        <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+          <div className={`bg-white/40 dark:bg-black/30 backdrop-blur-3xl py-10 px-6 sm:px-12 shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-[2.5rem] border border-white/60 dark:border-white/10 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
+            <form className="space-y-6" onSubmit={handleReset}>
 
-              <div className={`mac-dock-item ${isWaving ? 'mac-dock-animate' : ''} ${isTyping ? 'animate-type-pulse' : ''}`} style={{ animationDelay: '0.25s' }}>
-                <div className="flex justify-between items-center mb-2 px-1">
-                  <label className="block text-xs font-bold text-gray-800 dark:text-gray-300 uppercase tracking-wider">Senha</label>
-                  <button type="button" onClick={handleForgotPassword} className="text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase hover:underline focus:outline-none">
-                    Esqueci minha senha
-                  </button>
-                </div>
+              <div className={`mac-dock-item ${isWaving ? 'mac-dock-animate' : ''} ${isTyping ? 'animate-type-pulse' : ''}`} style={{ animationDelay: '0.15s' }}>
+                <label className="block text-xs font-bold text-gray-800 dark:text-gray-300 mb-2 uppercase tracking-wider ml-1">Digite a nova senha</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={handlePasswordChange}
-                    className={`appearance-none block w-full px-5 py-4 pr-14 bg-white/50 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl placeholder-gray-500/70 dark:placeholder-gray-400/70 focus:outline-none focus:ring-4 focus:ring-blue-500/30 focus:border-blue-500/50 sm:text-sm font-bold text-gray-900 dark:text-white transition-all shadow-inner backdrop-blur-md ${isRevealing ? 'animate-reveal text-transparent' : ''}`}
+                    className={`appearance-none block w-full px-5 py-4 pr-14 bg-white/50 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/30 text-gray-900 dark:text-white font-bold transition-all shadow-inner backdrop-blur-md ${isRevealing ? 'animate-reveal text-transparent' : ''}`}
                     placeholder="••••••••"
                   />
-                  
                   <button
                     type="button"
                     onClick={handleTogglePassword}
@@ -285,24 +216,19 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className={`pt-4 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.3s' }}>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-2xl shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-4 focus:ring-blue-500/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                >
+              <div className={`pt-2 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
+                <button type="submit" disabled={loading} className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-2xl shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-4 focus:ring-blue-500/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Autenticando...
+                      Salvando...
                     </>
                   ) : (
-                    "Entrar no Sistema"
+                    "Atualizar Senha"
                   )}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
       </div>
