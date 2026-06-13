@@ -145,12 +145,16 @@ export default function InvestimentosPage() {
     e.preventDefault();
     const valNumerico = parseFloat(valorAcao.replace(",", "."));
     
-    if (valNumerico <= 0) { showIsland("O valor deve ser maior que zero.", "error", "🛑"); return; }
+    // Ajuste: Aporte e Resgate tem que ser > 0. Mas o Saldo Atualizado (Rendimento) pode ser zero se você perdeu tudo!
+    if (valNumerico < 0) { showIsland("O valor não pode ser negativo.", "error", "🛑"); return; }
+    if (tipoAcao !== "rendimento" && valNumerico <= 0) { showIsland("O valor deve ser maior que zero.", "error", "🛑"); return; }
+    
     if (tipoAcao === "resgate" && valNumerico > caixinhaAlvo.saldo) { showIsland("Saldo insuficiente.", "error", "🛑"); return; }
     if (tipoAcao !== "rendimento" && !contaPonteId) { showIsland("Selecione a conta da movimentação.", "error", "🛑"); return; }
 
     setIsSubmitting(true); let idTransacaoGerada = null;
 
+    // 1. Gera a transação no extrato apenas para Aporte e Resgate
     if (tipoAcao === "aporte" || tipoAcao === "resgate") {
       const payloadTransacao = { user_id: userId, autor_nome: username, tipo: tipoAcao === "aporte" ? "despesa" : "receita", valor: valNumerico, data: dataAcao, descricao: tipoAcao === "aporte" ? `Guardou: ${caixinhaAlvo.nome}` : `Resgate: ${caixinhaAlvo.nome}`, conta_id: contaPonteId };
       const { data: transacaoSalva, error: errT } = await supabase.from("transacoes").insert([payloadTransacao]).select().single();
@@ -158,15 +162,42 @@ export default function InvestimentosPage() {
       idTransacaoGerada = transacaoSalva.id;
     }
 
-    const payloadHistorico = { caixinha_id: caixinhaAlvo.id, user_id: userId, tipo: tipoAcao, valor: valNumerico, data: dataAcao, descricao: tipoAcao === "rendimento" ? "Rendimento do período" : (tipoAcao === "aporte" ? "Aporte realizado" : "Resgate realizado"), transacao_id: idTransacaoGerada };
+    // ==========================================
+    // 🧠 NOVO CÉREBRO: LÓGICA DE RENDIMENTO
+    // ==========================================
+    let valorParaHistorico = valNumerico;
+    let novoSaldo = 0;
+
+    if (tipoAcao === "rendimento") {
+      // Você digita o SALDO FINAL (ex: 105). 
+      // O histórico grava só a diferença (105 - 100 = R$ 5 de rendimento)
+      valorParaHistorico = valNumerico - Number(caixinhaAlvo.saldo);
+      novoSaldo = valNumerico; // O saldo passa a ser exatamente o que você digitou
+    } else {
+      // Matemática normal para Aporte/Resgate
+      novoSaldo = tipoAcao === "resgate" ? Number(caixinhaAlvo.saldo) - valNumerico : Number(caixinhaAlvo.saldo) + valNumerico;
+    }
+
+    // 2. Grava o Histórico da Caixinha
+    const payloadHistorico = { 
+      caixinha_id: caixinhaAlvo.id, 
+      user_id: userId, 
+      tipo: tipoAcao, 
+      valor: valorParaHistorico, 
+      data: dataAcao, 
+      descricao: tipoAcao === "rendimento" ? "Atualização de Saldo" : (tipoAcao === "aporte" ? "Aporte realizado" : "Resgate realizado"), 
+      transacao_id: idTransacaoGerada 
+    };
     const { error: errH } = await supabase.from("caixinhas_historico").insert([payloadHistorico]);
     if (errH) { showIsland("Erro no histórico: " + errH.message, "error", "🛑"); setIsSubmitting(false); return; }
 
-    const novoSaldo = tipoAcao === "resgate" ? Number(caixinhaAlvo.saldo) - valNumerico : Number(caixinhaAlvo.saldo) + valNumerico;
+    // 3. Atualiza o saldo principal da Caixinha
     const { error: errC } = await supabase.from("caixinhas").update({ saldo: novoSaldo }).eq("id", caixinhaAlvo.id);
     if (errC) { showIsland("Erro atualizar saldo: " + errC.message, "error", "🛑"); setIsSubmitting(false); return; }
 
-    setIsSubmitting(false); setIsModalAcaoOpen(false); showIsland(tipoAcao === "rendimento" ? "Rendimento aplicado!" : "Movimentação concluída!", "success", tipoAcao === "rendimento" ? "📈" : "💰"); carregarDados(false);
+    setIsSubmitting(false); setIsModalAcaoOpen(false); 
+    showIsland(tipoAcao === "rendimento" ? "Saldo atualizado!" : "Movimentação concluída!", "success", tipoAcao === "rendimento" ? "📈" : "💰"); 
+    carregarDados(false);
   };
 
   const initialLetterMenu = username ? username.charAt(0).toUpperCase() : email ? email.charAt(0).toUpperCase() : "?";
@@ -256,9 +287,10 @@ export default function InvestimentosPage() {
                       <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
                       <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
                       <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Lançamentos Excluídos</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
                       <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
                       <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
                     </div>
                   </div>
@@ -351,8 +383,8 @@ export default function InvestimentosPage() {
         {isModalCaixinhaOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalCaixinhaOpen(false)}></div>
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
-              <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center">
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
+              <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center rounded-t-3xl">
                 <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Nova Caixinha / Fundo</h3>
                 <button type="button" onClick={() => setIsModalCaixinhaOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
@@ -456,9 +488,9 @@ export default function InvestimentosPage() {
         {isModalAcaoOpen && caixinhaAlvo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalAcaoOpen(false)}></div>
-            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
+            <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               
-              <div className={`px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center ${tipoAcao === 'rendimento' ? 'bg-blue-50 dark:bg-blue-900/20' : tipoAcao === 'aporte' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <div className={`px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center rounded-t-3xl ${tipoAcao === 'rendimento' ? 'bg-blue-50 dark:bg-blue-900/20' : tipoAcao === 'aporte' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
                 <div>
                   <h3 className={`text-lg font-black flex items-center gap-2 ${tipoAcao === 'rendimento' ? 'text-blue-700 dark:text-blue-400' : tipoAcao === 'aporte' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
                     {tipoAcao === 'rendimento' ? '📈 Atualizar Rendimento' : tipoAcao === 'aporte' ? '📥 Guardar Dinheiro' : '📤 Resgatar Dinheiro'}

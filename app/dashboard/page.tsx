@@ -166,6 +166,68 @@ export default function DashboardPage() {
       setUsuariosDisponiveis(unicos);
       if (isInitialLoad) setUsuariosSelecionados(unicos);
     }
+    if (isInitialLoad) {
+      try {
+        // 1. Descobre se ele tem pelo menos uma caixinha (já que o Dash não carrega caixinhas)
+        const { data: caixinhasData } = await supabase.from("caixinhas").select("id").limit(1);
+        
+        if (caixinhasData && caixinhasData.length > 0) {
+          const { data: { session } } = await supabase.auth.getSession();
+          const uid = session?.user?.id;
+          
+          if (uid) {
+            // 2. Puxa os parâmetros do usuário
+            const { data: params } = await supabase
+              .from("parametros")
+              .select("chave, valor")
+              .eq("user_id", uid)
+              .in("chave", ["notificar_rendimento", "dias_alerta_rendimento"]);
+
+            let alertaAtivo = true; 
+            let diasAlerta = 15; 
+
+            params?.forEach(p => {
+              if (p.chave === "notificar_rendimento") alertaAtivo = p.valor;
+              if (p.chave === "dias_alerta_rendimento") diasAlerta = Number(p.valor);
+            });
+
+            if (alertaAtivo) {
+              const { data: ultimoRend } = await supabase
+                .from("caixinhas_historico")
+                .select("data")
+                .eq("user_id", uid)
+                .eq("tipo", "rendimento")
+                .order("data", { ascending: false })
+                .limit(1);
+
+              let deveAlertar = false;
+
+              if (!ultimoRend || ultimoRend.length === 0) {
+                deveAlertar = true; 
+              } else {
+                const dataUltimoRend = new Date(ultimoRend[0].data);
+                const hojeCalc = new Date();
+                const diferencaTempo = Math.abs(hojeCalc.getTime() - dataUltimoRend.getTime());
+                const diasPassados = Math.ceil(diferencaTempo / (1000 * 60 * 60 * 24));
+
+                if (diasPassados >= diasAlerta) {
+                  deveAlertar = true;
+                }
+              }
+
+              if (deveAlertar) {
+                setTimeout(() => {
+                  showIsland(`Investimentos há mais de ${diasAlerta} dias sem atualizar rendimento!`, "info", "💡");
+                }, 3500);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erro ao processar alertas de rendimento", err);
+      }
+    }
+
     setIsLoadingData(false);
   };
 
@@ -249,7 +311,18 @@ export default function DashboardPage() {
       else if (t.tipo === "despesa") { if (t.conta_origem?.tipo === "credito") acc.cartao += val; else { acc.despesasPagas += val; acc.saldo -= val; } } 
       else if (t.tipo === "transferencia") {
         if (t.conta_origem?.tipo !== "credito") acc.saldo -= val;
-        if (t.conta_destino?.tipo === "credito") acc.cartao -= val; else if (t.conta_destino) acc.saldo += val;
+        if (t.conta_destino?.tipo === "credito"){ 
+          acc.cartao -= val; 
+          acc.despesasPagas += val;
+        } else if (t.conta_destino) { 
+          acc.saldo += val; 
+        }
+      }
+      if (t.conta_destino?.tipo === "credito") {
+        acc.cartao -= val;
+        acc.despesasPagas += val;
+      } else if (t.conta_destino) {
+        acc.saldo += val;
       }
       return acc;
     },
@@ -569,9 +642,10 @@ export default function DashboardPage() {
                       <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
                       <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
                       <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Lançamentos Excluídos</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
                       <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
                       <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
                     </div>
                   </div>
@@ -1034,11 +1108,11 @@ export default function DashboardPage() {
         {/* MODAL DE LANÇAMENTO E EDIÇÃO                            */}
         {/* ======================================================= */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 max-h-[95vh] overflow-y-auto custom-scrollbar border border-gray-100 dark:border-gray-700">
+          <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700 my-auto">
               
-              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80 sticky top-0 z-[60] backdrop-blur-md">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80 sticky top-0 z-[60] backdrop-blur-md rounded-t-2xl">
                 <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{editandoId ? "Editar Lançamento" : "Novo Lançamento"}</h3>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
