@@ -78,6 +78,8 @@ export default function DashboardPage() {
   const [data, setData] = useState(getDatLocal(new Date()));
   const [categoriaId, setCategoriaId] = useState("");
   const [parcelas, setParcelas] = useState(1);
+  const [modoParcelamento, setModoParcelamento] = useState<"ultima" | "primeira" | "manual">("ultima");
+  const [valoresParcelasManual, setValoresParcelasManual] = useState<string[]>([]);
   const [isPagamentoFatura, setIsPagamentoFatura] = useState(false);
 
   const [formaPagtoId, setFormaPagtoId] = useState("");
@@ -101,6 +103,8 @@ export default function DashboardPage() {
   const [atalhoAtivo, setAtalhoAtivo] = useState("m");
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [textoInputData, setTextoInputData] = useState("");
+  const atalhoDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const CODIGOS_ATALHO = ["h", "o", "s", "sa", "m", "ma", "a", "aa"];
 
   const [filtroTipo, setFiltroTipo] = useState<string[]>(["receita", "despesa", "transferencia"]);
   const [usuariosDisponiveis, setUsuariosDisponiveis] = useState<string[]>([]);
@@ -110,6 +114,13 @@ export default function DashboardPage() {
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroBanco, setFiltroBanco] = useState("");
   const [filtroFormaPagto, setFiltroFormaPagto] = useState("");
+
+  const [abaExtrato, setAbaExtrato] = useState<"extrato" | "parcelamentos">("extrato");
+
+  const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
+  const [cartoesExpandidos, setCartoesExpandidos] = useState<Record<string, boolean>>({});
+  const [buscaParcelamento, setBuscaParcelamento] = useState("");
+  const [grupoExpandidoId, setGrupoExpandidoId] = useState<string | null>(null);
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
@@ -246,6 +257,10 @@ export default function DashboardPage() {
 
         const { data: catData } = await supabase.from("categorias").select("*").order("nome");
         if (catData) setCategorias(catData);
+
+        const { data: paramFaturas } = await supabase.from("parametros").select("valor").eq("user_id", user.id).eq("chave", "qtd_faturas_visiveis").maybeSingle();
+        if (paramFaturas?.valor) setQtdFaturasVisiveis(Number(paramFaturas.valor));
+
         carregarDados(true);
       } else {
         router.push("/login");
@@ -271,6 +286,32 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo, categoriaId, data, parcelas]);
 
+  // Mantém o array de valores manuais em sincronia com a quantidade de
+  // parcelas, preservando o que o usuário já editou e preenchendo as
+  // parcelas novas com a divisão padrão (base + diferença na última).
+  useEffect(() => {
+    if (modoParcelamento !== "manual") return;
+    setValoresParcelasManual((prev) => {
+      const total = parseFloat((valor || "0").replace(",", ".")) || 0;
+      const base = parcelas > 0 ? Math.floor((total / parcelas) * 100) / 100 : 0;
+      const diferenca = Number((total - base * parcelas).toFixed(2));
+      return Array.from({ length: parcelas }, (_, i) => {
+        if (prev[i] !== undefined) return prev[i];
+        const v = i === parcelas - 1 ? base + diferenca : base;
+        return v.toFixed(2).replace(".", ",");
+      });
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modoParcelamento, parcelas]);
+
+  const atualizarValorParcelaManual = (index: number, value: string) => {
+    setValoresParcelasManual((prev) => {
+      const novo = [...prev];
+      novo[index] = value;
+      return novo;
+    });
+  };
+
   const aplicarAtalho = (atalho: string) => {
     const d = new Date(); let inicio = new Date(); let fim = new Date(); let reconhecido = true;
     switch (atalho.toLowerCase().trim()) {
@@ -288,7 +329,24 @@ export default function DashboardPage() {
     else { setAtalhoAtivo(""); }
   };
 
-  const handleInputDataChange = (e: React.ChangeEvent<HTMLInputElement>) => { const val = e.target.value; setTextoInputData(val); aplicarAtalho(val); };
+  const fecharAtalho = () => {
+    if (atalhoDebounceRef.current) clearTimeout(atalhoDebounceRef.current);
+    setIsDatePickerOpen(false);
+    setTextoInputData("");
+  };
+
+  const handleInputDataChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setTextoInputData(val);
+    aplicarAtalho(val);
+    if (atalhoDebounceRef.current) clearTimeout(atalhoDebounceRef.current);
+    const codigo = val.toLowerCase().trim();
+    if (CODIGOS_ATALHO.includes(codigo)) {
+      // Espera um instante pro caso do código ainda poder virar um atalho maior (ex: "s" -> "sa").
+      // Se nada mais for digitado nesse intervalo, aplica e fecha sozinho.
+      atalhoDebounceRef.current = setTimeout(fecharAtalho, 500);
+    }
+  };
   const getDisplayPeriodo = () => {
     if (isDatePickerOpen) return textoInputData;
     if (atalhoAtivo && nomesAtalhos[atalhoAtivo]) return `${nomesAtalhos[atalhoAtivo]} (${formatarDataNormal(dataInicio)} a ${formatarDataNormal(dataFim)})`;
@@ -311,7 +369,14 @@ export default function DashboardPage() {
     setSomenteMinhasContas(true);
   };
 
-  const categoriasFiltradasModal = categorias.filter((c) => c.tipo === tipo);
+  const categoriasFiltradasModal = categorias
+    .filter((c) => c.tipo === tipo)
+    .sort((a, b) => {
+      const aOutros = a.nome.toLowerCase().startsWith("outros");
+      const bOutros = b.nome.toLowerCase().startsWith("outros");
+      if (aOutros !== bOutros) return aOutros ? 1 : -1;
+      return a.nome.localeCompare(b.nome);
+    });
 
   const transacoesFiltradas = transacoes.filter((t) => {
     const dataOk = t.data >= dataInicio && t.data <= dataFim;
@@ -324,6 +389,42 @@ export default function DashboardPage() {
 
     return dataOk && tipoOk && usuarioOk && categoriaOk && bancoOk && contaOk;
   });
+
+  // Agrupa lançamentos parcelados (descrição "... (i/N)") pelo criado_em do
+  // lote de insert — todas as parcelas de um mesmo parcelamento são
+  // gravadas numa única chamada insert, então compartilham o mesmo
+  // criado_em. Ignora o filtro de período: um parcelamento pode ter
+  // parcelas em meses fora do intervalo selecionado no Extrato.
+  const gruposParcelamento = (() => {
+    const regexParcela = /^(.*) \((\d+)\/(\d+)\)$/;
+    const grupos: Record<string, any> = {};
+    transacoes.forEach((t) => {
+      if (t.tipo === "transferencia") return;
+      const m = t.descricao?.match(regexParcela);
+      if (!m) return;
+      const chave = String(t.criado_em);
+      if (!grupos[chave]) {
+        grupos[chave] = {
+          id: chave,
+          descricaoBase: m[1],
+          totalParcelas: Number(m[3]),
+          categoriaNome: t.categorias?.nome || "Sem categoria",
+          contaNome: t.conta_origem?.nome || "—",
+          autor_nome: t.autor_nome || "Usuário",
+          itens: [] as any[],
+        };
+      }
+      grupos[chave].itens.push(t);
+    });
+    return Object.values(grupos)
+      .map((g: any) => {
+        const itens = [...g.itens].sort((a: any, b: any) => a.data.localeCompare(b.data));
+        return { ...g, itens, valorTotal: itens.reduce((acc: number, t: any) => acc + Number(t.valor), 0), primeiraData: itens[0]?.data || "" };
+      })
+      .filter((g: any) => g.autor_nome === "Família" || usuariosSelecionados.includes(g.autor_nome))
+      .filter((g: any) => !buscaParcelamento || g.descricaoBase.toLowerCase().includes(buscaParcelamento.toLowerCase()))
+      .sort((a: any, b: any) => b.primeiraData.localeCompare(a.primeiraData));
+  })();
 
   const resumoFiltrado = transacoesFiltradas.reduce(
     (acc, t) => {
@@ -470,7 +571,7 @@ export default function DashboardPage() {
 
   const resetFields = () => {
     setEditandoId(null); setValor(""); setData(getDatLocal(new Date())); setDescricao("");
-    setCategoriaId(""); setParcelas(1); setIsPagamentoFatura(false); setFormaPagtoId("");
+    setCategoriaId(""); setParcelas(1); setModoParcelamento("ultima"); setValoresParcelasManual([]); setIsPagamentoFatura(false); setFormaPagtoId("");
     setBancoOrigemId(""); setBancoDestinoId(""); setFaturaDestinoId(""); closeAllDropdowns();
     setVinculoContaFixa(null); setOcorrenciaOriginalVinculada(null); setDescricaoTocada(false); setContasFixasSugestoes([]);
   };
@@ -555,14 +656,30 @@ export default function DashboardPage() {
       novoTransacaoId = editandoId;
     } else {
       if (tipo !== "transferencia" && parcelas > 1) {
+        let valoresParcelas: number[];
+        if (modoParcelamento === "manual") {
+          valoresParcelas = valoresParcelasManual.map((v) => parseFloat((v || "0").replace(",", ".")) || 0);
+          const somaManual = Number(valoresParcelas.reduce((acc, v) => acc + v, 0).toFixed(2));
+          if (Math.abs(somaManual - valorNumerico) > 0.01) {
+            showIsland(`A soma das parcelas (R$ ${somaManual.toFixed(2)}) não bate com o valor total (R$ ${valorNumerico.toFixed(2)}).`, "error", "🛑");
+            setIsProcessingAudit(false);
+            return;
+          }
+        } else {
+          const vBase = Math.floor((valorNumerico / parcelas) * 100) / 100;
+          const diferenca = Number((valorNumerico - vBase * parcelas).toFixed(2));
+          valoresParcelas = Array.from({ length: parcelas }, (_, i) => {
+            if (modoParcelamento === "primeira" && i === 0) return Number((vBase + diferenca).toFixed(2));
+            if (modoParcelamento === "ultima" && i === parcelas - 1) return Number((vBase + diferenca).toFixed(2));
+            return vBase;
+          });
+        }
         const payloadsMultiplos = [];
-        const vBase = Math.floor((valorNumerico / parcelas) * 100) / 100;
-        const vUltima = Number((valorNumerico - vBase * (parcelas - 1)).toFixed(2));
         for (let i = 0; i < parcelas; i++) {
           const [a, m, d] = data.split("-").map(Number);
           const dP = new Date(a, m - 1 + i, d);
           if (dP.getMonth() !== (m - 1 + i) % 12) dP.setDate(0);
-          payloadsMultiplos.push({ ...payloadBase, descricao: `${descricao} (${i + 1}/${parcelas})`, valor: i === parcelas - 1 ? vUltima : vBase, data: `${dP.getFullYear()}-${String(dP.getMonth() + 1).padStart(2, "0")}-${String(dP.getDate()).padStart(2, "0")}` });
+          payloadsMultiplos.push({ ...payloadBase, descricao: `${descricao} (${i + 1}/${parcelas})`, valor: valoresParcelas[i], data: `${dP.getFullYear()}-${String(dP.getMonth() + 1).padStart(2, "0")}-${String(dP.getDate()).padStart(2, "0")}` });
         }
         await supabase.from("transacoes").insert(payloadsMultiplos);
         showIsland(`${parcelas} parcelas salvas!`, "success", "📅");
@@ -727,15 +844,15 @@ export default function DashboardPage() {
             <div className="flex flex-col lg:flex-row gap-5 items-start lg:items-center">
               <div className="relative w-full lg:w-1/3 shrink-0">
                 <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1.5 ml-1">Período (Digite o Atalho)</label>
-                <input type="text" value={getDisplayPeriodo()} onFocus={() => { setIsDatePickerOpen(true); setTextoInputData(atalhoAtivo); }} onChange={handleInputDataChange} placeholder="Ex: m, h, sa..." className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer" />
+                <input type="text" value={getDisplayPeriodo()} onFocus={() => { if (atalhoDebounceRef.current) clearTimeout(atalhoDebounceRef.current); setIsDatePickerOpen(true); setTextoInputData(atalhoAtivo); }} onChange={handleInputDataChange} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fecharAtalho(); } }} placeholder="Ex: m, h, sa..." className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer" />
                 {isDatePickerOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => { setIsDatePickerOpen(false); setTextoInputData(""); }}></div>
+                    <div className="fixed inset-0 z-40" onClick={fecharAtalho}></div>
                     <div className="absolute top-[100%] mt-2 left-0 w-full sm:w-[450px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-5 z-50">
                       <p className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Atalhos Rápidos</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
                         {Object.entries(nomesAtalhos).map(([key, name]) => (
-                          <button key={key} type="button" onClick={() => { aplicarAtalho(key); setIsDatePickerOpen(false); setTextoInputData(""); }} className={`text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${atalhoAtivo === key ? "bg-blue-600 text-white shadow-md scale-105" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+                          <button key={key} type="button" onClick={() => { aplicarAtalho(key); fecharAtalho(); }} className={`text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${atalhoAtivo === key ? "bg-blue-600 text-white shadow-md scale-105" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
                             <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] ${atalhoAtivo === key ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"}`}>{key}</span>
                             <span className="text-center">{name}</span>
                           </button>
@@ -1008,9 +1125,16 @@ export default function DashboardPage() {
 
                       {faturasAbertas.length > 0 && (
                         <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 space-y-3">
-                          <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Faturas por Mês:</p>
-                          
-                          {faturasAbertas.map(f => {
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Faturas por Mês:</p>
+                            {faturasAbertas.length > qtdFaturasVisiveis && (
+                              <button type="button" onClick={() => setCartoesExpandidos((prev) => ({ ...prev, [cartao.id]: !prev[cartao.id] }))} className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline">
+                                {cartoesExpandidos[cartao.id] ? "Ver menos" : `Ver mais ${faturasAbertas.length - qtdFaturasVisiveis}`}
+                              </button>
+                            )}
+                          </div>
+
+                          {(cartoesExpandidos[cartao.id] ? faturasAbertas : faturasAbertas.slice(-qtdFaturasVisiveis)).map(f => {
                             const isAtrasada = f.status === 'Atrasada';
                             const isFechada = f.status === 'Fechada';
                             const isAtual = f.chave === chaveFaturaAtual;
@@ -1065,9 +1189,12 @@ export default function DashboardPage() {
 
           {/* 5. LISTAGEM DE TRANSAÇÕES (EXTRATO) - COM A ONDA (DELAY 0.25s) */}
           <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-2 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.25s' }}>
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex items-center justify-between">
+            <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100">Extrato Filtrado</h3>
+                <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
+                  <button onClick={() => setAbaExtrato("extrato")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${abaExtrato === "extrato" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Extrato</button>
+                  <button onClick={() => setAbaExtrato("parcelamentos")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${abaExtrato === "parcelamentos" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>📅 Parcelamentos</button>
+                </div>
                 <button onClick={() => toggleVisibilidadeBloco('extrato')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none">
                   {visibilidade.extrato ? (
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1076,10 +1203,65 @@ export default function DashboardPage() {
                   )}
                 </button>
               </div>
+              {abaExtrato === "parcelamentos" && (
+                <input type="text" value={buscaParcelamento} onChange={(e) => setBuscaParcelamento(e.target.value)} placeholder="Buscar por descrição..." className="w-full sm:w-64 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" />
+              )}
             </div>
-            
+
             {isLoadingData ? (
               <div className="p-10 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
+            ) : abaExtrato === "parcelamentos" ? (
+              gruposParcelamento.length === 0 ? (
+                <div className="p-10 flex flex-col items-center justify-center text-center gap-3">
+                  <p className="text-gray-500 dark:text-gray-400 font-bold">Nenhum parcelamento encontrado.</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {gruposParcelamento.map((g: any) => {
+                    const expandido = grupoExpandidoId === g.id;
+                    return (
+                      <li key={g.id}>
+                        <button onClick={() => setGrupoExpandidoId(expandido ? null : g.id)} className="w-full p-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors flex items-center justify-between gap-4 text-left">
+                          <div className="flex items-center gap-4 overflow-hidden">
+                            <span className={`text-lg text-gray-400 dark:text-gray-500 transition-transform shrink-0 ${expandido ? "rotate-90" : ""}`}>›</span>
+                            <div className="truncate">
+                              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{g.descricaoBase}</p>
+                              <div className="flex items-center gap-2 mt-1 text-[11px] sm:text-[12px] font-bold text-gray-500 dark:text-gray-400 flex-wrap">
+                                <span className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded-md">{g.categoriaNome}</span>
+                                <span className="text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 px-2 py-0.5 rounded-md">{g.contaNome}</span>
+                                <span>{g.itens.length}/{g.totalParcelas} parcelas</span>
+                                {g.itens.length < g.totalParcelas && <span className="text-orange-500 dark:text-orange-400">incompleto</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-base sm:text-lg font-black text-gray-900 dark:text-gray-100 shrink-0">{formatarMoeda(g.valorTotal, visibilidade.extrato)}</span>
+                        </button>
+                        {expandido && (
+                          <div className="px-4 sm:px-6 pb-4 space-y-1.5">
+                            {g.itens.map((t: any) => (
+                              <div key={t.id} className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2">
+                                <div className="flex items-center gap-3 text-xs font-bold text-gray-600 dark:text-gray-300">
+                                  <span className="text-gray-400 dark:text-gray-500 w-14">{t.descricao.match(/\((\d+\/\d+)\)$/)?.[1]}</span>
+                                  <span>{formatarDataNormal(t.data)}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-black text-gray-900 dark:text-gray-100">{formatarMoeda(t.valor, visibilidade.extrato)}</span>
+                                  <button onClick={() => abrirModalEditar(t)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar parcela">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                  </button>
+                                  <button onClick={() => { setTransacaoAlvo(t); abrirModalDeExclusao(); }} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors" title="Excluir parcela">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )
             ) : transacoesFiltradas.length === 0 ? (
               <div className="p-10 flex flex-col items-center justify-center text-center gap-3">
                 <p className="text-gray-500 dark:text-gray-400 font-bold">Nenhum lançamento encontrado para estes filtros.</p>
@@ -1210,6 +1392,44 @@ export default function DashboardPage() {
                     <input type="date" required value={data} onChange={(e) => setData(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-[11px] sm:text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                   </div>
                 </div>
+
+                {!editandoId && tipo !== "transferencia" && parcelas > 1 && (() => {
+                  const valorTotalPreview = parseFloat((valor || "0").replace(",", ".")) || 0;
+                  const vBasePreview = Math.floor((valorTotalPreview / parcelas) * 100) / 100;
+                  const diferencaPreview = Number((valorTotalPreview - vBasePreview * parcelas).toFixed(2));
+                  const somaManual = valoresParcelasManual.reduce((acc, v) => acc + (parseFloat((v || "0").replace(",", ".")) || 0), 0);
+                  const diferencaManual = Number((valorTotalPreview - somaManual).toFixed(2));
+                  return (
+                    <div className="space-y-2 bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Diferença de arredondamento</label>
+                      <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
+                        <button type="button" onClick={() => setModoParcelamento("primeira")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "primeira" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na 1ª parcela</button>
+                        <button type="button" onClick={() => setModoParcelamento("ultima")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "ultima" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na última</button>
+                        <button type="button" onClick={() => setModoParcelamento("manual")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "manual" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Personalizar</button>
+                      </div>
+
+                      {modoParcelamento === "manual" ? (
+                        <div className="space-y-2">
+                          <div className="space-y-1.5 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                            {Array.from({ length: parcelas }, (_, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 w-12 shrink-0">{i + 1}/{parcelas}</span>
+                                <input type="text" inputMode="decimal" value={valoresParcelasManual[i] ?? ""} onChange={(e) => atualizarValorParcelaManual(i, e.target.value)} placeholder="0,00" className="block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
+                              </div>
+                            ))}
+                          </div>
+                          <p className={`text-[11px] font-bold ${Math.abs(diferencaManual) > 0.01 ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                            Soma: R$ {somaManual.toFixed(2)} {diferencaManual > 0.01 ? `— faltam R$ ${diferencaManual.toFixed(2)} para bater com o total` : diferencaManual < -0.01 ? `— excede o total em R$ ${Math.abs(diferencaManual).toFixed(2)}` : "— confere com o valor total"}
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
+                          {parcelas}x de R$ {vBasePreview.toFixed(2)}, com a {modoParcelamento === "primeira" ? "1ª parcela" : "última parcela"} em R$ {(vBasePreview + diferencaPreview).toFixed(2)}.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="relative z-0">
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Descrição</label>
