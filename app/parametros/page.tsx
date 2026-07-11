@@ -22,6 +22,7 @@ export default function ParametrosPage() {
   // Estados dos Parâmetros
   const [notificarRendimento, setNotificarRendimento] = useState(true);
   const [diasAlerta, setDiasAlerta] = useState(15);
+  const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
 
   // ==========================================
   // DYNAMIC ISLAND 2.0 (LIQUID GLASS + BALLOON)
@@ -50,7 +51,7 @@ export default function ParametrosPage() {
         .from("parametros")
         .select("chave, valor")
         .eq("user_id", uid)
-        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento"]);
+        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis"]);
 
       if (error) {
         showIsland("Erro ao carregar configurações", "error", "🛑");
@@ -58,6 +59,7 @@ export default function ParametrosPage() {
         data.forEach(p => {
           if (p.chave === "notificar_rendimento") setNotificarRendimento(p.valor);
           if (p.chave === "dias_alerta_rendimento") setDiasAlerta(Number(p.valor));
+          if (p.chave === "qtd_faturas_visiveis") setQtdFaturasVisiveis(Number(p.valor));
         });
       }
       setIsLoading(false);
@@ -91,9 +93,16 @@ export default function ParametrosPage() {
       return;
     }
 
+    if (qtdFaturasVisiveis < 1) {
+      showIsland("A quantidade de faturas visíveis deve ser maior que zero", "error", "🛑");
+      setIsSaving(false);
+      return;
+    }
+
     const payload = [
       { user_id: userId, chave: "notificar_rendimento", valor: notificarRendimento },
-      { user_id: userId, chave: "dias_alerta_rendimento", valor: diasAlerta }
+      { user_id: userId, chave: "dias_alerta_rendimento", valor: diasAlerta },
+      { user_id: userId, chave: "qtd_faturas_visiveis", valor: qtdFaturasVisiveis }
     ];
 
     // O upsert insere se não existir ou atualiza se já existir a chave para este usuário
@@ -253,8 +262,32 @@ export default function ParametrosPage() {
                   </div>
                 </div>
 
-                {/* ESPAÇO PARA FUTUROS BLOCOS DE PARÂMETROS */}
-                {/* <div className="pt-4"> ... </div> */}
+                {/* BLOCO 2: CARTÕES DE CRÉDITO */}
+                <div>
+                  <h3 className="text-sm font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                    Cartões de Crédito
+                  </h3>
+
+                  <div className="bg-purple-50/50 dark:bg-purple-900/10 p-5 rounded-2xl border border-purple-100 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-bold text-purple-900 dark:text-purple-300 mb-1">Faturas visíveis por padrão</label>
+                      <p className="text-xs font-medium text-purple-700/70 dark:text-purple-400/70">No Dashboard, cada cartão vem com a lista de faturas colapsada, mostrando só as mais recentes. Escolha quantas aparecem antes de precisar clicar em "Ver mais".</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <input
+                        type="number"
+                        min="1"
+                        max="24"
+                        required
+                        value={qtdFaturasVisiveis}
+                        onChange={(e) => setQtdFaturasVisiveis(Number(e.target.value))}
+                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
+                      />
+                      <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="p-6 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700 flex justify-end">
