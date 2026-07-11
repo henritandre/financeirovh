@@ -85,6 +85,11 @@ export default function DashboardPage() {
   const [bancoDestinoId, setBancoDestinoId] = useState("");
   const [faturaDestinoId, setFaturaDestinoId] = useState("");
 
+  const [contasFixasSugestoes, setContasFixasSugestoes] = useState<any[]>([]);
+  const [vinculoContaFixa, setVinculoContaFixa] = useState<{ contaFixaId: string; ocorrenciaId: string | null } | null>(null);
+  const [ocorrenciaOriginalVinculada, setOcorrenciaOriginalVinculada] = useState<any | null>(null);
+  const [descricaoTocada, setDescricaoTocada] = useState(false);
+
   const [isFormaPagtoOpen, setIsFormaPagtoOpen] = useState(false);
   const [isBancoOrigemOpen, setIsBancoOrigemOpen] = useState(false);
   const [isBancoDestinoOpen, setIsBancoDestinoOpen] = useState(false);
@@ -249,6 +254,22 @@ export default function DashboardPage() {
     loadInit();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  useEffect(() => {
+    if (tipo !== "despesa" || !categoriaId || parcelas > 1) { setContasFixasSugestoes([]); return; }
+    let cancelado = false;
+    const buscarSugestoes = async () => {
+      const { data: fixas } = await supabase.from("contas_fixas").select("*").eq("categoria_id", categoriaId).eq("arquivada", false).eq("modo", "unico");
+      if (!fixas || fixas.length === 0) { if (!cancelado) setContasFixasSugestoes([]); return; }
+      const [ano, mes] = data.split("-").map(Number);
+      const { data: ocs } = await supabase.from("contas_fixas_ocorrencias").select("*").eq("competencia_ano", ano).eq("competencia_mes", mes).in("conta_fixa_id", fixas.map((f) => f.id));
+      if (cancelado) return;
+      setContasFixasSugestoes(fixas.map((f) => ({ ...f, ocorrencia: ocs?.find((o) => o.conta_fixa_id === f.id) || null })));
+    };
+    buscarSugestoes();
+    return () => { cancelado = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tipo, categoriaId, data, parcelas]);
 
   const aplicarAtalho = (atalho: string) => {
     const d = new Date(); let inicio = new Date(); let fim = new Date(); let reconhecido = true;
@@ -451,17 +472,26 @@ export default function DashboardPage() {
     setEditandoId(null); setValor(""); setData(getDatLocal(new Date())); setDescricao("");
     setCategoriaId(""); setParcelas(1); setIsPagamentoFatura(false); setFormaPagtoId("");
     setBancoOrigemId(""); setBancoDestinoId(""); setFaturaDestinoId(""); closeAllDropdowns();
+    setVinculoContaFixa(null); setOcorrenciaOriginalVinculada(null); setDescricaoTocada(false); setContasFixasSugestoes([]);
   };
 
   const abrirModalNovoLancamento = () => { resetFields(); setTipo("despesa"); setIsModalOpen(true); };
 
-  const abrirModalEditar = (t: any) => {
+  const abrirModalEditar = async (t: any) => {
     if (t.user_id !== userId) { showIsland("Apenas o autor pode editar este lançamento.", "error", "🛑"); return; }
     resetFields();
     setEditandoId(t.id); setTipo(t.tipo); setValor(t.valor.toString()); setData(t.data);
     setDescricao(t.descricao); setCategoriaId(t.categoria_id || "");
+    setDescricaoTocada(true);
 
-    if (t.tipo === "despesa") setFormaPagtoId(t.conta_id || "");
+    if (t.tipo === "despesa") {
+      setFormaPagtoId(t.conta_id || "");
+      const { data: ocVinculada } = await supabase.from("contas_fixas_ocorrencias").select("*").eq("transacao_id", t.id).maybeSingle();
+      if (ocVinculada) {
+        setOcorrenciaOriginalVinculada(ocVinculada);
+        setVinculoContaFixa({ contaFixaId: ocVinculada.conta_fixa_id, ocorrenciaId: ocVinculada.id });
+      }
+    }
     else if (t.tipo === "receita") {
       const c = contas.find((x) => x.id === t.conta_id);
       setBancoOrigemId(c?.tipo === "dinheiro" ? "dinheiro" : c?.conta_bancaria_id || "");
@@ -515,10 +545,14 @@ export default function DashboardPage() {
 
     const payloadBase = { user_id: userId, autor_nome: username || "Usuário", tipo, categoria_id: tipo === "transferencia" ? null : categoriaId, conta_id: dbContaId, conta_destino_id: dbContaDestinoId };
 
+    let novoTransacaoId: string | null = null;
+
     if (editandoId) {
       await supabase.from("transacoes_atualizadas").insert([{ transacao_id: editandoId, descricao: transacaoAlvo.descricao, valor: transacaoAlvo.valor, data: transacaoAlvo.data, tipo: transacaoAlvo.tipo, categoria_id: transacaoAlvo.categoria_id, conta_id: transacaoAlvo.conta_id, conta_destino_id: transacaoAlvo.conta_destino_id, user_id: transacaoAlvo.user_id, autor_nome: transacaoAlvo.autor_nome, atualizado_por_nome: username || "Usuário", motivo: motivoAuditoria }]);
       const { error } = await supabase.from("transacoes").update({ ...payloadBase, descricao, valor: valorNumerico, data }).eq("id", editandoId);
-      if (error) showIsland("Erro ao atualizar: " + error.message, "error", "🛑"); else showIsland("Atualizado com sucesso!", "success", "✏️");
+      if (error) { showIsland("Erro ao atualizar: " + error.message, "error", "🛑"); setIsProcessingAudit(false); return; }
+      showIsland("Atualizado com sucesso!", "success", "✏️");
+      novoTransacaoId = editandoId;
     } else {
       if (tipo !== "transferencia" && parcelas > 1) {
         const payloadsMultiplos = [];
@@ -533,10 +567,33 @@ export default function DashboardPage() {
         await supabase.from("transacoes").insert(payloadsMultiplos);
         showIsland(`${parcelas} parcelas salvas!`, "success", "📅");
       } else {
-        await supabase.from("transacoes").insert([{ ...payloadBase, descricao, valor: valorNumerico, data }]);
+        const { data: inserida, error } = await supabase.from("transacoes").insert([{ ...payloadBase, descricao, valor: valorNumerico, data }]).select("id").single();
+        if (error) { showIsland("Erro ao salvar: " + error.message, "error", "🛑"); setIsProcessingAudit(false); return; }
+        novoTransacaoId = inserida?.id || null;
         showIsland("Lançamento salvo com sucesso!", "success", "🎉");
       }
     }
+
+    // Vínculo com conta fixa (só se aplica a despesa avulsa, sem parcelamento)
+    if (editandoId && ocorrenciaOriginalVinculada) {
+      const mantemMesmoVinculo = tipo === "despesa" && vinculoContaFixa?.ocorrenciaId === ocorrenciaOriginalVinculada.id;
+      if (!mantemMesmoVinculo) {
+        await supabase.from("contas_fixas_ocorrencias").update({ status: "pendente", transacao_id: null }).eq("id", ocorrenciaOriginalVinculada.id);
+      }
+    }
+    if (tipo === "despesa" && parcelas === 1 && novoTransacaoId && vinculoContaFixa) {
+      const [ano, mes] = data.split("-").map(Number);
+      if (vinculoContaFixa.ocorrenciaId) {
+        await supabase.from("contas_fixas_ocorrencias").update({ status: "pago", transacao_id: novoTransacaoId, valor: valorNumerico, data_pagamento: data }).eq("id", vinculoContaFixa.ocorrenciaId);
+      } else {
+        const { error: ocError } = await supabase.from("contas_fixas_ocorrencias").insert([{ conta_fixa_id: vinculoContaFixa.contaFixaId, competencia_ano: ano, competencia_mes: mes, status: "pago", valor: valorNumerico, transacao_id: novoTransacaoId, data_pagamento: data, user_id: userId, autor_nome: username || "Usuário" }]);
+        if (ocError) {
+          if (ocError.code === "23505") showIsland("Lançamento salvo, mas já existia uma ocorrência para esse mês nessa conta fixa.", "error", "🛑");
+          else showIsland("Lançamento salvo, mas houve erro ao vincular a conta fixa: " + ocError.message, "error", "🛑");
+        }
+      }
+    }
+
     setIsProcessingAudit(false); setIsUpdateModalOpen(false); setIsModalOpen(false); carregarDados(false);
   };
 
@@ -556,6 +613,7 @@ export default function DashboardPage() {
     if (palavraConfirmacao.toLowerCase() !== "excluir") return;
     setIsProcessingAudit(true);
     await supabase.from("transacoes_excluidas").insert([{ transacao_id: transacaoAlvo.id, descricao: transacaoAlvo.descricao, valor: transacaoAlvo.valor, data: transacaoAlvo.data, tipo: transacaoAlvo.tipo, categoria_id: transacaoAlvo.categoria_id, conta_id: transacaoAlvo.conta_id, conta_destino_id: transacaoAlvo.conta_destino_id, user_id: transacaoAlvo.user_id, autor_nome: transacaoAlvo.autor_nome, excluido_por_nome: username || "Usuário", motivo: motivoAuditoria }]);
+    await supabase.from("contas_fixas_ocorrencias").update({ status: "pendente", transacao_id: null }).eq("transacao_id", transacaoAlvo.id);
     await supabase.from("transacoes").delete().eq("id", transacaoAlvo.id);
     setIsProcessingAudit(false); showIsland("Excluído com sucesso!", "success", "🗑️"); setIsDeleteModalOpen(false); carregarDados(false);
   };
@@ -641,6 +699,7 @@ export default function DashboardPage() {
                       <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
                       <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
                       <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
                       <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
                       <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
@@ -1154,7 +1213,7 @@ export default function DashboardPage() {
 
                 <div className="relative z-0">
                   <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Descrição</label>
-                  <input type="text" required value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder={tipo === "transferencia" ? (isPagamentoFatura ? "Ex: Pagamento Fatura Nubank..." : "Ex: Guardar Dinheiro...") : "Ex: Supermercado"} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
+                  <input type="text" required value={descricao} onChange={(e) => { setDescricao(e.target.value); setDescricaoTocada(true); }} placeholder={tipo === "transferencia" ? (isPagamentoFatura ? "Ex: Pagamento Fatura Nubank..." : "Ex: Guardar Dinheiro...") : "Ex: Supermercado"} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                 </div>
 
                 <div className="space-y-4">
@@ -1165,6 +1224,31 @@ export default function DashboardPage() {
                         <option value="" disabled>Selecione...</option>
                         {categoriasFiltradasModal.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                       </select>
+                    </div>
+                  )}
+
+                  {tipo === "despesa" && contasFixasSugestoes.length > 0 && (
+                    <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50 rounded-xl p-3 space-y-2 animate-in fade-in">
+                      <span className="text-[11px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">📌 Vincular a uma conta fixa?</span>
+                      <div className="flex flex-wrap gap-2">
+                        {contasFixasSugestoes.filter((f) => f.ocorrencia?.status !== "pago" || f.ocorrencia?.id === vinculoContaFixa?.ocorrenciaId).map((f) => {
+                          const selecionada = vinculoContaFixa?.contaFixaId === f.id;
+                          const label = f.ocorrencia
+                            ? (f.ocorrencia.status === "pago" ? `${f.nome} · vinculada R$ ${Number(f.ocorrencia.valor ?? 0).toFixed(2)}` : f.ocorrencia.valor != null ? `${f.nome} · pendente R$ ${Number(f.ocorrencia.valor).toFixed(2)}` : `${f.nome} · pendente (sem valor)`)
+                            : `➕ ${f.nome} (nova pendência)`;
+                          return (
+                            <button key={f.id} type="button" onClick={() => {
+                              setVinculoContaFixa({ contaFixaId: f.id, ocorrenciaId: f.ocorrencia?.id || null });
+                              if (f.ocorrencia && !descricaoTocada) setDescricao(`${f.nome} Ref. ${String(f.ocorrencia.competencia_mes).padStart(2, "0")}/${f.ocorrencia.competencia_ano}`);
+                            }} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${selecionada ? "bg-amber-600 border-amber-600 text-white" : "bg-white dark:bg-gray-900 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30"}`}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                        {vinculoContaFixa && (
+                          <button type="button" onClick={() => setVinculoContaFixa(null)} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">Nenhum vínculo</button>
+                        )}
+                      </div>
                     </div>
                   )}
 
