@@ -91,6 +91,9 @@ export default function ContasFixasPage() {
   const [nomeConta, setNomeConta] = useState("");
   const [categoriaIdConta, setCategoriaIdConta] = useState("");
   const [modoConta, setModoConta] = useState<"unico" | "agregado" | "cartao">("unico");
+  const [diaVencimentoConta, setDiaVencimentoConta] = useState("");
+
+  const [confirmacao, setConfirmacao] = useState<{ mensagem: string; onConfirmar: () => void } | null>(null);
 
   const [isModalPendenciaOpen, setIsModalPendenciaOpen] = useState(false);
   const [contaFixaAlvo, setContaFixaAlvo] = useState<any | null>(null);
@@ -169,37 +172,45 @@ export default function ContasFixasPage() {
   }, [isModalPendenciaOpen, mesPendencia, anoPendencia, contaFixaAlvo]);
 
   const abrirModalNovaConta = () => {
-    setContaEditandoId(null); setNomeConta(""); setCategoriaIdConta(categorias[0]?.id || ""); setModoConta("unico");
+    setContaEditandoId(null); setNomeConta(""); setCategoriaIdConta(categorias[0]?.id || ""); setModoConta("unico"); setDiaVencimentoConta("");
     setIsModalContaOpen(true);
   };
 
   const abrirModalEditarConta = (conta: any) => {
     setContaEditandoId(conta.id); setNomeConta(conta.nome); setCategoriaIdConta(conta.categoria_id); setModoConta(conta.modo || "unico");
+    setDiaVencimentoConta(conta.dia_vencimento ? String(conta.dia_vencimento) : "");
     setIsModalContaOpen(true);
   };
 
   const handleSalvarConta = async (e: React.FormEvent) => {
     e.preventDefault();
     if (modoConta !== "cartao" && !categoriaIdConta) { showIsland("Selecione uma categoria.", "error", "🛑"); return; }
+    if (diaVencimentoConta && (Number(diaVencimentoConta) < 1 || Number(diaVencimentoConta) > 31)) { showIsland("Dia de vencimento deve ser entre 1 e 31.", "error", "🛑"); return; }
     setIsSubmitting(true);
     const categoriaFinal = modoConta === "cartao" ? null : categoriaIdConta;
+    const diaVencimentoFinal = modoConta === "unico" && diaVencimentoConta ? Number(diaVencimentoConta) : null;
     let error;
     if (contaEditandoId) {
-      ({ error } = await supabase.from("contas_fixas").update({ nome: nomeConta, categoria_id: categoriaFinal, modo: modoConta }).eq("id", contaEditandoId));
+      ({ error } = await supabase.from("contas_fixas").update({ nome: nomeConta, categoria_id: categoriaFinal, modo: modoConta, dia_vencimento: diaVencimentoFinal }).eq("id", contaEditandoId));
     } else {
-      ({ error } = await supabase.from("contas_fixas").insert([{ nome: nomeConta, categoria_id: categoriaFinal, modo: modoConta, user_id: userId, autor_nome: username || "Usuário" }]));
+      ({ error } = await supabase.from("contas_fixas").insert([{ nome: nomeConta, categoria_id: categoriaFinal, modo: modoConta, dia_vencimento: diaVencimentoFinal, user_id: userId, autor_nome: username || "Usuário" }]));
     }
     setIsSubmitting(false);
     if (error) showIsland("Erro ao salvar: " + error.message, "error", "🛑");
     else { showIsland(contaEditandoId ? "Conta atualizada!" : "Conta fixa cadastrada!", "success", contaEditandoId ? "✏️" : "🎉"); setIsModalContaOpen(false); carregarDados(); }
   };
 
-  const toggleArquivar = async (conta: any) => {
+  const toggleArquivar = (conta: any) => {
     const arquivar = !conta.arquivada;
-    if (!confirm(arquivar ? `Arquivar "${conta.nome}"? Ela vai para a aba de arquivadas.` : `Desarquivar "${conta.nome}"?`)) return;
-    const { error } = await supabase.from("contas_fixas").update({ arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null }).eq("id", conta.id);
-    if (error) showIsland("Erro: " + error.message, "error", "🛑");
-    else { showIsland(arquivar ? "Conta arquivada." : "Conta reativada!", "success", arquivar ? "🗄️" : "♻️"); carregarDados(); }
+    setConfirmacao({
+      mensagem: arquivar ? `Arquivar "${conta.nome}"? Ela vai para a aba de arquivadas.` : `Desarquivar "${conta.nome}"?`,
+      onConfirmar: async () => {
+        setConfirmacao(null);
+        const { error } = await supabase.from("contas_fixas").update({ arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null }).eq("id", conta.id);
+        if (error) showIsland("Erro: " + error.message, "error", "🛑");
+        else { showIsland(arquivar ? "Conta arquivada." : "Conta reativada!", "success", arquivar ? "🗄️" : "♻️"); carregarDados(); }
+      },
+    });
   };
 
   const abrirModalPendencia = (conta: any) => {
@@ -230,14 +241,19 @@ export default function ContasFixasPage() {
     } else { showIsland("Salvo com sucesso!", "success", "🎉"); setIsModalPendenciaOpen(false); carregarDados(); }
   };
 
-  const handleExcluirOcorrencia = async () => {
+  const handleExcluirOcorrencia = () => {
     if (!ocorrenciaEditandoId) return;
-    if (!confirm("Excluir o registro deste mês?")) return;
-    setIsSubmitting(true);
-    const { error } = await supabase.from("contas_fixas_ocorrencias").delete().eq("id", ocorrenciaEditandoId);
-    setIsSubmitting(false);
-    if (error) showIsland("Erro: " + error.message, "error", "🛑");
-    else { showIsland("Registro excluído.", "success", "🗑️"); setIsModalPendenciaOpen(false); carregarDados(); }
+    setConfirmacao({
+      mensagem: "Excluir o registro deste mês?",
+      onConfirmar: async () => {
+        setConfirmacao(null);
+        setIsSubmitting(true);
+        const { error } = await supabase.from("contas_fixas_ocorrencias").delete().eq("id", ocorrenciaEditandoId);
+        setIsSubmitting(false);
+        if (error) showIsland("Erro: " + error.message, "error", "🛑");
+        else { showIsland("Registro excluído.", "success", "🗑️"); setIsModalPendenciaOpen(false); carregarDados(); }
+      },
+    });
   };
 
   const ocorrenciaDoMes = (contaId: string) => ocorrencias.find((o) => o.conta_fixa_id === contaId && o.competencia_ano === anoAtual && o.competencia_mes === mesAtual);
@@ -450,7 +466,10 @@ export default function ContasFixasPage() {
                             {agregado && <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">Soma</span>}
                             {cartao && <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800">Cartões</span>}
                           </h3>
-                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{cartao ? `${cartoesCredito.length} cartão(ões) de crédito` : (conta.categorias?.nome || "Sem categoria")}</span>
+                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
+                            {cartao ? `${cartoesCredito.length} cartão(ões) de crédito` : (conta.categorias?.nome || "Sem categoria")}
+                            {!cartao && !agregado && conta.dia_vencimento && ` • Vence dia ${conta.dia_vencimento}`}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
@@ -587,6 +606,12 @@ export default function ContasFixasPage() {
                     {categorias.length === 0 && <p className="text-[11px] font-bold text-orange-600 dark:text-orange-400 mt-1">Nenhuma categoria de despesa cadastrada — crie uma em "Categorias" primeiro.</p>}
                   </div>
                 )}
+                {modoConta === "unico" && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia de vencimento (opcional)</label>
+                    <input type="number" min="1" max="31" value={diaVencimentoConta} onChange={(e) => setDiaVencimentoConta(e.target.value)} placeholder="Ex: 10" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" />
+                  </div>
+                )}
                 <button type="submit" disabled={isSubmitting || (modoConta !== "cartao" && !categoriaIdConta)} className="w-full py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
                   {isSubmitting ? "Salvando..." : contaEditandoId ? "Salvar Alterações" : "Cadastrar Conta"}
                 </button>
@@ -652,6 +677,19 @@ export default function ContasFixasPage() {
                     </div>
                   </form>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmacao && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmacao(null)}></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+              <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-5">{confirmacao.mensagem}</p>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
+                <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all active:scale-95">Confirmar</button>
               </div>
             </div>
           </div>
