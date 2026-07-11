@@ -149,7 +149,7 @@ export default function DashboardPage() {
     m: "Acumulado do Mês", ma: "Mês Anterior", a: "Acumulado do Ano", aa: "Ano Anterior"
   };
 
-  const carregarDados = async (isInitialLoad = false) => {
+  const carregarDados = async (isInitialLoad = false, usernameOverride?: string) => {
     setIsLoadingData(true);
 
     const { data: perfisData } = await supabase.from("profiles").select("username, avatar_url");
@@ -176,7 +176,7 @@ export default function DashboardPage() {
       setTransacoes(historico);
       const autoresTransacoes = historico.map((t) => t.autor_nome || "Usuário");
       const autoresContas = contasData ? contasData.map((c) => c.autor_nome || "Usuário") : [];
-      const euMesmo = username || "Usuário";
+      const euMesmo = usernameOverride || username || "Usuário";
       const unicos = Array.from(new Set([...autoresTransacoes, ...autoresContas, euMesmo].filter((n) => n && n !== "Família")));
 
       setUsuariosDisponiveis(unicos);
@@ -251,8 +251,9 @@ export default function DashboardPage() {
     const loadInit = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const usernameResolvido = user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário";
         setUserId(user.id); setEmail(user.email || "");
-        setUsername(user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário");
+        setUsername(usernameResolvido);
         setFullName(user.user_metadata?.full_name || ""); setAvatarUrl(user.user_metadata?.avatar_url || "");
 
         const { data: catData } = await supabase.from("categorias").select("*").order("nome");
@@ -261,7 +262,11 @@ export default function DashboardPage() {
         const { data: paramFaturas } = await supabase.from("parametros").select("valor").eq("user_id", user.id).eq("chave", "qtd_faturas_visiveis").maybeSingle();
         if (paramFaturas?.valor) setQtdFaturasVisiveis(Number(paramFaturas.valor));
 
-        carregarDados(true);
+        // Passa o username já resolvido: o estado "username" ainda não foi
+        // commitado neste ponto (mesmo render do setUsername acima), então
+        // usar apenas o estado aqui faria o "eu mesmo" cair no fallback
+        // literal "Usuário" no primeiro carregamento da página.
+        carregarDados(true, usernameResolvido);
       } else {
         router.push("/login");
       }
@@ -468,7 +473,7 @@ export default function DashboardPage() {
        if (t.tipo === 'despesa') {
           const [aStr, mStr, dStr] = t.data.split('-');
           let ano = Number(aStr); let mes = Number(mStr) - 1; const dia = Number(dStr);
-          if (dia > diaFechamento) { mes++; if (mes > 11) { mes = 0; ano++; } }
+          if (dia >= diaFechamento) { mes++; if (mes > 11) { mes = 0; ano++; } }
           const chave = `${ano}-${String(mes + 1).padStart(2, '0')}`;
           faturasAgrupadas[chave] = (faturasAgrupadas[chave] || 0) + val;
        } else if (t.tipo === 'transferencia') { pagamentosTotais += val; }
@@ -493,7 +498,7 @@ export default function DashboardPage() {
     const hoje = new Date(); hoje.setHours(0,0,0,0);
     const faturasPendentes = faturasArray.filter(f => f.valorAberto > 0.01).map(f => {
         let status = "Em Aberto";
-        if (hoje > f.dataVencimento) status = "Atrasada"; else if (hoje > f.dataFechamento) status = "Fechada";
+        if (hoje > f.dataVencimento) status = "Atrasada"; else if (hoje >= f.dataFechamento) status = "Fechada";
         return { ...f, status, labelVencimento: `${String(f.dataVencimento.getDate()).padStart(2, '0')}/${String(f.dataVencimento.getMonth() + 1).padStart(2, '0')}/${f.dataVencimento.getFullYear()}` };
     });
 
@@ -1036,10 +1041,11 @@ export default function DashboardPage() {
           <div className={`bg-purple-50/40 dark:bg-purple-900/10 p-6 sm:p-8 rounded-2xl shadow-sm border border-purple-100 dark:border-purple-900/30 flex flex-col w-full mt-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
             
             {(() => {
-              // Lógica para calcular os 3 grandes totais do cabeçalho
+              // Lógica para calcular os 4 grandes totais do cabeçalho
               let globalGastoCredito = 0;
               let globalFechado = 0;
               let globalAtrasado = 0;
+              let globalMesAtual = 0;
 
               cartoesCredito.forEach(cartao => {
                 if (cartao.ativo !== false && usuariosSelecionados.includes(cartao.autor_nome)) {
@@ -1049,6 +1055,10 @@ export default function DashboardPage() {
                     if (f.status === 'Fechada') globalFechado += f.valorAberto;
                     if (f.status === 'Atrasada') globalAtrasado += f.valorAberto;
                   });
+                  // Fatura "Atual" = a primeira Em Aberto em ordem cronológica de vencimento
+                  // (mesma regra usada no card individual de cada cartão).
+                  const faturaAtualCartao = [...faturasAbertas].sort((a, b) => a.dataVencimento.getTime() - b.dataVencimento.getTime()).find(f => f.status === 'Em Aberto');
+                  if (faturaAtualCartao) globalMesAtual += faturaAtualCartao.valorAberto;
                 }
               });
 
@@ -1079,6 +1089,10 @@ export default function DashboardPage() {
                     <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-blue-100 dark:border-blue-900/30 text-center xl:text-right">
                       <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider block mb-0.5">Fatura Fechada</span>
                       <span className="text-lg font-black text-blue-600 dark:text-blue-400">{formatarMoeda(globalFechado, visibilidade.cartoes)}</span>
+                    </div>
+                    <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 text-center xl:text-right">
+                      <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider block mb-0.5">Total do Mês (Aberta)</span>
+                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{formatarMoeda(globalMesAtual, visibilidade.cartoes)}</span>
                     </div>
                     <div className="flex-1 xl:flex-none bg-purple-600 dark:bg-purple-500 px-4 py-2.5 rounded-xl shadow-sm border border-purple-500 dark:border-purple-400 text-center xl:text-right min-w-[170px]">
                       <span className="text-[10px] font-bold text-purple-100 uppercase tracking-wider block mb-0.5">Total Gasto em Crédito</span>
