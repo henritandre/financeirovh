@@ -447,18 +447,12 @@ export default function DashboardPage() {
       else if (t.tipo === "despesa") { if (t.conta_origem?.tipo === "credito") acc.cartao += val; else { acc.despesasPagas += val; acc.saldo -= val; } } 
       else if (t.tipo === "transferencia") {
         if (t.conta_origem?.tipo !== "credito") acc.saldo -= val;
-        if (t.conta_destino?.tipo === "credito"){ 
-          acc.cartao -= val; 
+        if (t.conta_destino?.tipo === "credito"){
+          acc.cartao -= val;
           acc.despesasPagas += val;
-        } else if (t.conta_destino) { 
-          acc.saldo += val; 
+        } else if (t.conta_destino) {
+          acc.saldo += val;
         }
-      }
-      if (t.conta_destino?.tipo === "credito") {
-        acc.cartao -= val;
-        acc.despesasPagas += val;
-      } else if (t.conta_destino) {
-        acc.saldo += val;
       }
       return acc;
     },
