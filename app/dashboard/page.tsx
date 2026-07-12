@@ -262,6 +262,15 @@ export default function DashboardPage() {
         const { data: paramFaturas } = await supabase.from("parametros").select("valor").eq("user_id", user.id).eq("chave", "qtd_faturas_visiveis").maybeSingle();
         if (paramFaturas?.valor) setQtdFaturasVisiveis(Number(paramFaturas.valor));
 
+        // Catch-up das assinaturas vencidas: o banco gera de uma vez só
+        // (mesmo que sejam vários dias/meses acumulados) e retorna quantos
+        // lançamentos entraram, sem travar a tela — só um aviso, como o
+        // lembrete de rendimento das caixinhas.
+        const { data: assinaturasGeradas } = await supabase.rpc("processar_assinaturas");
+        if (assinaturasGeradas && assinaturasGeradas > 0) {
+          showIsland(`${assinaturasGeradas} lançamento(s) de assinatura gerado(s)!`, "success", "🔁");
+        }
+
         // Passa o username já resolvido: o estado "username" ainda não foi
         // commitado neste ponto (mesmo render do setUsername acima), então
         // usar apenas o estado aqui faria o "eu mesmo" cair no fallback
@@ -822,6 +831,7 @@ export default function DashboardPage() {
                       <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
                       <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
                       <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
                       <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
                       <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
