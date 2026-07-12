@@ -58,8 +58,10 @@ export default function AssinaturasPage() {
   const [assinaturas, setAssinaturas] = useState<any[]>([]);
   const [lancamentos, setLancamentos] = useState<any[]>([]);
   const [categorias, setCategorias] = useState<any[]>([]);
-  const [formasPagto, setFormasPagto] = useState<any[]>([]);
+  const [contas, setContas] = useState<any[]>([]);
+  const [bancos, setBancos] = useState<any[]>([]);
   const [mapPerfis, setMapPerfis] = useState<Record<string, string>>({});
+  const [catAssinaturaId, setCatAssinaturaId] = useState<string | null>(null);
 
   const [aba, setAba] = useState<"ativas" | "arquivadas">("ativas");
   const [cardExpandidoId, setCardExpandidoId] = useState<string | null>(null);
@@ -93,9 +95,17 @@ export default function AssinaturasPage() {
   const [recorrencia, setRecorrencia] = useState<"semanal" | "mensal" | "anual">("mensal");
   const [diaCobranca, setDiaCobranca] = useState("");
   const [mesCobranca, setMesCobranca] = useState(1);
+  const [intervaloMeses, setIntervaloMeses] = useState("1");
   const [formaPagtoId, setFormaPagtoId] = useState("");
+  const [isFormaPagtoOpen, setIsFormaPagtoOpen] = useState(false);
+  const [somenteMinhasContas, setSomenteMinhasContas] = useState(true);
+  const [lancarAgora, setLancarAgora] = useState(false);
 
   const [confirmacao, setConfirmacao] = useState<{ mensagem: string; onConfirmar: () => void } | null>(null);
+
+  const [reativacaoAlvo, setReativacaoAlvo] = useState<any | null>(null);
+  const [jaLancadoEsteMes, setJaLancadoEsteMes] = useState<any | null>(null);
+  const [lancarAoReativar, setLancarAoReativar] = useState(false);
 
   const getDataLocal = (d: Date) => {
     const tzOffset = d.getTimezoneOffset() * 60000;
@@ -103,7 +113,7 @@ export default function AssinaturasPage() {
   };
 
   // Próxima ocorrência da cobrança a partir de hoje (inclusive), usada no
-  // cadastro, na edição e ao desarquivar — nunca gera cobrança retroativa.
+  // cadastro, na edição e ao reativar — nunca gera cobrança retroativa.
   const calcularProximaCobranca = (rec: string, dia: number, mes: number) => {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     if (rec === "semanal") {
@@ -123,6 +133,62 @@ export default function AssinaturasPage() {
     let d = clampMes(hoje.getFullYear(), mes - 1);
     if (d < hoje) d = clampMes(hoje.getFullYear() + 1, mes - 1);
     return d;
+  };
+
+  // Quando o usuário já cobriu manualmente a cobrança do ciclo atual (novo
+  // cadastro com "lançar agora" ou reativação sobre um mês já lançado), a
+  // próxima automática precisa pular esse ciclo — senão o processamento
+  // automático encontra proxima_cobranca == hoje de novo e duplica.
+  const calcularProximaAposCicloCoberto = (rec: string, dia: number, mes: number, intervaloMeses: number) => {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const natural = calcularProximaCobranca(rec, dia, mes);
+    if (natural.getTime() !== hoje.getTime()) return natural;
+    if (rec === "semanal") { const d = new Date(hoje); d.setDate(d.getDate() + 7); return d; }
+    const clampMes = (ano: number, mesIdx: number) => {
+      const ultimo = new Date(ano, mesIdx + 1, 0).getDate();
+      return new Date(ano, mesIdx, Math.min(dia, ultimo));
+    };
+    if (rec === "mensal") return clampMes(hoje.getFullYear(), hoje.getMonth() + Math.max(1, intervaloMeses));
+    return clampMes(hoje.getFullYear() + 1, mes - 1);
+  };
+
+  const labelIntervaloMeses = (n: number) => {
+    const nomes: Record<number, string> = { 1: "Mensal", 2: "Bimestral", 3: "Trimestral", 4: "Quadrimestral", 6: "Semestral", 12: "Anual" };
+    return nomes[n] || `A cada ${n} meses`;
+  };
+
+  const getContaAvatar = (c: any) => {
+    const foto = mapPerfis[c.autor_nome];
+    if (c.tipo === "dinheiro") return { photo: null, char: "💵", bg: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400" };
+    if (c.tipo === "credito") return { photo: foto, char: c.autor_nome?.charAt(0).toUpperCase() || "C", bg: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400" };
+    return { photo: foto, char: c.autor_nome?.charAt(0).toUpperCase() || "B", bg: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400" };
+  };
+
+  const getContaSubtitle = (c: any) => {
+    if (c.tipo === "dinheiro") return "Na Carteira / Cofre";
+    if (c.tipo === "corrente" && c.subtipo === "pix") return `PIX: ${c.chave_pix}`;
+    if (c.tipo === "credito" || (c.tipo === "corrente" && c.subtipo === "debito")) return `FINAL ${c.ultimos_digitos || "----"}`;
+    return "";
+  };
+
+  // Lança manualmente, agora, a cobrança de uma assinatura (usado no
+  // "já registrar este mês" do cadastro e na reativação). Não mexe em
+  // proxima_cobranca — o ciclo automático continua intacto.
+  const lancarCobrancaManual = async (a: { id: string; nome: string; valor: number; conta_id: string; user_id: string; autor_nome: string; recorrencia?: string }) => {
+    const hoje = new Date();
+    const dataHoje = getDataLocal(hoje);
+    const descricao = `${a.nome} Ref. ${a.recorrencia === "semanal" ? formatarDataBR(dataHoje) : `${String(hoje.getMonth() + 1).padStart(2, "0")}/${hoje.getFullYear()}`}`;
+    await supabase.from("transacoes").insert([{
+      user_id: a.user_id,
+      autor_nome: a.autor_nome,
+      tipo: "despesa",
+      descricao,
+      valor: a.valor,
+      data: dataHoje,
+      categoria_id: catAssinaturaId || a.conta_id,
+      conta_id: a.conta_id,
+      assinatura_id: a.id,
+    }]);
   };
 
   const processarPendentes = async () => {
@@ -148,8 +214,12 @@ export default function AssinaturasPage() {
     if (lancData) setLancamentos(lancData);
     const { data: catsData } = await supabase.from("categorias").select("*").eq("tipo", "despesa").order("nome", { ascending: true });
     if (catsData) setCategorias(catsData);
-    const { data: contasData } = await supabase.from("contas").select("id, nome, tipo, autor_nome, ativo").order("nome", { ascending: true });
-    if (contasData) setFormasPagto(contasData.filter((c) => c.ativo !== false));
+    const { data: catAssData } = await supabase.from("categorias").select("id").eq("tipo", "despesa").ilike("nome", "assinatura%").order("nome", { ascending: true }).limit(1).maybeSingle();
+    if (catAssData) setCatAssinaturaId(catAssData.id);
+    const { data: contasData } = await supabase.from("contas").select("*").order("nome", { ascending: true });
+    if (contasData) setContas(contasData.filter((c) => c.ativo !== false));
+    const { data: bancosData } = await supabase.from("contas_bancarias").select("*").order("nome", { ascending: true });
+    if (bancosData) setBancos(bancosData);
     setLoading(false);
   };
 
@@ -174,13 +244,16 @@ export default function AssinaturasPage() {
 
   const abrirModalNova = () => {
     setEditandoId(null); setNome(""); setCategoriaId(categorias[0]?.id || ""); setValor("");
-    setRecorrencia("mensal"); setDiaCobranca(""); setMesCobranca(1); setFormaPagtoId("");
+    setRecorrencia("mensal"); setDiaCobranca(""); setMesCobranca(1); setIntervaloMeses("1"); setFormaPagtoId("");
+    setLancarAgora(false); setIsFormaPagtoOpen(false); setSomenteMinhasContas(true);
     setIsModalOpen(true);
   };
 
   const abrirModalEditar = (a: any) => {
     setEditandoId(a.id); setNome(a.nome); setCategoriaId(a.categoria_id); setValor(String(a.valor).replace(".", ","));
-    setRecorrencia(a.recorrencia); setDiaCobranca(String(a.dia_cobranca)); setMesCobranca(a.mes_cobranca || 1); setFormaPagtoId(a.conta_id);
+    setRecorrencia(a.recorrencia); setDiaCobranca(String(a.dia_cobranca)); setMesCobranca(a.mes_cobranca || 1);
+    setIntervaloMeses(String(a.intervalo_meses || 1)); setFormaPagtoId(a.conta_id);
+    setLancarAgora(false); setIsFormaPagtoOpen(false); setSomenteMinhasContas(true);
     setIsModalOpen(true);
   };
 
@@ -193,46 +266,88 @@ export default function AssinaturasPage() {
     if (recorrencia !== "semanal" && (dia < 1 || dia > 31)) { showIsland("Dia de cobrança deve ser entre 1 e 31.", "error", "🛑"); return; }
 
     setIsSubmitting(true);
+    const valorNumerico = parseFloat(valor.replace(",", "."));
+    const intervaloFinal = recorrencia === "mensal" ? Math.max(1, Number(intervaloMeses) || 1) : 1;
+    // Se "lançar agora" está marcado, o ciclo atual já fica coberto pelo
+    // lançamento manual — a próxima automática precisa pular pra frente
+    // pra não duplicar quando o processamento automático rodar.
+    const proximaDate = !editandoId && lancarAgora
+      ? calcularProximaAposCicloCoberto(recorrencia, dia, mesCobranca, intervaloFinal)
+      : calcularProximaCobranca(recorrencia, dia, mesCobranca);
     const payload = {
       nome,
       categoria_id: categoriaId,
-      valor: parseFloat(valor.replace(",", ".")),
+      valor: valorNumerico,
       recorrencia,
       dia_cobranca: dia,
       mes_cobranca: recorrencia === "anual" ? mesCobranca : null,
+      intervalo_meses: intervaloFinal,
       conta_id: formaPagtoId,
-      proxima_cobranca: getDataLocal(calcularProximaCobranca(recorrencia, dia, mesCobranca)),
+      proxima_cobranca: getDataLocal(proximaDate),
     };
     let error;
+    let novoId = editandoId;
     if (editandoId) {
       ({ error } = await supabase.from("assinaturas").update(payload).eq("id", editandoId));
     } else {
-      ({ error } = await supabase.from("assinaturas").insert([{ ...payload, user_id: userId, autor_nome: username || "Usuário" }]));
+      const { data: inserida, error: insErr } = await supabase.from("assinaturas").insert([{ ...payload, user_id: userId, autor_nome: username || "Usuário" }]).select("id").single();
+      error = insErr; novoId = inserida?.id || null;
     }
     if (error) { setIsSubmitting(false); showIsland("Erro ao salvar: " + error.message, "error", "🛑"); return; }
     setIsModalOpen(false);
     showIsland(editandoId ? "Assinatura atualizada!" : "Assinatura cadastrada!", "success", editandoId ? "✏️" : "🎉");
-    // se a primeira cobrança é hoje, o lançamento já nasce agora
+    if (!editandoId && lancarAgora && novoId) {
+      await lancarCobrancaManual({ id: novoId, nome, valor: valorNumerico, conta_id: formaPagtoId, user_id: userId, autor_nome: username || "Usuário", recorrencia });
+    }
+    // se a primeira cobrança já é hoje, o lançamento automático também nasce agora
     await processarPendentes();
     setIsSubmitting(false);
     carregarDados();
   };
 
-  const toggleArquivar = (a: any) => {
-    const arquivar = !a.arquivada;
+  const pausarAssinatura = (a: any) => {
     setConfirmacao({
-      mensagem: arquivar
-        ? `Pausar "${a.nome}"? Nenhum lançamento novo será gerado enquanto estiver arquivada.`
-        : `Reativar "${a.nome}"? As cobranças voltam a ser geradas a partir da próxima data (sem retroativos do período pausado).`,
+      mensagem: `Pausar "${a.nome}"? Nenhum lançamento novo será gerado enquanto estiver pausada.`,
       onConfirmar: async () => {
         setConfirmacao(null);
-        const payload: any = { arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null };
-        if (!arquivar) payload.proxima_cobranca = getDataLocal(calcularProximaCobranca(a.recorrencia, a.dia_cobranca, a.mes_cobranca || 1));
-        const { error } = await supabase.from("assinaturas").update(payload).eq("id", a.id);
+        const { error } = await supabase.from("assinaturas").update({ arquivada: true, arquivada_em: new Date().toISOString() }).eq("id", a.id);
         if (error) showIsland("Erro: " + error.message, "error", "🛑");
-        else { showIsland(arquivar ? "Assinatura pausada." : "Assinatura reativada!", "success", arquivar ? "🗄️" : "♻️"); carregarDados(); }
+        else { showIsland("Assinatura pausada.", "success", "🗄️"); carregarDados(); }
       },
     });
+  };
+
+  const abrirReativacao = (a: any) => {
+    const hoje = new Date();
+    const jaLancado = lancamentos.find((l) => {
+      if (l.assinatura_id !== a.id) return false;
+      const [ano, mes] = l.data.split("-").map(Number);
+      return ano === hoje.getFullYear() && mes === hoje.getMonth() + 1;
+    }) || null;
+    setReativacaoAlvo(a);
+    setJaLancadoEsteMes(jaLancado);
+    setLancarAoReativar(false);
+  };
+
+  const confirmarReativacao = async () => {
+    if (!reativacaoAlvo) return;
+    setIsSubmitting(true);
+    // O ciclo atual fica coberto quando já existe lançamento este mês OU
+    // quando o usuário optou por lançar agora — nos dois casos a próxima
+    // automática precisa pular pra frente pra não duplicar.
+    const cicloJaCoberto = !!jaLancadoEsteMes || lancarAoReativar;
+    const proximaDate = cicloJaCoberto
+      ? calcularProximaAposCicloCoberto(reativacaoAlvo.recorrencia, reativacaoAlvo.dia_cobranca, reativacaoAlvo.mes_cobranca || 1, reativacaoAlvo.intervalo_meses || 1)
+      : calcularProximaCobranca(reativacaoAlvo.recorrencia, reativacaoAlvo.dia_cobranca, reativacaoAlvo.mes_cobranca || 1);
+    const { error } = await supabase.from("assinaturas").update({ arquivada: false, arquivada_em: null, proxima_cobranca: getDataLocal(proximaDate) }).eq("id", reativacaoAlvo.id);
+    if (error) { setIsSubmitting(false); showIsland("Erro: " + error.message, "error", "🛑"); return; }
+    if (!jaLancadoEsteMes && lancarAoReativar) {
+      await lancarCobrancaManual({ id: reativacaoAlvo.id, nome: reativacaoAlvo.nome, valor: Number(reativacaoAlvo.valor), conta_id: reativacaoAlvo.conta_id, user_id: reativacaoAlvo.user_id, autor_nome: reativacaoAlvo.autor_nome, recorrencia: reativacaoAlvo.recorrencia });
+    }
+    setIsSubmitting(false);
+    setReativacaoAlvo(null);
+    showIsland("Assinatura reativada!", "success", "♻️");
+    carregarDados();
   };
 
   // Agrupa os lançamentos gerados por mês (gráfico de evolução do card)
@@ -256,13 +371,13 @@ export default function AssinaturasPage() {
   const custoAnualEstimado = (a: any) => {
     const v = Number(a.valor);
     if (a.recorrencia === "semanal") return v * 52;
-    if (a.recorrencia === "mensal") return v * 12;
+    if (a.recorrencia === "mensal") return v * (12 / (a.intervalo_meses || 1));
     return v;
   };
 
   const labelRecorrencia = (a: any) => {
     if (a.recorrencia === "semanal") return `Semanal · ${DIAS_SEMANA[a.dia_cobranca]}`;
-    if (a.recorrencia === "mensal") return `Mensal · dia ${a.dia_cobranca}`;
+    if (a.recorrencia === "mensal") return `${labelIntervaloMeses(a.intervalo_meses || 1)} · dia ${a.dia_cobranca}`;
     return `Anual · ${String(a.dia_cobranca).padStart(2, "0")}/${String(a.mes_cobranca).padStart(2, "0")}`;
   };
 
@@ -270,6 +385,17 @@ export default function AssinaturasPage() {
     const [a, m, d] = iso.split("-");
     return `${d}/${m}/${a}`;
   };
+
+  // "Outros..." sempre por último, resto em ordem alfabética — mesmo
+  // critério usado no modal de lançamento do Dashboard.
+  const categoriasOrdenadas = [...categorias].sort((a, b) => {
+    const aOutros = a.nome.toLowerCase().startsWith("outros");
+    const bOutros = b.nome.toLowerCase().startsWith("outros");
+    if (aOutros !== bOutros) return aOutros ? 1 : -1;
+    return a.nome.localeCompare(b.nome);
+  });
+
+  const contaSelecionada = contas.find((c) => c.id === formaPagtoId);
 
   const initialLetterMenu = username ? username.charAt(0).toUpperCase() : email ? email.charAt(0).toUpperCase() : "?";
   const assinaturasFiltradas = assinaturas.filter((a) => a.arquivada === (aba === "arquivadas"));
@@ -425,7 +551,7 @@ export default function AssinaturasPage() {
                         <span onClick={(e) => { e.stopPropagation(); abrirModalEditar(a); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer" title="Editar assinatura">
                           ✏️
                         </span>
-                        <span onClick={(e) => { e.stopPropagation(); toggleArquivar(a); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors cursor-pointer" title={a.arquivada ? "Reativar" : "Pausar"}>
+                        <span onClick={(e) => { e.stopPropagation(); a.arquivada ? abrirReativacao(a) : pausarAssinatura(a); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors cursor-pointer" title={a.arquivada ? "Reativar" : "Pausar"}>
                           {a.arquivada ? "♻️" : "🗄️"}
                         </span>
                       </div>
@@ -482,7 +608,7 @@ export default function AssinaturasPage() {
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-0">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
-            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80 sticky top-0 z-10">
                 <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{editandoId ? "Editar Assinatura" : "Nova Assinatura"}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
@@ -502,7 +628,7 @@ export default function AssinaturasPage() {
                     <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Categoria</label>
                     <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
                       <option value="" disabled>Selecione...</option>
-                      {categorias.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
+                      {categoriasOrdenadas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                     </select>
                   </div>
                 </div>
@@ -527,9 +653,17 @@ export default function AssinaturasPage() {
                 )}
 
                 {recorrencia === "mensal" && (
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia do mês</label>
-                    <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia do mês</label>
+                      <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Repete a cada</label>
+                      <select value={intervaloMeses} onChange={(e) => setIntervaloMeses(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
+                        {[1, 2, 3, 4, 6].map((n) => <option key={n} value={n}>{labelIntervaloMeses(n)}</option>)}
+                      </select>
+                    </div>
                   </div>
                 )}
 
@@ -548,17 +682,109 @@ export default function AssinaturasPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Forma de pagamento</label>
-                  <select required value={formaPagtoId} onChange={(e) => setFormaPagtoId(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
-                    <option value="" disabled>Selecione...</option>
-                    {formasPagto.map((c) => <option key={c.id} value={c.id}>{c.nome} (@{c.autor_nome})</option>)}
-                  </select>
+                {/* FORMA DE PAGAMENTO — mesmo componente/visual do modal de lançamento do Dashboard */}
+                <div className={`relative ${isFormaPagtoOpen ? "z-50" : "z-0"}`}>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">💳 Forma Pagto / Banco</label>
+                  <button type="button" onClick={() => setIsFormaPagtoOpen(!isFormaPagtoOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:ring-4 focus:border-teal-500 focus:ring-teal-500/20 transition-all h-[55px]">
+                    {contaSelecionada ? (() => {
+                      const avatar = getContaAvatar(contaSelecionada);
+                      return (
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                            {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
+                          </div>
+                          <div className="flex flex-col items-start truncate text-left">
+                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{contaSelecionada.nome}</span>
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{getContaSubtitle(contaSelecionada)}</span>
+                          </div>
+                        </div>
+                      );
+                    })() : (
+                      <span className="text-gray-400 font-bold text-sm ml-1">Selecione o meio de pagamento...</span>
+                    )}
+                    <svg className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${isFormaPagtoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  </button>
+
+                  {isFormaPagtoOpen && (
+                    <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
+                      {bancos.filter((b) => !somenteMinhasContas || b.user_id === userId).map((banco) => {
+                        const chavesDoBanco = contas.filter((c) => c.conta_bancaria_id === banco.id && c.ativo !== false);
+                        if (chavesDoBanco.length === 0) return null;
+                        return (
+                          <div key={banco.id}>
+                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 flex items-center justify-between">
+                              <span>🏦 {banco.banco}</span><span>@{banco.autor_nome}</span>
+                            </div>
+                            <ul className="divide-y divide-gray-50 dark:divide-gray-700">
+                              {chavesDoBanco.map((c) => {
+                                const avatar = getContaAvatar(c);
+                                return (
+                                  <li key={c.id}>
+                                    <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
+                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                                        {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
+                                      </div>
+                                      <div className="flex flex-col truncate">
+                                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
+                                      </div>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                      {(() => {
+                        const chavesDin = contas.filter((c) => c.tipo === "dinheiro" && c.ativo !== false && (!somenteMinhasContas || c.user_id === userId));
+                        if (chavesDin.length === 0) return null;
+                        return (
+                          <div>
+                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">💵 Dinheiro Físico</div>
+                            <ul className="divide-y divide-gray-50 dark:divide-gray-700">
+                              {chavesDin.map((c) => {
+                                const avatar = getContaAvatar(c);
+                                return (
+                                  <li key={c.id}>
+                                    <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
+                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                                        {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
+                                      </div>
+                                      <div className="flex flex-col truncate">
+                                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
+                                      </div>
+                                    </button>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+
+                  <div className="mt-3 flex items-center gap-2">
+                    <input type="checkbox" id="filtroContasAssinatura" checked={somenteMinhasContas} onChange={(e) => setSomenteMinhasContas(e.target.checked)} className="w-4 h-4 text-teal-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-teal-500 cursor-pointer" />
+                    <label htmlFor="filtroContasAssinatura" className="text-xs font-bold text-gray-500 dark:text-gray-400 cursor-pointer select-none">Visualizar apenas minhas contas</label>
+                  </div>
                 </div>
 
                 <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500">
                   O lançamento entra automaticamente no Dashboard com a categoria "Assinaturas" na data da cobrança. A categoria escolhida acima aparece só nesta tela.
                 </p>
+
+                {!editandoId && (
+                  <label className="flex items-start gap-2.5 bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/50 rounded-xl p-3 cursor-pointer">
+                    <input type="checkbox" checked={lancarAgora} onChange={(e) => setLancarAgora(e.target.checked)} className="mt-0.5 w-4 h-4 text-teal-600 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded focus:ring-teal-500 cursor-pointer shrink-0" />
+                    <span className="text-xs font-bold text-teal-800 dark:text-teal-400">
+                      Já registrar a cobrança deste mês agora?
+                      <span className="block text-[11px] font-bold text-teal-600/70 dark:text-teal-400/70 mt-0.5">Lança manualmente um pagamento hoje. A cobrança automática seguinte fica marcada para {diaCobranca && formatarDataBR(getDataLocal(calcularProximaCobranca(recorrencia, Number(diaCobranca) || 0, mesCobranca)))} — sem duplicar.</span>
+                    </span>
+                  </label>
+                )}
 
                 <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-teal-600 hover:bg-teal-700 disabled:opacity-50">
                   {isSubmitting ? "Salvando..." : editandoId ? "Salvar Alterações" : "Cadastrar Assinatura"}
@@ -576,6 +802,32 @@ export default function AssinaturasPage() {
               <div className="flex gap-3">
                 <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
                 <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">Confirmar</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {reativacaoAlvo && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setReativacaoAlvo(null)}></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+              <h3 className="text-base font-black text-gray-900 dark:text-gray-100 mb-1">Reativar "{reativacaoAlvo.nome}"?</h3>
+              <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-4">As cobranças voltam a ser geradas a partir da próxima data, sem retroativos do período pausado.</p>
+
+              {jaLancadoEsteMes ? (
+                <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 mb-5">
+                  <p className="text-xs font-bold text-blue-800 dark:text-blue-400">🔗 Já existe um lançamento de "{reativacaoAlvo.nome}" em {formatarDataBR(jaLancadoEsteMes.data)} (R$ {Number(jaLancadoEsteMes.valor).toFixed(2)}) neste mês.</p>
+                </div>
+              ) : (
+                <label className="flex items-start gap-2.5 bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/50 rounded-xl p-3 mb-5 cursor-pointer">
+                  <input type="checkbox" checked={lancarAoReativar} onChange={(e) => setLancarAoReativar(e.target.checked)} className="mt-0.5 w-4 h-4 text-teal-600 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded focus:ring-teal-500 cursor-pointer shrink-0" />
+                  <span className="text-xs font-bold text-teal-800 dark:text-teal-400">Lançar a cobrança deste mês agora?</span>
+                </label>
+              )}
+
+              <div className="flex gap-3">
+                <button type="button" onClick={() => setReativacaoAlvo(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
+                <button type="button" disabled={isSubmitting} onClick={confirmarReativacao} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? "Salvando..." : "Confirmar"}</button>
               </div>
             </div>
           </div>
