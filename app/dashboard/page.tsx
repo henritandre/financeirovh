@@ -616,6 +616,22 @@ export default function DashboardPage() {
     setTransacaoAlvo(t); setIsModalOpen(true);
   };
 
+  // Deep-link vindo da Insights: /dashboard?editar=<id> abre o modal de edição
+  // já no lançamento clicado. Roda uma vez, quando os dados terminam de carregar.
+  const deepLinkEditarRef = useRef(false);
+  useEffect(() => {
+    if (deepLinkEditarRef.current || isLoadingData || !userId || transacoes.length === 0) return;
+    const editarId = new URLSearchParams(window.location.search).get("editar");
+    if (!editarId) return;
+    deepLinkEditarRef.current = true;
+    const alvo = transacoes.find((t) => t.id === editarId);
+    const url = new URL(window.location.href); url.searchParams.delete("editar"); window.history.replaceState({}, "", url.toString());
+    if (!alvo) { showIsland("Lançamento não encontrado.", "error", "🔍"); return; }
+    if (alvo.user_id !== userId) { showIsland("Lançamento de outro usuário — veja pelo extrato.", "info", "👤"); return; }
+    abrirModalEditar(alvo);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoadingData, userId, transacoes]);
+
   const dispararAuditoriaAtualizacao = async (e: React.FormEvent) => {
     e.preventDefault();
     if (tipo === "despesa" && !formaPagtoId) { showIsland("Selecione a forma de pagamento!", "error", "🛑"); return; }

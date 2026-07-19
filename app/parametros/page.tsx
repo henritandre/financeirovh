@@ -23,6 +23,9 @@ export default function ParametrosPage() {
   const [notificarRendimento, setNotificarRendimento] = useState(true);
   const [diasAlerta, setDiasAlerta] = useState(15);
   const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
+  const [insightsQtdCategorias, setInsightsQtdCategorias] = useState(5);
+  const [insightsExpandirResto, setInsightsExpandirResto] = useState(true);
+  const [insightsQtdTop, setInsightsQtdTop] = useState(3);
 
   // ==========================================
   // DYNAMIC ISLAND 2.0 (LIQUID GLASS + BALLOON)
@@ -51,7 +54,7 @@ export default function ParametrosPage() {
         .from("parametros")
         .select("chave, valor")
         .eq("user_id", uid)
-        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis"]);
+        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis", "insights_qtd_categorias", "insights_expandir_resto", "insights_qtd_top"]);
 
       if (error) {
         showIsland("Erro ao carregar configurações", "error", "🛑");
@@ -60,6 +63,9 @@ export default function ParametrosPage() {
           if (p.chave === "notificar_rendimento") setNotificarRendimento(p.valor);
           if (p.chave === "dias_alerta_rendimento") setDiasAlerta(Number(p.valor));
           if (p.chave === "qtd_faturas_visiveis") setQtdFaturasVisiveis(Number(p.valor));
+          if (p.chave === "insights_qtd_categorias") setInsightsQtdCategorias(Number(p.valor));
+          if (p.chave === "insights_expandir_resto") setInsightsExpandirResto(p.valor);
+          if (p.chave === "insights_qtd_top") setInsightsQtdTop(Number(p.valor));
         });
       }
       setIsLoading(false);
@@ -99,10 +105,19 @@ export default function ParametrosPage() {
       return;
     }
 
+    if (insightsQtdCategorias < 1 || insightsQtdTop < 1) {
+      showIsland("As quantidades da Insights devem ser maiores que zero", "error", "🛑");
+      setIsSaving(false);
+      return;
+    }
+
     const payload = [
       { user_id: userId, chave: "notificar_rendimento", valor: notificarRendimento },
       { user_id: userId, chave: "dias_alerta_rendimento", valor: diasAlerta },
-      { user_id: userId, chave: "qtd_faturas_visiveis", valor: qtdFaturasVisiveis }
+      { user_id: userId, chave: "qtd_faturas_visiveis", valor: qtdFaturasVisiveis },
+      { user_id: userId, chave: "insights_qtd_categorias", valor: insightsQtdCategorias },
+      { user_id: userId, chave: "insights_expandir_resto", valor: insightsExpandirResto },
+      { user_id: userId, chave: "insights_qtd_top", valor: insightsQtdTop }
     ];
 
     // O upsert insere se não existir ou atualiza se já existir a chave para este usuário
@@ -286,6 +301,74 @@ export default function ParametrosPage() {
                         className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
                       />
                       <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BLOCO 3: INSIGHTS */}
+                <div>
+                  <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    Insights
+                  </h3>
+
+                  <div className="space-y-6">
+                    {/* CATEGORIAS VISÍVEIS */}
+                    <div className="bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Categorias visíveis por padrão</label>
+                        <p className="text-xs font-medium text-blue-700/70 dark:text-blue-400/70">Nos cards "Para onde o dinheiro foi" e "De onde veio", quantas categorias aparecem antes de agrupar o restante em "Resto".</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          required
+                          value={insightsQtdCategorias}
+                          onChange={(e) => setInsightsQtdCategorias(Number(e.target.value))}
+                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                        />
+                        <span className="text-sm font-bold text-blue-800 dark:text-blue-300">categorias</span>
+                      </div>
+                    </div>
+
+                    {/* EXPANDIR RESTO */}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Permitir expandir o "Resto"</h4>
+                        <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Quando ligado, a barra "Resto" pode ser aberta para ver, em detalhe, todas as categorias agrupadas.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setInsightsExpandirResto(!insightsExpandirResto)}
+                        className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${insightsExpandirResto ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                        role="switch"
+                        aria-checked={insightsExpandirResto}
+                      >
+                        <span className="sr-only">Permitir expandir o resto</span>
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${insightsExpandirResto ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+
+                    {/* PESOS PESADOS */}
+                    <div className="bg-blue-50/50 dark:bg-blue-900/10 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">"Pesos pesados" por padrão</label>
+                        <p className="text-xs font-medium text-blue-700/70 dark:text-blue-400/70">Quantas das maiores despesas do mês aparecem ao abrir a Insights (você ainda pode aumentar/diminuir na hora).</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          required
+                          value={insightsQtdTop}
+                          onChange={(e) => setInsightsQtdTop(Number(e.target.value))}
+                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                        />
+                        <span className="text-sm font-bold text-blue-800 dark:text-blue-300">itens</span>
+                      </div>
                     </div>
                   </div>
                 </div>
