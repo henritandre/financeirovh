@@ -4,44 +4,10 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
+import { Barras } from "../insights/charts";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-
-function GraficoEvolucao({ dados }: { dados: any[] }) {
-  if (dados.length === 0) {
-    return <div className="text-center py-8 text-sm font-bold text-gray-400 dark:text-gray-500">Nenhuma cobrança gerada ainda.</div>;
-  }
-  const valores = dados.map((d) => Number(d.valor));
-  const max = Math.max(...valores, 0.01);
-  const media = valores.reduce((a, b) => a + b, 0) / valores.length;
-  const w = 600, h = 160, padding = 24;
-  const barW = (w - padding * 2) / dados.length;
-  const escala = (v: number) => (v / max) * (h - padding * 2);
-  const yMedia = h - padding - escala(media);
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-40" preserveAspectRatio="none">
-      <line x1={padding} y1={yMedia} x2={w - padding} y2={yMedia} strokeDasharray="4 3" strokeWidth="1" className="stroke-blue-400 dark:stroke-blue-500" />
-      {dados.map((d, i) => {
-        const barH = escala(Number(d.valor));
-        const x = padding + i * barW + barW * 0.2;
-        const y = h - padding - barH;
-        return (
-          <g key={d.id}>
-            <rect x={x} y={y} width={barW * 0.6} height={Math.max(barH, 1)} rx="2" className="fill-blue-500 dark:fill-blue-400" />
-            <title>{`${String(d.competencia_mes).padStart(2, "0")}/${d.competencia_ano}: R$ ${Number(d.valor).toFixed(2)}`}</title>
-            {dados.length <= 12 && (
-              <text x={x + barW * 0.3} y={h - 6} textAnchor="middle" className="fill-gray-400 dark:fill-gray-500" style={{ fontSize: "8px", fontWeight: 700 }}>
-                {MESES[d.competencia_mes - 1]}/{String(d.competencia_ano).slice(-2)}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
 
 export default function AssinaturasPage() {
   const router = useRouter();
@@ -529,29 +495,29 @@ export default function AssinaturasPage() {
 
                 return (
                   <div key={a.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors">
-                    <button onClick={() => setCardExpandidoId(expandido ? null : a.id)} className="w-full p-5 flex items-center justify-between gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
-                      <div className="flex items-center gap-3 min-w-0">
+                    <button onClick={() => setCardExpandidoId(expandido ? null : a.id)} className="w-full p-4 sm:p-5 flex items-center justify-between gap-2 sm:gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                         <span className={`text-lg text-gray-400 dark:text-gray-500 transition-transform shrink-0 ${expandido ? "rotate-90" : ""}`}>›</span>
                         <div className="w-7 h-7 rounded-full overflow-hidden bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-400 flex items-center justify-center text-xs font-black shrink-0" title={`@${a.autor_nome}`}>
                           {fotoAutor ? <img src={fotoAutor} className="w-full h-full object-cover" alt="" /> : a.autor_nome?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-base font-black text-gray-900 dark:text-gray-100 truncate">{a.nome}</h3>
-                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 truncate block">
+                          <h3 className="text-base font-black text-gray-900 dark:text-gray-100 leading-tight line-clamp-2">{a.nome}</h3>
+                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 truncate block mt-0.5">
                             {a.categorias?.nome || "Sem categoria"} • {labelRecorrencia(a)} • {a.contas?.nome || "—"}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="text-right mr-1">
+                      <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
+                        <div className="text-right mr-0.5 sm:mr-1">
                           <span className="block text-sm font-black text-gray-900 dark:text-gray-100">R$ {Number(a.valor).toFixed(2)}</span>
                           {!a.arquivada && <span className="block text-[10px] font-bold text-teal-600 dark:text-teal-400">Próx: {formatarDataBR(a.proxima_cobranca)}</span>}
                           {a.arquivada && <span className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase">Pausada</span>}
                         </div>
-                        <span onClick={(e) => { e.stopPropagation(); abrirModalEditar(a); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer" title="Editar assinatura">
+                        <span onClick={(e) => { e.stopPropagation(); abrirModalEditar(a); }} className="p-1.5 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer" title="Editar assinatura">
                           ✏️
                         </span>
-                        <span onClick={(e) => { e.stopPropagation(); a.arquivada ? abrirReativacao(a) : pausarAssinatura(a); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors cursor-pointer" title={a.arquivada ? "Reativar" : "Pausar"}>
+                        <span onClick={(e) => { e.stopPropagation(); a.arquivada ? abrirReativacao(a) : pausarAssinatura(a); }} className="p-1.5 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-900/30 rounded-lg transition-colors cursor-pointer" title={a.arquivada ? "Reativar" : "Pausar"}>
                           {a.arquivada ? "♻️" : "🗄️"}
                         </span>
                       </div>
@@ -560,7 +526,11 @@ export default function AssinaturasPage() {
                     {expandido && (
                       <div className="px-5 pb-5 pt-1 border-t border-gray-100 dark:border-gray-700 space-y-4 animate-in fade-in duration-200">
                         <div className="pt-4">
-                          <GraficoEvolucao dados={dadosGrafico} />
+                          {dadosGrafico.length === 0 ? (
+                            <div className="text-center py-8 text-sm font-bold text-gray-400 dark:text-gray-500">Nenhuma cobrança gerada ainda.</div>
+                          ) : (
+                            <Barras labels={dadosGrafico.map((d) => `${MESES[d.competencia_mes - 1]}/${String(d.competencia_ano).slice(-2)}`)} series={[{ nome: "Cobrança", valores: dadosGrafico.map((d) => Number(d.valor)), cor: "#14b8a6" }]} />
+                          )}
                         </div>
 
                         <div className="grid grid-cols-3 gap-3">

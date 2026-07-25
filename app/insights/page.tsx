@@ -305,7 +305,7 @@ export default function InsightsPage() {
         <div><h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{titulo}</h3><p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5">{sub}</p></div>
         {botaoInfo(id)}
       </div>
-      <FlipCard flipped={infoAberto === id} frente={children} verso={<div className="h-full flex items-center px-1 py-2 min-h-[180px]">{verso}</div>} />
+      <FlipCard flipped={infoAberto === id} frente={children} verso={<div className="px-1 py-2">{verso}</div>} />
     </div>
   );
 
@@ -367,7 +367,7 @@ export default function InsightsPage() {
         <main className="p-6 max-w-6xl mx-auto space-y-6 mt-4">
 
           {/* NAVEGADOR DE MÊS (sem filtro de usuário — visão da casa) */}
-          <div className={`bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center gap-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
+          <div className={`bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-center sm:justify-between items-center gap-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
             <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-900 p-2 rounded-2xl border border-gray-200 dark:border-gray-700 transition-colors">
               <button onClick={() => alterarMes(-1)} className="p-3 bg-white dark:bg-gray-800 rounded-xl shadow-sm text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:scale-105 transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
               <div className="w-40 text-center">
@@ -396,7 +396,7 @@ export default function InsightsPage() {
 
               <div className={cardCls}>
                 <div className="flex items-start justify-between gap-3 mb-3"><div><h3 className="text-lg font-black text-gray-900 dark:text-gray-100">De onde vem a previsão?</h3><p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5">Fixas: média · Variáveis: mediana · últimos 3 meses</p></div>{botaoInfo("proj")}</div>
-                <FlipCard flipped={infoAberto === "proj"} verso={<div className="min-h-[120px] flex items-center px-1">A previsão usa o histórico real das despesas dos <b>últimos 3 meses</b>, categoria a categoria. <b>Fixas</b> (contas fixas e assinaturas) usam a <b>média</b>; <b>variáveis</b> usam a <b>mediana</b>, que ignora meses atípicos (ex.: um mês com uma compra grande não infla a previsão). Categorias sem lançamento real não entram.</div>} frente={
+                <FlipCard flipped={infoAberto === "proj"} verso={<div className="px-1 py-2">A previsão usa o histórico real das despesas dos <b>últimos 3 meses</b>, categoria a categoria. <b>Fixas</b> (contas fixas e assinaturas) usam a <b>média</b>; <b>variáveis</b> usam a <b>mediana</b>, que ignora meses atípicos (ex.: um mês com uma compra grande não infla a previsão). Categorias sem lançamento real não entram.</div>} frente={
                   despesasPrevistas === 0 ? <p className="text-sm font-bold text-gray-400 text-center py-10">Sem histórico nos últimos 3 meses para projetar.</p> : (
                     <div className="space-y-3">
                       {[{ chave: "fixas", titulo: "Despesas fixas", icon: "📌", total: totalProjFixas, itens: projFixas }, { chave: "variaveis", titulo: "Despesas variáveis", icon: "🛒", total: totalProjVariaveis, itens: projVariaveis }].map((g) => {
@@ -438,7 +438,7 @@ export default function InsightsPage() {
                       <div><h3 className="text-lg font-black text-gray-900 dark:text-gray-100">A história do mês</h3><p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5">Gasto acumulado dia a dia · passe o mouse</p></div>
                       <div className="flex items-center gap-2"><div className="hidden sm:flex items-center gap-2.5 text-[10px] font-black uppercase tracking-wider mr-1"><span className="flex items-center gap-1 text-gray-900 dark:text-gray-100"><span className="inline-block w-4 h-0.5 rounded" style={{ background: modo === "corrente" ? PALETA.saldo : "#6b7280" }}></span>{modo === "corrente" ? "Este mês" : "Mês"}</span><span className="flex items-center gap-1 text-gray-400 dark:text-gray-500"><span className="inline-block w-4 border-t-2 border-dashed border-gray-300 dark:border-gray-600"></span>Anterior</span></div>{botaoInfo("historia")}</div>
                     </div>
-                    <FlipCard flipped={infoAberto === "historia"} verso={<div className="min-h-[200px] flex items-center px-1">Cada ponto é o <b>total gasto acumulado</b> do começo do mês até aquele dia. A linha cheia é {modo === "corrente" ? "este mês, até hoje" : "o mês selecionado"}; a tracejada é o mês anterior. Se a cheia está <b>abaixo</b> da tracejada, vocês gastaram menos que no mês passado no mesmo ponto. Passe o mouse pra ver o valor de cada dia.</div>} frente={
+                    <FlipCard flipped={infoAberto === "historia"} verso={<div className="px-1 py-2">Cada ponto é o <b>total gasto acumulado</b> do começo do mês até aquele dia. A linha cheia é {modo === "corrente" ? "este mês, até hoje" : "o mês selecionado"}; a tracejada é o mês anterior. Se a cheia está <b>abaixo</b> da tracejada, vocês gastaram menos que no mês passado no mesmo ponto. Passe o mouse pra ver o valor de cada dia.</div>} frente={
                       <>
                         <Linhas labels={Array.from({ length: totalDiasMes }, (_, i) => `dia ${i + 1}`)} marcadorIndex={diaLimiteGrafico - 1} series={[{ nome: modo === "corrente" ? "Este mês" : "Mês", valores: serieEsteExib, cor: modo === "corrente" ? PALETA.saldo : "#6b7280", area: true }, { nome: "Anterior", valores: serieAntExib, cor: "#9ca3af", tracejada: true }]} height={220} />
                         <div className="mt-4 flex flex-wrap gap-2">
@@ -562,7 +562,7 @@ export default function InsightsPage() {
           <button onClick={() => toggleInfo("saude")} className={`absolute right-0 top-0 w-7 h-7 rounded-full flex items-center justify-center transition-colors ${infoAberto === "saude" ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400" : "text-gray-300 dark:text-gray-600 hover:text-blue-500"}`} title="Como é calculado?"><IconeInfo /></button>
         </div>
         <FlipCard flipped={infoAberto === "saude"} verso={
-          <div className="min-h-[260px] flex flex-col justify-center px-1 space-y-2 text-[11px]">
+          <div className="px-1 py-2 space-y-2 text-[11px]">
             <p>Uma nota de <b>0 a 100</b> pra saúde do mês, somando três partes:</p>
             <p>🐷 <b>Poupança (0–40):</b> quanto da renda sobrou. 30%+ = nota cheia.</p>
             <p>⏱️ <b>Ritmo (0–30):</b> se estão gastando menos que no mesmo ponto do mês passado.</p>
