@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 
 // ============================================================================
 // COMPONENTES DE VISUALIZAÇÃO DA INSIGHTS
@@ -24,6 +24,20 @@ const fmtK = (v: number) => {
   if (abs >= 1000) return `${(v / 1000).toFixed(abs >= 10000 ? 0 : 1).replace(".", ",")}k`;
   return `${Math.round(v)}`;
 };
+
+// No celular o SVG é espremido para ~343px; com viewBox 640 tudo fica minúsculo.
+// Usamos um viewBox mais estreito (menos downscale) e fontes maiores no mobile.
+function useIsMobile() {
+  const [mobile, setMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const f = () => setMobile(mq.matches);
+    f();
+    mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, []);
+  return mobile;
+}
 
 // ============================================================================
 // FLIP CARD — vira o conteúdo (gráfico ↔ explicação) ao clicar no info.
@@ -75,20 +89,30 @@ export function GaugeSaude({ score, corHex, label, compact = false }: { score: n
   );
 }
 
-// Tooltip SVG reutilizável.
-function Tooltip({ x, w, title, items }: { x: number; w: number; title: string; items: { nome: string; cor: string; v: number }[] }) {
-  const tw = 176;
-  const th = 20 + items.length * 15 + 6;
-  const tx = x > w / 2 ? x - tw - 10 : x + 10;
+// Tooltip SVG reutilizável (fontes maiores no mobile).
+function Tooltip({ x, w, title, items, mobile }: { x: number; w: number; title: string; items: { nome: string; cor: string; v: number }[]; mobile: boolean }) {
+  const tw = mobile ? 232 : 176;
+  const fsT = mobile ? 13 : 10;
+  const fsV = mobile ? 15 : 11;
+  const rh = mobile ? 23 : 15;
+  const px = mobile ? 12 : 10;
+  const rC = mobile ? 5.5 : 4;
+  const titleY = mobile ? 30 : 26;
+  const cy0 = mobile ? 47 : 38;
+  const ty0 = mobile ? 52 : 42;
+  const th = (mobile ? 30 : 22) + items.length * rh + 4;
+  const tx = Math.max(4, Math.min(w - tw - 4, x > w / 2 ? x - tw - 10 : x + 10));
+  const maxCh = mobile ? 12 : 11;
+  const curto = (s: string) => (s.length > maxCh ? s.slice(0, maxCh - 1) + "…" : s);
   return (
     <g style={{ pointerEvents: "none" }}>
-      <rect x={tx} y={10} width={tw} height={th} rx="8" fill="#0f172a" stroke="#334155" strokeWidth="1" opacity="0.96" />
-      <text x={tx + 10} y={26} className="fill-gray-300" style={{ fontSize: "10px", fontWeight: 800, letterSpacing: "0.5px" }}>{title}</text>
+      <rect x={tx} y={8} width={tw} height={th} rx="8" fill="#0f172a" stroke="#334155" strokeWidth="1" opacity="0.97" />
+      <text x={tx + px} y={titleY} className="fill-gray-300" style={{ fontSize: `${fsT}px`, fontWeight: 800, letterSpacing: "0.5px" }}>{title}</text>
       {items.map((it, i) => (
         <g key={i}>
-          <circle cx={tx + 14} cy={38 + i * 15} r="4" fill={it.cor} />
-          <text x={tx + 24} y={42 + i * 15} className="fill-white" style={{ fontSize: "11px", fontWeight: 700 }}>{it.nome}</text>
-          <text x={tx + tw - 10} y={42 + i * 15} textAnchor="end" className="fill-white" style={{ fontSize: "11px", fontWeight: 800 }}>{brl(it.v)}</text>
+          <circle cx={tx + px + 4} cy={cy0 + i * rh} r={rC} fill={it.cor} />
+          <text x={tx + px + 16} y={ty0 + i * rh} className="fill-white" style={{ fontSize: `${fsV}px`, fontWeight: 700 }}>{curto(it.nome)}</text>
+          <text x={tx + tw - px} y={ty0 + i * rh} textAnchor="end" className="fill-white" style={{ fontSize: `${fsV}px`, fontWeight: 800 }}>{brl(it.v)}</text>
         </g>
       ))}
     </g>
@@ -101,7 +125,10 @@ function Tooltip({ x, w, title, items }: { x: number; w: number; title: string; 
 // ============================================================================
 export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { labels: string[]; series: { nome: string; valores: (number | null)[]; cor: string; area?: boolean; tracejada?: boolean }[]; height?: number; marcadorIndex?: number }) {
   const [hi, setHi] = useState<number | null>(null);
-  const w = 640, h = height, padL = 44, padR = 16, padT = 20, padB = 28;
+  const mobile = useIsMobile();
+  const h = height;
+  const w = mobile ? 360 : 640, padL = mobile ? 40 : 44, padR = mobile ? 12 : 16, padT = 20, padB = mobile ? 32 : 28;
+  const fsAxis = mobile ? 15 : 9, rMark = mobile ? 6 : 4.5;
   const n = labels.length;
   const vals = series.flatMap((s) => s.valores).filter((v): v is number => v != null);
   const maxV = Math.max(...vals, 0.01);
@@ -109,7 +136,7 @@ export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { l
   const x = (i: number) => padL + (n <= 1 ? (w - padL - padR) / 2 : (i / (n - 1)) * (w - padL - padR));
   const y = (v: number) => h - padB - ((v - minV) / (maxV - minV || 1)) * (h - padT - padB);
   const yl = [maxV, (maxV + minV) / 2, minV];
-  const xIdx = n <= 8 ? labels.map((_, i) => i) : [0, Math.floor(n / 2), n - 1];
+  const xIdx = n <= (mobile ? 4 : 8) ? labels.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const sx = ((e.clientX - r.left) / r.width) * w;
@@ -126,8 +153,8 @@ export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { l
           <linearGradient key={i} id={`gl-${s.cor.replace("#", "")}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={s.cor} stopOpacity="0.25" /><stop offset="100%" stopColor={s.cor} stopOpacity="0.02" /></linearGradient>
         ))}
       </defs>
-      {yl.map((lv, i) => (<text key={i} x={padL - 6} y={y(lv) + 3} textAnchor="end" className="fill-gray-300 dark:fill-gray-600" style={{ fontSize: "9px", fontWeight: 700 }}>{fmtK(lv)}</text>))}
-      {xIdx.map((i) => (<text key={i} x={x(i)} y={h - 8} textAnchor="middle" className="fill-gray-300 dark:fill-gray-600" style={{ fontSize: "9px", fontWeight: 700 }}>{labels[i]}</text>))}
+      {yl.map((lv, i) => (<text key={i} x={padL - 6} y={y(lv) + 3} textAnchor="end" className="fill-gray-400 dark:fill-gray-500" style={{ fontSize: `${fsAxis}px`, fontWeight: 700 }}>{fmtK(lv)}</text>))}
+      {xIdx.map((i) => { const anchor = i === 0 ? "start" : i === n - 1 ? "end" : "middle"; const xp = i === 0 ? padL - 2 : i === n - 1 ? w - padR + 2 : x(i); return (<text key={i} x={xp} y={h - 8} textAnchor={anchor} className="fill-gray-400 dark:fill-gray-500" style={{ fontSize: `${fsAxis}px`, fontWeight: 700 }}>{labels[i]}</text>); })}
       {marcadorIndex >= 0 && <line x1={x(marcadorIndex)} y1={padT} x2={x(marcadorIndex)} y2={h - padB} strokeWidth="1" strokeDasharray="3 3" className="stroke-gray-400 dark:stroke-gray-500 opacity-50" />}
       {series.map((s, si) => {
         const pts = s.valores.map((v, i) => (v == null ? null : `${x(i)},${y(v)}`)).filter(Boolean).join(" ");
@@ -142,8 +169,8 @@ export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { l
       {hi != null && (
         <>
           <line x1={x(hi)} y1={padT} x2={x(hi)} y2={h - padB} strokeWidth="1.5" className="stroke-gray-400 dark:stroke-gray-500 opacity-60" />
-          {series.map((s, si) => s.valores[hi] == null ? null : (<circle key={si} cx={x(hi)} cy={y(s.valores[hi] as number)} r="4.5" fill={s.tracejada ? "#9ca3af" : s.cor} className="stroke-white dark:stroke-gray-800" strokeWidth="2" />))}
-          {tipItems.length > 0 && <Tooltip x={x(hi)} w={w} title={labels[hi]} items={tipItems} />}
+          {series.map((s, si) => s.valores[hi] == null ? null : (<circle key={si} cx={x(hi)} cy={y(s.valores[hi] as number)} r={rMark} fill={s.tracejada ? "#9ca3af" : s.cor} className="stroke-white dark:stroke-gray-800" strokeWidth="2" />))}
+          {tipItems.length > 0 && <Tooltip x={x(hi)} w={w} title={labels[hi]} items={tipItems} mobile={mobile} />}
         </>
       )}
     </svg>
@@ -155,7 +182,9 @@ export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { l
 // ============================================================================
 export function Barras({ labels, series, empilhado = false, linha }: { labels: string[]; series: { nome: string; valores: number[]; cor: string }[]; empilhado?: boolean; linha?: { nome: string; valores: number[]; cor: string } }) {
   const [hi, setHi] = useState<number | null>(null);
-  const w = 640, h = 220, padL = 44, padR = 16, padT = 20, padB = 30;
+  const mobile = useIsMobile();
+  const w = mobile ? 360 : 640, h = 220, padL = mobile ? 40 : 44, padR = mobile ? 12 : 16, padT = 20, padB = 30;
+  const fsAxis = mobile ? 15 : 9;
   const n = labels.length;
   const totais = labels.map((_, i) => empilhado ? series.reduce((a, s) => a + (s.valores[i] || 0), 0) : Math.max(...series.map((s) => s.valores[i] || 0)));
   const linhaVals = linha ? linha.valores : [];
@@ -164,7 +193,8 @@ export function Barras({ labels, series, empilhado = false, linha }: { labels: s
   const x = (i: number) => padL + (i + 0.5) * ((w - padL - padR) / n);
   const y = (v: number) => h - padB - ((v - base) / (maxV - base || 1)) * (h - padT - padB);
   const grupoW = (w - padL - padR) / n;
-  const barW = empilhado ? grupoW * 0.5 : (grupoW * 0.7) / series.length;
+  const barMax = 72;
+  const barW = empilhado ? Math.min(grupoW * 0.5, barMax) : Math.min((grupoW * 0.7) / series.length, barMax);
   const yl = [maxV, (maxV + base) / 2, base];
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -177,8 +207,13 @@ export function Barras({ labels, series, empilhado = false, linha }: { labels: s
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-56 select-none" style={{ cursor: "crosshair" }} onMouseMove={onMove} onMouseLeave={() => setHi(null)}>
-      {yl.map((lv, i) => (<text key={i} x={padL - 6} y={y(lv) + 3} textAnchor="end" className="fill-gray-300 dark:fill-gray-600" style={{ fontSize: "9px", fontWeight: 700 }}>{fmtK(lv)}</text>))}
-      {labels.map((lb, i) => (<text key={i} x={x(i)} y={h - 9} textAnchor="middle" className={`${hi === i ? "fill-gray-600 dark:fill-gray-300" : "fill-gray-300 dark:fill-gray-600"}`} style={{ fontSize: "9px", fontWeight: 700 }}>{lb}</text>))}
+      {yl.map((lv, i) => (<text key={i} x={padL - 6} y={y(lv) + 3} textAnchor="end" className="fill-gray-400 dark:fill-gray-500" style={{ fontSize: `${fsAxis}px`, fontWeight: 700 }}>{fmtK(lv)}</text>))}
+      {labels.map((lb, i) => {
+        const stride = mobile ? Math.max(1, Math.ceil(n / 4)) : 1;
+        if (i % stride !== 0 && i !== n - 1) return null;
+        const isLast = i === n - 1;
+        return (<text key={i} x={isLast ? w - 4 : x(i)} y={h - 9} textAnchor={isLast ? "end" : "middle"} className={`${hi === i ? "fill-gray-600 dark:fill-gray-300" : "fill-gray-400 dark:fill-gray-500"}`} style={{ fontSize: `${fsAxis}px`, fontWeight: 700 }}>{lb}</text>);
+      })}
       {hi != null && <rect x={x(hi) - grupoW / 2} y={padT} width={grupoW} height={h - padT - padB} className="fill-gray-100/60 dark:fill-gray-700/30" rx="4" />}
       {labels.map((_, i) => {
         if (empilhado) {
@@ -189,11 +224,11 @@ export function Barras({ labels, series, empilhado = false, linha }: { labels: s
             </g>
           );
         }
-        const total = grupoW * 0.7; const start = x(i) - total / 2;
+        const total = barW * series.length; const start = x(i) - total / 2;
         return (<g key={i}>{series.map((s, si) => { const v = s.valores[i] || 0; const yy = y(v); const y0 = y(0); return <rect key={si} x={start + si * barW} y={Math.min(yy, y0)} width={barW * 0.86} height={Math.max(Math.abs(y0 - yy), 1)} rx="2" fill={s.cor} />; })}</g>);
       })}
       {linha && <polyline points={linha.valores.map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" stroke={linha.cor} />}
-      {hi != null && tipItems.length > 0 && <Tooltip x={x(hi)} w={w} title={labels[hi]} items={tipItems} />}
+      {hi != null && tipItems.length > 0 && <Tooltip x={x(hi)} w={w} title={labels[hi]} items={tipItems} mobile={mobile} />}
     </svg>
   );
 }
