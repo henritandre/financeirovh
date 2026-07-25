@@ -72,6 +72,15 @@ export default function InvestimentosPage() {
   const [contaPonteId, setContaPonteId] = useState("");
   const [isContaPonteDropdownOpen, setIsContaPonteDropdownOpen] = useState(false);
 
+  const [aba, setAba] = useState<"ativas" | "arquivadas">("ativas");
+  const [menuCardId, setMenuCardId] = useState<string | null>(null);
+  const [confirmacao, setConfirmacao] = useState<{
+    titulo: string; mensagem: string;
+    primarioLabel: string; onPrimario: () => void;
+    secundarioLabel?: string; onSecundario?: () => void;
+    tom?: "perigo" | "normal";
+  } | null>(null);
+
   const formatarMoeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
   const toggleUsuario = (nome: string) => setUsuariosSelecionados((prev) => (prev.includes(nome) ? prev.filter((u) => u !== nome) : [...prev, nome]));
 
@@ -118,10 +127,13 @@ export default function InvestimentosPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  const caixinhasFiltradas = caixinhas.filter((c) => usuariosSelecionados.includes(c.autor_nome || "Usuário"));
-  const totalInvestido = caixinhasFiltradas.reduce((acc, c) => acc + Number(c.saldo), 0);
+  const caixinhasVisiveis = caixinhas.filter((c) => usuariosSelecionados.includes(c.autor_nome || "Usuário"));
+  const caixinhasFiltradas = caixinhasVisiveis.filter((c) => (aba === "arquivadas" ? c.ativo === false : c.ativo !== false));
+  const totalInvestido = caixinhasVisiveis.filter((c) => c.ativo !== false).reduce((acc, c) => acc + Number(c.saldo), 0);
+  const qtdArquivadas = caixinhasVisiveis.filter((c) => c.ativo === false).length;
 
   const abrirModalNovaCaixinha = () => { setCaixinhaId(null); setNomeCaixinha(""); setBancoId(""); setIsBancoDropdownOpen(false); setIsModalCaixinhaOpen(true); };
+  const abrirModalEditarCaixinha = (c: any) => { setMenuCardId(null); setCaixinhaId(c.id); setNomeCaixinha(c.nome); setBancoId(c.banco_id || "dinheiro"); setIsBancoDropdownOpen(false); setIsModalCaixinhaOpen(true); };
 
   const handleSalvarCaixinha = async (e: React.FormEvent) => {
     e.preventDefault(); setIsSubmitting(true);
@@ -195,9 +207,86 @@ export default function InvestimentosPage() {
     const { error: errC } = await supabase.from("caixinhas").update({ saldo: novoSaldo }).eq("id", caixinhaAlvo.id);
     if (errC) { showIsland("Erro atualizar saldo: " + errC.message, "error", "🛑"); setIsSubmitting(false); return; }
 
-    setIsSubmitting(false); setIsModalAcaoOpen(false); 
-    showIsland(tipoAcao === "rendimento" ? "Saldo atualizado!" : "Movimentação concluída!", "success", tipoAcao === "rendimento" ? "📈" : "💰"); 
+    setIsSubmitting(false); setIsModalAcaoOpen(false);
+    showIsland(tipoAcao === "rendimento" ? "Saldo atualizado!" : "Movimentação concluída!", "success", tipoAcao === "rendimento" ? "📈" : "💰");
     carregarDados(false);
+  };
+
+  // Zera o saldo da caixinha SEM gerar lançamento no Dashboard (resíduo de IR/taxas).
+  // Reusa o mecanismo de "rendimento" (ajuste de saldo, sem transacao) com valor negativo.
+  const liquidarCaixinha = async (c: any) => {
+    const saldo = Number(c.saldo);
+    const { error: errH } = await supabase.from("caixinhas_historico").insert([{
+      caixinha_id: c.id, user_id: userId, tipo: "rendimento", valor: -saldo,
+      data: getDatLocal(new Date()), descricao: "Liquidação de saldo residual", transacao_id: null,
+    }]);
+    if (errH) { showIsland("Erro ao liquidar: " + errH.message, "error", "🛑"); return false; }
+    const { error: errC } = await supabase.from("caixinhas").update({ saldo: 0 }).eq("id", c.id);
+    if (errC) { showIsland("Erro ao zerar saldo: " + errC.message, "error", "🛑"); return false; }
+    return true;
+  };
+
+  const setArquivada = async (c: any, arquivar: boolean) => {
+    const { error } = await supabase.from("caixinhas").update({ ativo: !arquivar }).eq("id", c.id);
+    if (error) { showIsland("Erro: " + error.message, "error", "🛑"); return false; }
+    return true;
+  };
+
+  const confirmarLiquidar = (c: any) => {
+    setMenuCardId(null);
+    setConfirmacao({
+      titulo: "Liquidar saldo",
+      mensagem: `Zerar o saldo de ${formatarMoeda(Number(c.saldo))} de "${c.nome}"? Isso não gera lançamento no Dashboard — serve pra descartar resíduos (ex.: IR retido).`,
+      primarioLabel: "Liquidar",
+      onPrimario: async () => { const ok = await liquidarCaixinha(c); setConfirmacao(null); if (ok) { showIsland("Saldo liquidado!", "success", "🧹"); carregarDados(false); } },
+    });
+  };
+
+  const confirmarArquivar = (c: any) => {
+    setMenuCardId(null);
+    const saldo = Number(c.saldo);
+    if (saldo > 0.005) {
+      setConfirmacao({
+        titulo: "Arquivar caixinha",
+        mensagem: `"${c.nome}" ainda tem ${formatarMoeda(saldo)}. Deseja liquidar esse saldo (sem lançamento no Dashboard) antes de arquivar?`,
+        primarioLabel: "Liquidar e arquivar",
+        onPrimario: async () => { const okL = await liquidarCaixinha(c); if (!okL) { setConfirmacao(null); return; } const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Liquidada e arquivada!", "success", "🗄️"); carregarDados(false); } },
+        secundarioLabel: "Arquivar mantendo saldo",
+        onSecundario: async () => { const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Caixinha arquivada.", "success", "🗄️"); carregarDados(false); } },
+      });
+    } else {
+      setConfirmacao({
+        titulo: "Arquivar caixinha",
+        mensagem: `Arquivar "${c.nome}"? Ela sai do Patrimônio Total e vai para a aba Arquivadas (o histórico é preservado).`,
+        primarioLabel: "Arquivar",
+        onPrimario: async () => { const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Caixinha arquivada.", "success", "🗄️"); carregarDados(false); } },
+      });
+    }
+  };
+
+  const reativarCaixinha = async (c: any) => {
+    setMenuCardId(null);
+    const ok = await setArquivada(c, false);
+    if (ok) { showIsland("Caixinha reativada!", "success", "♻️"); carregarDados(false); }
+  };
+
+  const confirmarExcluir = (c: any) => {
+    setMenuCardId(null);
+    const saldo = Number(c.saldo);
+    setConfirmacao({
+      titulo: "Excluir definitivamente",
+      tom: "perigo",
+      mensagem: `Excluir "${c.nome}"? Apaga a caixinha e o histórico dela.${saldo > 0.005 ? ` O saldo de ${formatarMoeda(saldo)} será descartado (sem lançamento no Dashboard).` : ""} Os lançamentos de Guardou/Resgate antigos continuam no Dashboard.`,
+      primarioLabel: "Excluir",
+      onPrimario: async () => {
+        const { error: errH } = await supabase.from("caixinhas_historico").delete().eq("caixinha_id", c.id);
+        if (errH) { showIsland("Erro ao excluir histórico: " + errH.message, "error", "🛑"); setConfirmacao(null); return; }
+        const { error: errC } = await supabase.from("caixinhas").delete().eq("id", c.id);
+        setConfirmacao(null);
+        if (errC) showIsland("Erro ao excluir: " + errC.message, "error", "🛑");
+        else { showIsland("Caixinha excluída.", "success", "🗑️"); carregarDados(false); }
+      },
+    });
   };
 
   const initialLetterMenu = username ? username.charAt(0).toUpperCase() : email ? email.charAt(0).toUpperCase() : "?";
@@ -335,45 +424,79 @@ export default function InvestimentosPage() {
             </button>
           </div>
 
+          <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit">
+            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
+            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all flex items-center justify-center gap-1.5 ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Arquivadas{qtdArquivadas > 0 && <span className="text-[10px] font-black bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded-full">{qtdArquivadas}</span>}</button>
+          </div>
+
           {isLoading ? (
             <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600"></div></div>
           ) : caixinhasFiltradas.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">
-              <span className="text-5xl opacity-30 mb-3 block">🏦</span>
-              <p className="text-lg font-bold text-gray-600 dark:text-gray-400">Nenhum investimento encontrado para este filtro.</p>
+              <span className="text-5xl opacity-30 mb-3 block">{aba === "arquivadas" ? "🗄️" : "🏦"}</span>
+              <p className="text-lg font-bold text-gray-600 dark:text-gray-400">{aba === "arquivadas" ? "Nenhuma caixinha arquivada." : "Nenhum investimento encontrado para este filtro."}</p>
             </div>
           ) : (
             <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
               {caixinhasFiltradas.map((c) => {
                 const fotoAutor = mapPerfis[c.autor_nome];
+                const arquivada = c.ativo === false;
+                const temSaldo = Number(c.saldo) > 0.005;
+                const menuAberto = menuCardId === c.id;
+                const menuItemCls = "w-full text-left px-3 py-2 text-sm font-bold rounded-lg transition-colors flex items-center gap-2";
                 return (
-                  <div key={c.id} className="bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden hover:shadow-md transition-shadow group">
+                  <div key={c.id} className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border flex flex-col hover:shadow-md transition-shadow group ${arquivada ? "border-gray-200 dark:border-gray-700 opacity-80" : "border-gray-100 dark:border-gray-700"}`}>
                     <div className="p-6 border-b border-gray-50 dark:border-gray-700">
-                      <div className="flex justify-between items-start mb-4">
+                      <div className="flex justify-between items-start mb-4 gap-2">
                         <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-md uppercase tracking-wider flex items-center gap-1">
                           🏦 {c.banco?.banco || "Cofre Físico"}
                         </span>
-                        <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                          <div className="w-4 h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[8px] font-black">
-                            {fotoAutor ? <img src={fotoAutor} alt="" className="w-full h-full object-cover" /> : c.autor_nome?.charAt(0).toUpperCase()}
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
+                            <div className="w-4 h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[8px] font-black">
+                              {fotoAutor ? <img src={fotoAutor} alt="" className="w-full h-full object-cover" /> : c.autor_nome?.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">@{c.autor_nome}</span>
                           </div>
-                          <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">@{c.autor_nome}</span>
+                          <div className="relative">
+                            <button onClick={() => setMenuCardId(menuAberto ? null : c.id)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none font-black" title="Opções">⋮</button>
+                            {menuAberto && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setMenuCardId(null)}></div>
+                                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-1 space-y-0.5">
+                                  <button onClick={() => abrirModalEditarCaixinha(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>✏️ Editar</button>
+                                  {!arquivada && temSaldo && <button onClick={() => confirmarLiquidar(c)} className={`${menuItemCls} text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20`}>🧹 Liquidar saldo</button>}
+                                  {!arquivada && <button onClick={() => confirmarArquivar(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>🗄️ Arquivar</button>}
+                                  {arquivada && <button onClick={() => reativarCaixinha(c)} className={`${menuItemCls} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20`}>♻️ Reativar</button>}
+                                  <button onClick={() => confirmarExcluir(c)} className={`${menuItemCls} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20`}>🗑️ Excluir</button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 truncate mb-1">{c.nome}</h3>
                       <p className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-3">{formatarMoeda(c.saldo)}</p>
+                      {arquivada && <span className="inline-block mt-2 text-[10px] font-black bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded uppercase tracking-wider">Arquivada</span>}
                     </div>
-                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-between gap-2">
-                      <button onClick={() => abrirModalAcao(c, 'aporte')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-green-700 dark:text-green-400 font-bold text-xs rounded-xl hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-200 dark:hover:border-green-800 transition-colors shadow-sm flex flex-col items-center gap-1">
-                        <span className="text-lg">📥</span> Guardar
-                      </button>
-                      <button onClick={() => abrirModalAcao(c, 'resgate')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-200 dark:hover:border-red-800 transition-colors shadow-sm flex flex-col items-center gap-1">
-                        <span className="text-lg">📤</span> Resgatar
-                      </button>
-                      <button onClick={() => abrirModalAcao(c, 'rendimento')} className="flex-1 py-2.5 bg-blue-600 dark:bg-blue-500 text-white font-bold text-xs rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm flex flex-col items-center gap-1">
-                        <span className="text-lg">📈</span> Render
-                      </button>
-                    </div>
+                    {arquivada ? (
+                      <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex gap-2 rounded-b-3xl">
+                        <button onClick={() => reativarCaixinha(c)} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-blue-600 dark:text-blue-400 font-bold text-xs rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors shadow-sm flex items-center justify-center gap-1.5">♻️ Reativar</button>
+                        <button onClick={() => confirmarExcluir(c)} className="py-2.5 px-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shadow-sm" title="Excluir">🗑️</button>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-between gap-2 rounded-b-3xl">
+                        <button onClick={() => abrirModalAcao(c, 'aporte')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-green-700 dark:text-green-400 font-bold text-xs rounded-xl hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-200 dark:hover:border-green-800 transition-colors shadow-sm flex flex-col items-center gap-1">
+                          <span className="text-lg">📥</span> Guardar
+                        </button>
+                        <button onClick={() => abrirModalAcao(c, 'resgate')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-200 dark:hover:border-red-800 transition-colors shadow-sm flex flex-col items-center gap-1">
+                          <span className="text-lg">📤</span> Resgatar
+                        </button>
+                        <button onClick={() => abrirModalAcao(c, 'rendimento')} className="flex-1 py-2.5 bg-blue-600 dark:bg-blue-500 text-white font-bold text-xs rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm flex flex-col items-center gap-1">
+                          <span className="text-lg">📈</span> Render
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -387,7 +510,7 @@ export default function InvestimentosPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalCaixinhaOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center rounded-t-3xl">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Nova Caixinha / Fundo</h3>
+                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{caixinhaId ? "Editar Caixinha" : "Nova Caixinha / Fundo"}</h3>
                 <button type="button" onClick={() => setIsModalCaixinhaOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
               
@@ -478,7 +601,7 @@ export default function InvestimentosPage() {
 
                 <div className="pt-2">
                   <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white bg-gray-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 font-black uppercase tracking-wide transition-all shadow-md active:scale-95 disabled:opacity-50">
-                    {isSubmitting ? "Criando..." : "Salvar Caixinha"}
+                    {isSubmitting ? "Salvando..." : caixinhaId ? "Salvar Alterações" : "Salvar Caixinha"}
                   </button>
                 </div>
               </form>
@@ -585,6 +708,23 @@ export default function InvestimentosPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {confirmacao && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmacao(null)}></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
+              <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 mb-1">{confirmacao.titulo}</h3>
+              <p className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-5 leading-relaxed">{confirmacao.mensagem}</p>
+              <div className="flex flex-col gap-2">
+                <button type="button" onClick={confirmacao.onPrimario} className={`w-full py-3 rounded-xl font-black text-white transition-all active:scale-95 ${confirmacao.tom === "perigo" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>{confirmacao.primarioLabel}</button>
+                {confirmacao.secundarioLabel && (
+                  <button type="button" onClick={confirmacao.onSecundario} className="w-full py-3 rounded-xl font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">{confirmacao.secundarioLabel}</button>
+                )}
+                <button type="button" onClick={() => setConfirmacao(null)} className="w-full py-2.5 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">Cancelar</button>
+              </div>
             </div>
           </div>
         )}
