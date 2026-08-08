@@ -4,6 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
+import { Linhas, Barras, PALETA } from "../insights/charts";
+
+const MESES_CURTOS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 export default function InvestimentosPage() {
   const router = useRouter();
@@ -72,7 +75,8 @@ export default function InvestimentosPage() {
   const [contaPonteId, setContaPonteId] = useState("");
   const [isContaPonteDropdownOpen, setIsContaPonteDropdownOpen] = useState(false);
 
-  const [aba, setAba] = useState<"ativas" | "arquivadas">("ativas");
+  const [aba, setAba] = useState<"ativas" | "arquivadas" | "evolucao">("ativas");
+  const [historico, setHistorico] = useState<any[]>([]);
   const [menuCardId, setMenuCardId] = useState<string | null>(null);
   const [confirmacao, setConfirmacao] = useState<{
     titulo: string; mensagem: string;
@@ -84,7 +88,10 @@ export default function InvestimentosPage() {
   const formatarMoeda = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
   const toggleUsuario = (nome: string) => setUsuariosSelecionados((prev) => (prev.includes(nome) ? prev.filter((u) => u !== nome) : [...prev, nome]));
 
-  const carregarDados = async (isInitialLoad = false) => {
+  // usernameOverride: no primeiro carregamento o estado "username" ainda não foi
+  // commitado (mesmo render do setUsername), então usar só o estado faria o
+  // "eu mesmo" cair no literal "Usuário" e criar um chip fantasma no filtro.
+  const carregarDados = async (isInitialLoad = false, usernameOverride?: string) => {
     setIsLoading(true);
     const { data: perfisData } = await supabase.from("profiles").select("username, avatar_url");
     if (perfisData) {
@@ -96,6 +103,9 @@ export default function InvestimentosPage() {
     const { data: caixinhasData } = await supabase.from("caixinhas").select("*, banco:contas_bancarias(nome, banco, autor_nome)").order("criado_em", { ascending: false });
     if (caixinhasData) setCaixinhas(caixinhasData);
 
+    const { data: histData } = await supabase.from("caixinhas_historico").select("caixinha_id, tipo, valor, data").order("data", { ascending: true });
+    if (histData) setHistorico(histData);
+
     const { data: bancosData } = await supabase.from("contas_bancarias").select("*").eq("ativo", true).order("nome");
     if (bancosData) setBancos(bancosData);
 
@@ -104,7 +114,7 @@ export default function InvestimentosPage() {
 
     const autoresCaixinhas = caixinhasData ? caixinhasData.map((c) => c.autor_nome || "Usuário") : [];
     const autoresBancos = bancosData ? bancosData.map((b) => b.autor_nome || "Usuário") : [];
-    const euMesmo = username || "Usuário";
+    const euMesmo = usernameOverride || username || "Usuário";
     const unicos = Array.from(new Set([...autoresCaixinhas, ...autoresBancos, euMesmo].filter((n) => n && n !== "Família")));
 
     setUsuariosDisponiveis(unicos);
@@ -117,10 +127,11 @@ export default function InvestimentosPage() {
     const loadInit = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const usernameResolvido = user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário";
         setUserId(user.id); setEmail(user.email || "");
-        setUsername(user.user_metadata?.username || user.user_metadata?.full_name || user.email?.split("@")[0] || "Usuário");
+        setUsername(usernameResolvido);
         setFullName(user.user_metadata?.full_name || ""); setAvatarUrl(user.user_metadata?.avatar_url || "");
-        carregarDados(true);
+        carregarDados(true, usernameResolvido);
       } else { router.push("/login"); }
     };
     loadInit();
@@ -131,6 +142,79 @@ export default function InvestimentosPage() {
   const caixinhasFiltradas = caixinhasVisiveis.filter((c) => (aba === "arquivadas" ? c.ativo === false : c.ativo !== false));
   const totalInvestido = caixinhasVisiveis.filter((c) => c.ativo !== false).reduce((acc, c) => acc + Number(c.saldo), 0);
   const qtdArquivadas = caixinhasVisiveis.filter((c) => c.ativo === false).length;
+  const saldoArquivadas = caixinhasVisiveis.filter((c) => c.ativo === false).reduce((acc, c) => acc + Number(c.saldo), 0);
+
+  // ==========================================================================
+  // EVOLUÇÃO DO PATRIMÔNIO
+  // O saldo de cada caixinha é reconstruído a partir do histórico:
+  //   aporte = entra · resgate = sai · rendimento = variação (pode ser negativa,
+  //   é assim que a liquidação de saldo residual também é registrada).
+  // Assim: patrimônio = aportes líquidos + rendimentos acumulados.
+  // ==========================================================================
+  const idsVisiveis = new Set(caixinhasVisiveis.map((c) => c.id));
+  const historicoVisivel = historico.filter((h) => idsVisiveis.has(h.caixinha_id));
+  const delta = (h: any) => (h.tipo === "resgate" ? -Number(h.valor) : Number(h.valor));
+
+  const mesesEvolucao = (() => {
+    if (historicoVisivel.length === 0) return [] as { ano: number; mes: number }[];
+    const tempos = historicoVisivel.map((h) => new Date(h.data + "T00:00:00").getTime());
+    const inicio = new Date(Math.min(...tempos));
+    const hojeD = new Date();
+    const lista: { ano: number; mes: number }[] = [];
+    let cur = new Date(inicio.getFullYear(), inicio.getMonth(), 1);
+    const fim = new Date(hojeD.getFullYear(), hojeD.getMonth(), 1);
+    while (cur <= fim && lista.length < 60) {
+      lista.push({ ano: cur.getFullYear(), mes: cur.getMonth() });
+      cur = new Date(cur.getFullYear(), cur.getMonth() + 1, 1);
+    }
+    return lista;
+  })();
+
+  const labelsEvolucao = mesesEvolucao.map((m) => `${MESES_CURTOS[m.mes]}/${String(m.ano).slice(-2)}`);
+
+  // Acumulado até o fim de cada mês, com um filtro opcional (por caixinha/tipo).
+  const acumuladoPorMes = (filtro?: (h: any) => boolean) =>
+    mesesEvolucao.map((m) => {
+      const limite = new Date(m.ano, m.mes + 1, 0, 23, 59, 59).getTime();
+      return historicoVisivel.reduce((acc, h) => {
+        if (filtro && !filtro(h)) return acc;
+        return new Date(h.data + "T00:00:00").getTime() <= limite ? acc + delta(h) : acc;
+      }, 0);
+    });
+
+  const seriePatrimonio = acumuladoPorMes();
+  const serieAportes = acumuladoPorMes((h) => h.tipo !== "rendimento");
+  const serieRendimentos = acumuladoPorMes((h) => h.tipo === "rendimento");
+
+  const totalAportado = serieAportes[serieAportes.length - 1] || 0;
+  const totalRendido = serieRendimentos[serieRendimentos.length - 1] || 0;
+  const patrimonioAtual = seriePatrimonio[seriePatrimonio.length - 1] || 0;
+  const rentabilidade = totalAportado > 0 ? (totalRendido / totalAportado) * 100 : 0;
+  const variacaoMes = seriePatrimonio.length >= 2
+    ? patrimonioAtual - seriePatrimonio[seriePatrimonio.length - 2]
+    : patrimonioAtual;
+
+  // Aportado x rendido de cada caixinha ativa (comparação lado a lado).
+  const porCaixinhaAtiva = caixinhasVisiveis
+    .filter((c) => c.ativo !== false)
+    .map((c) => {
+      const doCard = historicoVisivel.filter((h) => h.caixinha_id === c.id);
+      const aportado = doCard.filter((h) => h.tipo !== "rendimento").reduce((a, h) => a + delta(h), 0);
+      const rendido = doCard.filter((h) => h.tipo === "rendimento").reduce((a, h) => a + delta(h), 0);
+      return { nome: c.nome, aportado, rendido, total: aportado + rendido };
+    })
+    .filter((c) => Math.abs(c.total) > 0.005 || Math.abs(c.rendido) > 0.005)
+    .sort((a, b) => b.total - a.total);
+
+  // Uma linha por caixinha (as maiores primeiro, para a legenda não explodir).
+  const seriesPorCaixinha = [...caixinhasVisiveis]
+    .sort((a, b) => Number(b.saldo) - Number(a.saldo))
+    .slice(0, 6)
+    .map((c, i) => ({
+      nome: c.nome,
+      cor: PALETA.categorias[i % PALETA.categorias.length],
+      valores: acumuladoPorMes((h) => h.caixinha_id === c.id),
+    }));
 
   const abrirModalNovaCaixinha = () => { setCaixinhaId(null); setNomeCaixinha(""); setBancoId(""); setIsBancoDropdownOpen(false); setIsModalCaixinhaOpen(true); };
   const abrirModalEditarCaixinha = (c: any) => { setMenuCardId(null); setCaixinhaId(c.id); setNomeCaixinha(c.nome); setBancoId(c.banco_id || "dinheiro"); setIsBancoDropdownOpen(false); setIsModalCaixinhaOpen(true); };
@@ -417,20 +501,118 @@ export default function InvestimentosPage() {
             <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-5 rounded-full blur-2xl"></div>
             <div>
               <h3 className="text-sm font-bold text-blue-200 dark:text-blue-300 uppercase tracking-widest mb-2">Patrimônio Total Acumulado</h3>
-              <p className="text-5xl font-black">{formatarMoeda(totalInvestido)}</p>
+              <p className="text-4xl sm:text-5xl font-black break-words">{formatarMoeda(totalInvestido)}</p>
             </div>
             <button onClick={abrirModalNovaCaixinha} className="bg-white text-blue-900 px-6 py-3.5 rounded-xl font-black shadow-md active:scale-95 transition-all w-full sm:w-auto relative z-10 hover:bg-gray-50">
               + Nova Caixinha
             </button>
           </div>
 
-          <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit">
-            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
-            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all flex items-center justify-center gap-1.5 ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Arquivadas{qtdArquivadas > 0 && <span className="text-[10px] font-black bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded-full">{qtdArquivadas}</span>}</button>
+          <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit gap-1">
+            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all whitespace-nowrap ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
+            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Arquivadas{qtdArquivadas > 0 &&<span className="text-[10px] font-black bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded-full">{qtdArquivadas}</span>}</button>
+            <button onClick={() => setAba("evolucao")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all whitespace-nowrap ${aba === "evolucao" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>📈 Evolução</button>
           </div>
 
           {isLoading ? (
             <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600"></div></div>
+          ) : aba === "evolucao" ? (
+            mesesEvolucao.length === 0 ? (
+              <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">
+                <span className="text-5xl opacity-30 mb-3 block">📈</span>
+                <p className="text-lg font-bold text-gray-600 dark:text-gray-400">Ainda não há movimentações para montar a evolução.</p>
+                <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">Faça um aporte ou atualize um rendimento para começar a série.</p>
+              </div>
+            ) : (
+              <div className={`space-y-6 animate-in fade-in duration-300 mac-dock-item ${isWaving ? "mac-dock-animate" : ""}`} style={{ animationDelay: "0.2s" }}>
+
+                {/* RESUMO */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Patrimônio hoje</p>
+                    <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">{formatarMoeda(patrimonioAtual)}</p>
+                    {saldoArquivadas > 0.005 && <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">inclui {formatarMoeda(saldoArquivadas)} em arquivadas</p>}
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Você aportou</p>
+                    <p className="text-xl font-black text-gray-800 dark:text-gray-100 mt-1">{formatarMoeda(totalAportado)}</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rendeu</p>
+                    <p className={`text-xl font-black mt-1 ${totalRendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{formatarMoeda(totalRendido)}</p>
+                    <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">{rentabilidade >= 0 ? "+" : ""}{rentabilidade.toFixed(1)}% sobre o aportado</p>
+                  </div>
+                  <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">No último mês</p>
+                    <p className={`text-xl font-black mt-1 ${variacaoMes >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{variacaoMes >= 0 ? "+" : ""}{formatarMoeda(variacaoMes)}</p>
+                  </div>
+                </div>
+
+                {/* PATRIMÔNIO ACUMULADO */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Evolução do patrimônio</h3>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-4">Saldo acumulado mês a mês · passe o mouse</p>
+                  <Linhas labels={labelsEvolucao} series={[{ nome: "Patrimônio", valores: seriePatrimonio, cor: PALETA.saldo, area: true }]} height={230} />
+                </div>
+
+                {/* APORTES x RENDIMENTOS */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Seu dinheiro × o que rendeu</h3>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">Quanto do patrimônio veio de aporte e quanto o dinheiro trabalhou</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.saldo }}></span>Aportado</span>
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.receita }}></span>Rendimento</span>
+                  </div>
+                  <Barras labels={labelsEvolucao} empilhado series={[{ nome: "Aportado", valores: serieAportes, cor: PALETA.saldo }, { nome: "Rendimento", valores: serieRendimentos, cor: PALETA.receita }]} />
+                </div>
+
+                {/* APORTADO x RENDEU POR CAIXINHA */}
+                {porCaixinhaAtiva.length > 0 && (
+                  <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+                    <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Aportado × rendeu, por caixinha</h3>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">Quais caixinhas estão fazendo o dinheiro trabalhar</p>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.saldo }}></span>Aportado</span>
+                      <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.receita }}></span>Rendimento</span>
+                    </div>
+                    <Barras
+                      labels={porCaixinhaAtiva.map((c) => (c.nome.length > 12 ? c.nome.slice(0, 11) + "…" : c.nome))}
+                      series={[
+                        { nome: "Aportado", valores: porCaixinhaAtiva.map((c) => c.aportado), cor: PALETA.saldo },
+                        { nome: "Rendimento", valores: porCaixinhaAtiva.map((c) => c.rendido), cor: PALETA.receita },
+                      ]}
+                    />
+                    <div className="mt-4 space-y-1.5">
+                      {porCaixinhaAtiva.map((c) => {
+                        const pct = c.aportado > 0 ? (c.rendido / c.aportado) * 100 : 0;
+                        return (
+                          <div key={c.nome} className="flex items-center justify-between gap-3 text-xs">
+                            <span className="font-bold text-gray-600 dark:text-gray-300 truncate">{c.nome}</span>
+                            <span className={`font-black whitespace-nowrap ${c.rendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                              {c.rendido >= 0 ? "+" : ""}{formatarMoeda(c.rendido)} <span className="text-gray-400 dark:text-gray-500 font-bold">({pct >= 0 ? "+" : ""}{pct.toFixed(1)}%)</span>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* POR CAIXINHA */}
+                <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Evolução por caixinha</h3>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">
+                    {seriesPorCaixinha.length >= 6 ? "As 6 maiores" : `${seriesPorCaixinha.length} caixinha(s)`} · saldo acumulado
+                  </p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
+                    {seriesPorCaixinha.map((s) => (
+                      <span key={s.nome} className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: s.cor }}></span>{s.nome}</span>
+                    ))}
+                  </div>
+                  <Linhas labels={labelsEvolucao} series={seriesPorCaixinha} height={230} />
+                </div>
+              </div>
+            )
           ) : caixinhasFiltradas.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">
               <span className="text-5xl opacity-30 mb-3 block">{aba === "arquivadas" ? "🗄️" : "🏦"}</span>
