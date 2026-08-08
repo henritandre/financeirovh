@@ -4,43 +4,9 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
+import { Barras } from "../insights/charts";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-
-function GraficoEvolucao({ dados }: { dados: any[] }) {
-  if (dados.length === 0) {
-    return <div className="text-center py-8 text-sm font-bold text-gray-400 dark:text-gray-500">Sem valores registrados neste período.</div>;
-  }
-  const valores = dados.map((d) => Number(d.valor));
-  const max = Math.max(...valores, 0.01);
-  const media = valores.reduce((a, b) => a + b, 0) / valores.length;
-  const w = 600, h = 160, padding = 24;
-  const barW = (w - padding * 2) / dados.length;
-  const escala = (v: number) => (v / max) * (h - padding * 2);
-  const yMedia = h - padding - escala(media);
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-40" preserveAspectRatio="none">
-      <line x1={padding} y1={yMedia} x2={w - padding} y2={yMedia} strokeDasharray="4 3" strokeWidth="1" className="stroke-blue-400 dark:stroke-blue-500" />
-      {dados.map((d, i) => {
-        const barH = escala(Number(d.valor));
-        const x = padding + i * barW + barW * 0.2;
-        const y = h - padding - barH;
-        return (
-          <g key={d.id}>
-            <rect x={x} y={y} width={barW * 0.6} height={Math.max(barH, 1)} rx="2" className="fill-blue-500 dark:fill-blue-400" />
-            <title>{`${String(d.competencia_mes).padStart(2, "0")}/${d.competencia_ano}: R$ ${Number(d.valor).toFixed(2)}`}</title>
-            {dados.length <= 12 && (
-              <text x={x + barW * 0.3} y={h - 6} textAnchor="middle" className="fill-gray-400 dark:fill-gray-500" style={{ fontSize: "8px", fontWeight: 700 }}>
-                {MESES[d.competencia_mes - 1]}/{String(d.competencia_ano).slice(-2)}
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
 
 export default function ContasFixasPage() {
   const router = useRouter();
@@ -509,7 +475,11 @@ export default function ContasFixasPage() {
                           </p>
                         )}
 
-                        <GraficoEvolucao dados={dadosGrafico} />
+                        {dadosGrafico.length === 0 ? (
+                          <div className="text-center py-8 text-sm font-bold text-gray-400 dark:text-gray-500">Sem valores registrados neste período.</div>
+                        ) : (
+                          <Barras labels={dadosGrafico.map((d: any) => `${MESES[d.competencia_mes - 1]}/${String(d.competencia_ano).slice(-2)}`)} series={[{ nome: "Valor", valores: dadosGrafico.map((d: any) => Number(d.valor)), cor: "#3b82f6" }]} />
+                        )}
 
                         {stats && (
                           <div className="grid grid-cols-3 gap-3">
@@ -549,7 +519,11 @@ export default function ContasFixasPage() {
                                     </div>
                                     <span className="text-xs font-black text-gray-700 dark:text-gray-300 whitespace-nowrap shrink-0">R$ {totalMesCartao.toFixed(2)} <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">este mês</span></span>
                                   </div>
-                                  <GraficoEvolucao dados={dadosCartao} />
+                                  {dadosCartao.length === 0 ? (
+                                    <div className="text-center py-6 text-xs font-bold text-gray-400 dark:text-gray-500">Sem pagamentos neste período.</div>
+                                  ) : (
+                                    <Barras labels={dadosCartao.map((d: any) => `${MESES[d.competencia_mes - 1]}/${String(d.competencia_ano).slice(-2)}`)} series={[{ nome: "Pago", valores: dadosCartao.map((d: any) => Number(d.valor)), cor: "#8b5cf6" }]} />
+                                  )}
                                 </div>
                               );
                             })}
