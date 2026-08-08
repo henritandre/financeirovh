@@ -586,6 +586,89 @@ export default function DashboardPage() {
 
   const abrirModalNovoLancamento = () => { resetFields(); setTipo("despesa"); setIsModalOpen(true); };
 
+  // ==========================================
+  // ACESSO RÁPIDO — segure o botão de lançamento
+  // ==========================================
+  const [isSpeedDialOpen, setIsSpeedDialOpen] = useState(false);
+  const [isPixModalOpen, setIsPixModalOpen] = useState(false);
+  const [pixCopiadoId, setPixCopiadoId] = useState<string | null>(null);
+  const longPressRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressAtivadoRef = useRef(false);
+
+  const iniciarLongPress = () => {
+    longPressAtivadoRef.current = false;
+    if (longPressRef.current) clearTimeout(longPressRef.current);
+    longPressRef.current = setTimeout(() => {
+      longPressAtivadoRef.current = true;
+      setIsSpeedDialOpen(true);
+      // vibrate pode ser bloqueado pelo navegador; se estourar aqui, o React
+      // descarta a atualização de estado acima e o menu não abre.
+      try { navigator.vibrate?.(18); } catch { /* sem vibração, tudo bem */ }
+    }, 420);
+  };
+  const cancelarLongPress = () => { if (longPressRef.current) clearTimeout(longPressRef.current); };
+  // O clique dispara logo após o long-press terminar; ignoramos esse primeiro clique.
+  const cliqueLancamento = () => {
+    if (longPressAtivadoRef.current) { longPressAtivadoRef.current = false; return; }
+    abrirModalNovoLancamento();
+  };
+
+  const abrirLancamentoTipo = (t: "receita" | "despesa" | "transferencia") => {
+    resetFields(); setTipo(t); setIsSpeedDialOpen(false); setIsModalOpen(true);
+  };
+
+  // Ordena primeiro por usuário (dono da chave) e depois pelo banco.
+  const chavesPix = contas
+    .filter((c) => c.subtipo === "pix" && c.chave_pix && c.ativo !== false)
+    .sort((a, b) => {
+      const autorA = a.autor_nome || ""; const autorB = b.autor_nome || "";
+      if (autorA !== autorB) return autorA.localeCompare(autorB, "pt-BR");
+      const bancoA = a.banco_vinculado?.banco || a.nome || "";
+      const bancoB = b.banco_vinculado?.banco || b.nome || "";
+      return bancoA.localeCompare(bancoB, "pt-BR");
+    });
+
+  const LABEL_TIPO_PIX: Record<string, string> = { cpf: "CPF/CNPJ", celular: "Celular", email: "E-mail", aleatoria: "Aleatória" };
+
+  // Alguns navegadores de celular (e webviews) bloqueiam a Clipboard API;
+  // nesse caso caímos no execCommand, que funciona sem permissão especial.
+  const copiarTexto = async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      return true;
+    } catch {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = texto;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed"; ta.style.top = "-1000px"; ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.select(); ta.setSelectionRange(0, ta.value.length);
+        const ok = document.execCommand("copy");
+        document.body.removeChild(ta);
+        return ok;
+      } catch { return false; }
+    }
+  };
+
+  const copiarPix = async (c: any) => {
+    const ok = await copiarTexto(c.chave_pix);
+    if (ok) {
+      setPixCopiadoId(c.id);
+      setTimeout(() => setPixCopiadoId((id) => (id === c.id ? null : id)), 2000);
+      showIsland("Chave PIX copiada!", "success", "📋");
+    } else {
+      showIsland("Não consegui copiar — toque e segure na chave.", "error", "🛑");
+    }
+  };
+
+  const acoesRapidas = [
+    { label: "Chaves PIX", icon: "🔑", cor: "bg-teal-500", onClick: () => { setIsSpeedDialOpen(false); setIsPixModalOpen(true); } },
+    { label: "Nova receita", icon: "📥", cor: "bg-green-600", onClick: () => abrirLancamentoTipo("receita") },
+    { label: "Nova despesa", icon: "📤", cor: "bg-red-600", onClick: () => abrirLancamentoTipo("despesa") },
+    { label: "Transferência", icon: "🔄", cor: "bg-purple-600", onClick: () => abrirLancamentoTipo("transferencia") },
+  ];
+
   const abrirModalEditar = async (t: any) => {
     if (t.user_id !== userId) { showIsland("Apenas o autor pode editar este lançamento.", "error", "🛑"); return; }
     resetFields();
@@ -859,9 +942,31 @@ export default function DashboardPage() {
         <main className="p-6 max-w-6xl mx-auto space-y-6 mt-4 relative z-0">
           <div className="flex justify-between items-end">
             <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Visão Geral</h2>
-            <button onClick={abrirModalNovoLancamento} className="hidden md:flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95">
-              <span className="text-xl leading-none">+</span> Novo Lançamento
-            </button>
+            <div className="hidden md:block relative">
+              <button
+                onClick={cliqueLancamento}
+                onMouseDown={iniciarLongPress} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}
+                onContextMenu={(e) => { e.preventDefault(); setIsSpeedDialOpen(true); }}
+                title="Clique para lançar · segure (ou botão direito) para atalhos"
+                className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 select-none"
+              >
+                <span className="text-xl leading-none">+</span> Novo Lançamento
+              </button>
+              {isSpeedDialOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsSpeedDialOpen(false)}></div>
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <p className="px-2 py-1 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Acesso rápido</p>
+                    {acoesRapidas.map((a) => (
+                      <button key={a.label} onClick={a.onClick} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <span className={`h-9 w-9 rounded-full ${a.cor} text-white flex items-center justify-center text-base shrink-0`}>{a.icon}</span>
+                        <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{a.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* 1. SEÇÃO DE FILTROS - COM A ONDA (DELAY 0s) */}
@@ -1377,7 +1482,88 @@ export default function DashboardPage() {
           </div>
         </main>
 
-        <button onClick={abrirModalNovoLancamento} className="md:hidden fixed bottom-6 right-6 h-14 w-14 bg-blue-600 dark:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center text-3xl font-light hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 z-20">+</button>
+        {/* ACESSO RÁPIDO (mobile): toque = novo lançamento · segure = atalhos */}
+        {isSpeedDialOpen && (
+          <div className="md:hidden fixed inset-0 z-30 bg-black/30 backdrop-blur-[2px] animate-in fade-in duration-200" onClick={() => setIsSpeedDialOpen(false)}></div>
+        )}
+        <div className="md:hidden fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+          {isSpeedDialOpen && (
+            <div className="flex flex-col items-end gap-2.5 mb-1">
+              {acoesRapidas.map((a, i) => (
+                <button key={a.label} onClick={a.onClick} className="flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${i * 45}ms`, animationFillMode: "backwards" }}>
+                  <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-xs font-black shadow-lg whitespace-nowrap border border-gray-100 dark:border-gray-700">{a.label}</span>
+                  <span className={`h-12 w-12 rounded-full ${a.cor} text-white shadow-lg flex items-center justify-center text-xl active:scale-90 transition-transform`}>{a.icon}</span>
+                </button>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={cliqueLancamento}
+            onTouchStart={iniciarLongPress} onTouchEnd={cancelarLongPress} onTouchMove={cancelarLongPress} onTouchCancel={cancelarLongPress}
+            onMouseDown={iniciarLongPress} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}
+            onContextMenu={(e) => { e.preventDefault(); setIsSpeedDialOpen(true); }}
+            title="Toque para lançar · segure para atalhos"
+            className={`h-14 w-14 bg-blue-600 dark:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center text-3xl font-light hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-transform select-none ${isSpeedDialOpen ? "rotate-45" : ""}`}
+            style={{ WebkitTouchCallout: "none", transitionDuration: "200ms" }}
+          >+</button>
+        </div>
+
+        {/* ======================================================= */}
+        {/* MODAL DE CHAVES PIX (acesso rápido)                     */}
+        {/* ======================================================= */}
+        {isPixModalOpen && (
+          <div className="fixed inset-0 z-[75] flex items-end sm:items-center justify-center p-0 sm:p-4">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsPixModalOpen(false)}></div>
+            <div className="relative bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
+              <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center">
+                <div>
+                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">🔑 Chaves PIX</h3>
+                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-0.5">Toque na chave para copiar</p>
+                </div>
+                <button onClick={() => setIsPixModalOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
+              </div>
+
+              <div className="p-4 overflow-y-auto space-y-2.5">
+                {chavesPix.length === 0 ? (
+                  <div className="text-center py-10">
+                    <span className="text-4xl opacity-40 block mb-2">🔑</span>
+                    <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Nenhuma chave PIX cadastrada.</p>
+                    <button onClick={() => router.push("/contas")} className="mt-3 text-xs font-black text-blue-600 dark:text-blue-400 hover:underline">Cadastrar em Gestão Bancária →</button>
+                  </div>
+                ) : chavesPix.map((c, idx) => {
+                  const foto = mapPerfis[c.autor_nome];
+                  const copiado = pixCopiadoId === c.id;
+                  const novoDono = idx === 0 || chavesPix[idx - 1].autor_nome !== c.autor_nome;
+                  return (
+                    <div key={c.id}>
+                      {novoDono && (
+                        <div className={`flex items-center gap-2 px-1 ${idx === 0 ? "mb-2" : "mt-4 mb-2"}`}>
+                          <div className="w-6 h-6 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[9px] font-black shrink-0">
+                            {foto ? <img src={foto} alt="" className="w-full h-full object-cover" /> : c.autor_nome?.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">@{c.autor_nome}</span>
+                          <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700"></div>
+                        </div>
+                      )}
+                      <button onClick={() => copiarPix(c)} className={`w-full text-left p-4 rounded-2xl border transition-all active:scale-[0.98] ${copiado ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20" : "border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}>
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <span className="text-xs font-black text-gray-700 dark:text-gray-200 truncate">🏦 {c.banco_vinculado?.banco || c.nome}</span>
+                          <span className="text-[9px] font-black uppercase tracking-wider bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2 py-1 rounded shrink-0">{LABEL_TIPO_PIX[c.tipo_chave_pix] || "PIX"}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-black text-gray-900 dark:text-gray-100 break-all select-all">{c.chave_pix}</span>
+                          <span className={`shrink-0 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${copiado ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
+                            {copiado ? "✓ copiado" : "📋 copiar"}
+                          </span>
+                        </div>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ======================================================= */}
         {/* MODAL DE LANÇAMENTO E EDIÇÃO                            */}
