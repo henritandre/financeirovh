@@ -16,11 +16,25 @@ import { criarMola, criarRastreador, projetar, elastico, prefereMenosMovimento, 
 const brl = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 const dataLocal = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
+// No desktop a linguagem muda: ação principal na barra (não flutuante), diálogo
+// centrado no lugar da folha que sobe, e estados de hover (existe ponteiro).
+function usarDesktop() {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const f = () => setDesktop(mq.matches);
+    f(); mq.addEventListener("change", f);
+    return () => mq.removeEventListener("change", f);
+  }, []);
+  return desktop;
+}
+
 export default function UILabPage() {
   const router = useRouter();
   const { isDarkMode, toggleTheme } = useTheme();
   const [versao, setVersao] = useState<"classica" | "nova">("nova");
   const [reduzido, setReduzido] = useState(false);
+  const desktop = usarDesktop();
 
   const [carregando, setCarregando] = useState(true);
   const [transacoes, setTransacoes] = useState<any[]>([]);
@@ -146,50 +160,75 @@ export default function UILabPage() {
         </div>
       )}
 
-      <Cabecalho nova={nova} isDarkMode={isDarkMode} toggleTheme={toggleTheme} onVoltar={() => router.push("/dashboard")} />
+      <Cabecalho nova={nova} isDarkMode={isDarkMode} toggleTheme={toggleTheme} onVoltar={() => router.push("/dashboard")} onNovo={() => setDetalhe({ novo: true })} />
 
-      <main className="relative px-4 pb-32 max-w-2xl mx-auto pt-5 space-y-7">
-        <SeletorVersao versao={versao} onTrocar={trocarVersao} reduzido={reduzido} nova={nova} />
+      <main className="relative px-4 lg:px-8 pb-32 lg:pb-16 max-w-2xl lg:max-w-6xl mx-auto pt-5 lg:pt-7">
+        <div className="lg:max-w-sm">
+          <SeletorVersao versao={versao} onTrocar={trocarVersao} reduzido={reduzido} nova={nova} />
+        </div>
 
         {carregando ? (
           <div className="flex justify-center py-24">
             <div className={`animate-spin rounded-full h-9 w-9 border-b-2 ${nova ? "border-[#0a84ff]" : "border-blue-600"}`} />
           </div>
         ) : (
-          <>
-            <SaldoHero nova={nova} saldo={saldoTotal} receitas={resumo.receitas} despesas={resumo.despesas} />
-            <Bancos nova={nova} bancos={saldosBancarios} dinheiro={saldoDinheiro} mapPerfis={mapPerfis} />
-            <Cartoes nova={nova} cartoes={cartoes} total={totalCartoes} />
-            <ResumoPeriodo nova={nova} resumo={resumo} />
-            <Extrato nova={nova} itens={extrato} onAbrir={setDetalhe} />
-          </>
+          // Celular: uma coluna. PC: duas colunas — o conteúdo ocupa a largura
+          // em vez de virar um app de celular esticado no meio da tela.
+          <div className="mt-7 grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-7 items-start">
+            <div className="lg:col-span-3 space-y-7">
+              <SaldoHero nova={nova} saldo={saldoTotal} receitas={resumo.receitas} despesas={resumo.despesas} />
+              <Bancos nova={nova} bancos={saldosBancarios} dinheiro={saldoDinheiro} mapPerfis={mapPerfis} />
+              <Cartoes nova={nova} cartoes={cartoes} total={totalCartoes} />
+            </div>
+            <div className="lg:col-span-2 space-y-7 lg:sticky lg:top-20">
+              <ResumoPeriodo nova={nova} resumo={resumo} />
+              <Extrato nova={nova} itens={extrato} onAbrir={setDetalhe} />
+            </div>
+          </div>
         )}
       </main>
 
-      <BotaoFlutuante nova={nova} onClick={() => setDetalhe({ novo: true })} />
-      <PainelArrastavel item={detalhe} aoFechar={() => setDetalhe(null)} nova={nova} reduzido={reduzido} />
+      {/* Ação flutuante é padrão de toque — no PC ela vive na barra do topo */}
+      <div className="lg:hidden"><BotaoFlutuante nova={nova} onClick={() => setDetalhe({ novo: true })} /></div>
+      <PainelArrastavel item={detalhe} aoFechar={() => setDetalhe(null)} nova={nova} reduzido={reduzido} desktop={desktop} />
     </div>
   );
 }
 
 // ============================================================================
-function Cabecalho({ nova, isDarkMode, toggleTheme, onVoltar }: any) {
+function Cabecalho({ nova, isDarkMode, toggleTheme, onVoltar, onNovo }: any) {
+  const btnNovo = useRef<HTMLButtonElement>(null);
+  usarPressao(btnNovo, nova, 0.97);
   return (
     <header
-      className={`sticky top-0 z-30 px-4 py-3 flex items-center justify-between ${
+      className={`sticky top-0 z-30 ${
         nova ? "bg-white/55 dark:bg-[#1c1c1e]/55 border-b border-white/40 dark:border-white/[0.08]" : "bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm"
       }`}
       style={nova ? { backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)" } : undefined}
     >
-      <div className="flex items-center gap-2.5">
-        <BotaoIcone nova={nova} onClick={onVoltar} rotulo="Voltar">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-        </BotaoIcone>
-        <h1 className={nova ? "text-[19px] font-semibold text-black dark:text-white" : "text-xl font-black text-blue-600 dark:text-blue-400"} style={nova ? { letterSpacing: "-0.02em" } : undefined}>
-          Visão geral
-        </h1>
+      <div className="px-4 lg:px-8 py-3 max-w-2xl lg:max-w-6xl mx-auto flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <BotaoIcone nova={nova} onClick={onVoltar} rotulo="Voltar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+          </BotaoIcone>
+          <h1 className={nova ? "text-[19px] lg:text-[22px] font-semibold text-black dark:text-white" : "text-xl font-black text-blue-600 dark:text-blue-400"} style={nova ? { letterSpacing: "-0.02em" } : undefined}>
+            Visão geral
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            ref={btnNovo}
+            onClick={onNovo}
+            className={`hidden lg:flex items-center gap-1.5 h-9 px-4 rounded-full text-white select-none ${
+              nova ? "text-[14px] font-semibold bg-[#0a84ff] hover:bg-[#0a7aef] shadow-[0_2px_10px_-2px_rgba(10,132,255,0.5)]" : "text-xs font-black uppercase tracking-wide bg-blue-600 hover:bg-blue-700"
+            }`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+            Novo lançamento
+          </button>
+          <BotaoIcone nova={nova} onClick={toggleTheme} rotulo="Alternar tema"><span className="text-sm">{isDarkMode ? "☀️" : "🌙"}</span></BotaoIcone>
+        </div>
       </div>
-      <BotaoIcone nova={nova} onClick={toggleTheme} rotulo="Alternar tema"><span className="text-sm">{isDarkMode ? "☀️" : "🌙"}</span></BotaoIcone>
     </header>
   );
 }
@@ -311,7 +350,8 @@ function Bancos({ nova, bancos, dinheiro, mapPerfis }: any) {
         <Cartao nova className="overflow-hidden">
           {dinheiro !== 0 && <LinhaBanco nome="Carteira / Casa" sub="Dinheiro físico" valor={dinheiro} cor="#10b981" primeira />}
           {lista.map((b: any, i: number) => (
-            <LinhaBanco key={b.id} nome={b.banco || b.nome} sub={b.nome} valor={b.saldo} cor="#3b82f6" foto={mapPerfis[b.autor_nome]} autor={b.autor_nome} primeira={i === 0 && dinheiro === 0} />
+            // Quando o apelido da conta é igual ao do banco, não repete embaixo
+            <LinhaBanco key={b.id} nome={b.banco || b.nome} sub={b.nome && b.nome !== b.banco ? b.nome : ""} valor={b.saldo} cor="#3b82f6" foto={mapPerfis[b.autor_nome]} autor={b.autor_nome} primeira={i === 0 && dinheiro === 0} />
           ))}
         </Cartao>
       ) : (
@@ -338,13 +378,13 @@ function LinhaBanco({ nome, sub, valor, cor, foto, autor, primeira }: any) {
   const ref = useRef<HTMLDivElement>(null);
   usarPressao(ref, true, 0.97);
   return (
-    <div ref={ref} className={`flex items-center gap-3 px-4 py-3.5 select-none ${primeira ? "" : "border-t border-black/[0.06] dark:border-white/[0.06]"}`} style={{ touchAction: "manipulation" }}>
+    <div ref={ref} className={`flex items-center gap-3 px-4 py-3.5 select-none transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${primeira ? "" : "border-t border-black/[0.06] dark:border-white/[0.06]"}`} style={{ touchAction: "manipulation" }}>
       <div className="w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-semibold text-white shrink-0 overflow-hidden" style={{ background: cor }}>
         {foto ? <img src={foto} alt="" className="w-full h-full object-cover" /> : (nome || "?").charAt(0)}
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[15px] font-medium text-black dark:text-white truncate" style={{ letterSpacing: "-0.01em" }}>{nome}</p>
-        <p className="text-[13px] text-black/45 dark:text-white/45 truncate">{sub}{autor ? ` · @${autor}` : ""}</p>
+        <p className="text-[13px] text-black/45 dark:text-white/45 truncate">{[sub, autor ? `@${autor}` : ""].filter(Boolean).join(" · ")}</p>
       </div>
       <p className={`text-[15px] font-semibold shrink-0 ${valor < 0 ? "text-red-600 dark:text-red-400" : "text-black dark:text-white"}`} style={{ fontVariantNumeric: "tabular-nums" }}>{brl(valor)}</p>
     </div>
@@ -418,8 +458,8 @@ function LinhaExtrato({ t, nova, primeira, onAbrir }: any) {
   return (
     <div ref={ref} onClick={() => onAbrir(t)}
       className={nova
-        ? `flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none ${primeira ? "" : "border-t border-black/[0.06] dark:border-white/[0.06]"}`
-        : "flex items-center gap-3 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 cursor-pointer"}
+        ? `flex items-center gap-3 px-4 py-3.5 cursor-pointer select-none transition-colors hover:bg-black/[0.03] dark:hover:bg-white/[0.04] ${primeira ? "" : "border-t border-black/[0.06] dark:border-white/[0.06]"}`
+        : "flex items-center gap-3 p-3 rounded-2xl border border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50"}
       style={{ touchAction: "manipulation" }}>
       <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm shrink-0 ${
         nova ? (receita ? "bg-emerald-500/15" : transf ? "bg-blue-500/15" : "bg-black/[0.06] dark:bg-white/10") : "bg-gray-100 dark:bg-gray-700"}`}>
@@ -455,7 +495,7 @@ function BotaoFlutuante({ nova, onClick }: any) {
 // ============================================================================
 // PAINEL ARRASTÁVEL — detalhe do lançamento
 // ============================================================================
-function PainelArrastavel({ item, aoFechar, nova, reduzido }: any) {
+function PainelArrastavel({ item, aoFechar, nova, reduzido, desktop }: any) {
   const painel = useRef<HTMLDivElement>(null);
   const fundo = useRef<HTMLDivElement>(null);
   const mola = useRef<ReturnType<typeof criarMola> | null>(null);
@@ -465,27 +505,52 @@ function PainelArrastavel({ item, aoFechar, nova, reduzido }: any) {
   const aberto = !!item;
 
   const altura = () => painel.current?.getBoundingClientRect().height || 400;
-  const aplicar = (y: number) => {
-    if (painel.current) painel.current.style.transform = `translate3d(0, ${y}px, 0)`;
-    if (fundo.current) fundo.current.style.opacity = String(1 - Math.min(Math.max(y / altura(), 0), 1));
+  // Celular: desliza de baixo. PC: materializa no centro (escala + opacidade),
+  // que é o gesto certo para um diálogo com ponteiro.
+  const aplicar = (v: number) => {
+    if (painel.current) {
+      painel.current.style.transform = desktop
+        ? `scale(${0.96 + 0.04 * (1 - v)})`
+        : `translate3d(0, ${v}px, 0)`;
+      if (desktop) painel.current.style.opacity = String(1 - v);
+    }
+    if (fundo.current) fundo.current.style.opacity = String(1 - Math.min(Math.max(desktop ? v : v / altura(), 0), 1));
   };
+
+  const fechado = () => (desktop ? 1 : altura());
 
   useEffect(() => { if (aberto) setMontado(true); }, [aberto]);
 
+  // A mola guarda o "aplicar" do momento em que foi criada. Se a janela muda de
+  // PC para celular (ou o aparelho gira), esse closure fica com o modo antigo e
+  // a animação vai para a propriedade errada — então recriamos a mola.
+  useEffect(() => {
+    mola.current?.parar();
+    mola.current = null;
+  }, [desktop]);
+
   useEffect(() => {
     if (!montado || !painel.current) return;
-    if (!mola.current) mola.current = criarMola(altura(), aplicar);
-    if (aberto) mola.current.animarPara(0, reduzido ? { damping: 1, response: 0.01 } : { damping: 0.8, response: 0.35 });
+    if (!mola.current) mola.current = criarMola(fechado(), aplicar);
+    if (aberto) mola.current.animarPara(0, reduzido ? { damping: 1, response: 0.01 } : desktop ? { damping: 1, response: 0.3 } : { damping: 0.8, response: 0.35 });
     else {
-      mola.current.animarPara(altura(), reduzido ? { damping: 1, response: 0.01 } : SPRING_PADRAO);
-      const t = setTimeout(() => setMontado(false), reduzido ? 60 : 450);
+      mola.current.animarPara(fechado(), reduzido ? { damping: 1, response: 0.01 } : { damping: 1, response: 0.25 });
+      const t = setTimeout(() => setMontado(false), reduzido ? 60 : 400);
       return () => clearTimeout(t);
     }
-  }, [aberto, montado, reduzido]);
+  }, [aberto, montado, reduzido, desktop]);
+
+  // Fechar com Esc — no PC o teclado é caminho de saída esperado
+  useEffect(() => {
+    if (!montado) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") aoFechar(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [montado, aoFechar]);
 
   useEffect(() => {
     const el = painel.current;
-    if (!el || !montado) return;
+    if (!el || !montado || desktop) return;  // arrastar é gesto de toque
     let agarre = 0;
     const down = (e: PointerEvent) => {
       if (!(e.target as HTMLElement).closest("[data-alca]")) return;
@@ -517,22 +582,29 @@ function PainelArrastavel({ item, aoFechar, nova, reduzido }: any) {
       el.removeEventListener("pointerdown", down); el.removeEventListener("pointermove", move);
       el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
     };
-  }, [montado, aoFechar]);
+  }, [montado, aoFechar, desktop]);
 
   if (!montado) return null;
   const novoLanc = item?.novo;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center" style={{ pointerEvents: aberto ? "auto" : "none" }}>
+    <div className={`fixed inset-0 z-50 flex justify-center ${desktop ? "items-center p-6" : "items-end"}`} style={{ pointerEvents: aberto ? "auto" : "none" }}>
       <div ref={fundo} onClick={aoFechar} className="absolute inset-0 bg-black/35" style={{ opacity: 0, backdropFilter: "blur(2px)" }} />
       <div ref={painel}
-        className={`relative w-full sm:max-w-lg ${nova ? "bg-white/85 dark:bg-[#1c1c1e]/85 rounded-t-[28px] border-t border-white/60 dark:border-white/10" : "bg-white dark:bg-gray-800 rounded-t-3xl border-t border-gray-200 dark:border-gray-700"}`}
-        style={{ transform: "translate3d(0,100%,0)", willChange: "transform", touchAction: "none",
-          ...(nova ? { backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)", boxShadow: "0 -8px 40px rgba(0,0,0,0.18)" } : { boxShadow: "0 -4px 20px rgba(0,0,0,0.12)" }) }}>
-        <div data-alca className="pt-3 pb-2 cursor-grab active:cursor-grabbing">
-          <div className={`mx-auto w-10 h-1.5 rounded-full ${nova ? "bg-black/20 dark:bg-white/25" : "bg-gray-300 dark:bg-gray-600"}`} />
-        </div>
-        <div className="px-6 pb-10 pt-2">
+        className={`relative w-full ${desktop ? "max-w-md rounded-[26px] border" : "sm:max-w-lg rounded-t-[28px] border-t"} ${
+          nova ? "bg-white/85 dark:bg-[#1c1c1e]/85 border-white/60 dark:border-white/10" : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+        }`}
+        style={{ transform: desktop ? "scale(0.96)" : "translate3d(0,100%,0)", opacity: desktop ? 0 : 1, willChange: "transform, opacity", touchAction: desktop ? "auto" : "none",
+          ...(nova ? { backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)", boxShadow: desktop ? "0 24px 60px rgba(0,0,0,0.28)" : "0 -8px 40px rgba(0,0,0,0.18)" } : { boxShadow: desktop ? "0 20px 50px rgba(0,0,0,0.25)" : "0 -4px 20px rgba(0,0,0,0.12)" }) }}>
+        {desktop ? (
+          <button onClick={aoFechar} aria-label="Fechar"
+            className={`absolute right-4 top-4 h-8 w-8 rounded-full flex items-center justify-center text-[18px] leading-none ${nova ? "bg-black/[0.06] dark:bg-white/10 text-black/60 dark:text-white/60 hover:bg-black/10 dark:hover:bg-white/20" : "text-gray-400 hover:text-gray-700"}`}>×</button>
+        ) : (
+          <div data-alca className="pt-3 pb-2 cursor-grab active:cursor-grabbing">
+            <div className={`mx-auto w-10 h-1.5 rounded-full ${nova ? "bg-black/20 dark:bg-white/25" : "bg-gray-300 dark:bg-gray-600"}`} />
+          </div>
+        )}
+        <div className={`px-6 ${desktop ? "pt-6 pb-7" : "pb-10 pt-2"}`}>
           {novoLanc ? (
             <>
               <h3 className={nova ? "text-[22px] font-semibold text-black dark:text-white" : "text-lg font-black text-gray-900 dark:text-gray-100"} style={nova ? { letterSpacing: "-0.02em" } : undefined}>Novo lançamento</h3>
