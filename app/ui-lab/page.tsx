@@ -389,9 +389,9 @@ function ResumoPeriodo({ nova, resumo }: any) {
         {itens.map(([rotulo, valor, tom]) => (
           <Cartao key={rotulo} nova={nova} className="p-4">
             <p className={nova ? "text-[12px] font-medium text-black/45 dark:text-white/45 leading-tight" : "text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider leading-tight"}>{rotulo}</p>
-            <p className={`mt-1.5 ${nova ? "text-[16px] font-semibold" : "text-base font-black"} ${
+            <p className={`mt-1.5 whitespace-nowrap ${nova ? "text-[15px] font-semibold" : "text-[15px] font-black"} ${
               tom === "verde" ? "text-emerald-600 dark:text-emerald-400" : tom === "vermelho" ? "text-red-600 dark:text-red-400" : nova ? "text-black dark:text-white" : "text-blue-600 dark:text-blue-400"
-            }`} style={{ fontVariantNumeric: "tabular-nums" }}>{brl(valor)}</p>
+            }`} style={{ fontVariantNumeric: "tabular-nums", letterSpacing: "-0.02em" }}>{brl(valor)}</p>
           </Cartao>
         ))}
       </div>
