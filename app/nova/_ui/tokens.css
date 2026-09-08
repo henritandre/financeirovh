@@ -1,0 +1,281 @@
+/*
+ * Tokens da UI Nova ("Liquid Glass"). Escopado inteiramente em .nova-root —
+ * nunca deve ser importado fora de app/nova, para não vazar para a UI
+ * Clássica (que continua vivendo só de utilitários Tailwind crus).
+ */
+
+.nova-root {
+  --nova-bg: #f2f2f7;
+  --nova-bg-elevated: #ffffff;
+  --nova-ink: #172031;
+  --nova-ink-soft: rgba(0, 0, 0, 0.55);
+  --nova-ink-faint: rgba(0, 0, 0, 0.45);
+  --nova-ink-hairline: rgba(0, 0, 0, 0.08);
+
+  --nova-glass-1: rgba(255, 255, 255, 0.7);
+  --nova-glass-2: rgba(255, 255, 255, 0.78);
+  --nova-glass-3: rgba(255, 255, 255, 0.88);
+  --nova-glass-border: rgba(255, 255, 255, 0.55);
+
+  --nova-accent: #0a84ff;
+  --nova-accent-ink: #ffffff;
+  --nova-success: #248a3d;
+  --nova-success-bg: rgba(52, 199, 89, 0.14);
+  --nova-danger: #d70015;
+  --nova-danger-bg: rgba(255, 59, 48, 0.12);
+
+  --nova-radius-sm: 12px;
+  --nova-radius-md: 16px;
+  --nova-radius-lg: 22px;
+  --nova-radius-xl: 28px;
+  --nova-radius-pill: 999px;
+
+  --nova-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.04), 0 10px 28px -10px rgba(0, 0, 0, 0.12);
+  --nova-shadow-2: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  --nova-shadow-3: 0 20px 50px rgba(0, 0, 0, 0.25);
+
+  --nova-blur-card: blur(24px) saturate(180%);
+  --nova-blur-sheet: blur(30px) saturate(180%);
+
+  color-scheme: light;
+}
+
+.dark .nova-root {
+  --nova-bg: #101522;
+  --nova-bg-elevated: #1c1c1e;
+  --nova-ink: #ffffff;
+  --nova-ink-soft: rgba(255, 255, 255, 0.55);
+  --nova-ink-faint: rgba(255, 255, 255, 0.45);
+  --nova-ink-hairline: rgba(255, 255, 255, 0.08);
+
+  --nova-glass-1: rgba(28, 28, 30, 0.7);
+  --nova-glass-2: rgba(28, 28, 30, 0.8);
+  --nova-glass-3: rgba(44, 44, 46, 0.9);
+  --nova-glass-border: rgba(255, 255, 255, 0.1);
+
+  --nova-success: #30d158;
+  --nova-success-bg: rgba(48, 209, 88, 0.16);
+  --nova-danger: #ff453a;
+  --nova-danger-bg: rgba(255, 69, 58, 0.16);
+
+  --nova-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 10px 30px -8px rgba(0, 0, 0, 0.5);
+  --nova-shadow-2: 0 -4px 24px rgba(0, 0, 0, 0.4);
+  --nova-shadow-3: 0 24px 60px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}
+
+.nova-root {
+  background: var(--nova-bg);
+  color: var(--nova-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Evita o "fantasma" de arrastar nativo do navegador em avatares/imagens dentro
+   de cards com feedback de pressão — sem isso, clicar-e-segurar (com um mínimo
+   de movimento) inicia um drag nativo que rouba o pointerup da mola e deixa o
+   card visualmente "travado" na escala reduzida. */
+.nova-root img {
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Superfícies de navegador que também carregam o sistema visual */
+.nova-root ::selection {
+  background: color-mix(in srgb, var(--nova-accent) 30%, transparent);
+  color: var(--nova-ink);
+}
+.nova-root :focus-visible {
+  outline: 2px solid var(--nova-accent);
+  outline-offset: 2px;
+  border-radius: var(--nova-radius-sm);
+}
+.nova-root {
+  scrollbar-color: var(--nova-ink-hairline) transparent;
+  scrollbar-width: thin;
+}
+.nova-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.nova-root ::-webkit-scrollbar-thumb {
+  background: var(--nova-ink-hairline);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+@keyframes nova-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.nova-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--nova-ink-hairline) 25%,
+    color-mix(in srgb, var(--nova-ink-hairline) 55%, transparent) 37%,
+    var(--nova-ink-hairline) 63%
+  );
+  background-size: 200% 100%;
+  animation: nova-shimmer 1.6s ease-in-out infinite;
+  border-radius: var(--nova-radius-sm);
+}
+
+@keyframes nova-toast-in {
+  0% { transform: translateY(-50px) scale(0.3); opacity: 0; filter: blur(10px); }
+  60% { transform: translateY(5px) scale(1.05); opacity: 1; filter: blur(0px); }
+  100% { transform: translateY(0) scale(1); opacity: 1; filter: blur(0px); }
+}
+@keyframes nova-toast-out {
+  0% { transform: scale(1); opacity: 1; filter: blur(0px); }
+  40% { transform: scale(1.15); opacity: 0.8; filter: blur(2px); }
+  100% { transform: scale(0); opacity: 0; filter: blur(10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-skeleton { animation: none; }
+  .nova-root [style*="animation"],
+  .nova-root [class*="animate-"] { animation-duration: 0.01ms !important; }
+}
+
+.nova-brand { font-size: 19px; font-weight: 650; letter-spacing: -0.055em; }
+.nova-brand span { color: var(--nova-accent); }
+.nova-page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 4px 0 20px; }
+.nova-page-intro h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 600; letter-spacing: -0.055em; line-height: 1.15; margin: 8px 0; }
+.nova-page-intro p { font-size: 14px; color: var(--nova-ink-soft); }
+.nova-page-intro .nova-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
+.nova-text-link { font-size: 13px; font-weight: 600; white-space: nowrap; padding: 8px 0; text-underline-offset: 5px; }
+.nova-text-link:hover { text-decoration: underline; }
+/* O saldo fica sobre um fundo suave e dispensa captura do backdrop.
+   Mantém translucidez, borda e sombra sem compartilhar a camada de desfoque
+   com os controles que mudam no hover. */
+.nova-balance { padding: 24px; --nova-blur-card: none; isolation: isolate; }
+.nova-balance > p:first-child { font-size: 14px; }
+.nova-balance > p:nth-child(2) { margin-top: 14px; }
+.nova-root button { transition: background-color 160ms ease, box-shadow 160ms ease; }
+@keyframes nova-section-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: no-preference) {
+  .nova-dashboard-grid > div { animation: nova-section-enter 360ms ease-out backwards; }
+  .nova-dashboard-grid > div:nth-child(2) { animation-delay: 65ms; }
+}
+@media (max-width: 480px) {
+  .nova-page-intro { align-items: flex-start; flex-direction: column; gap: 6px; padding-bottom: 24px; }
+}
+
+
+/* Vidro com borda iluminada; o fundo estático dá contexto à translucidez. */
+.nova-root {
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  --nova-ink-soft: #526079;
+  --nova-ink-faint: #59677e;
+  --nova-glass-1: rgba(255, 255, 255, .57);
+  --nova-glass-2: rgba(255, 255, 255, .72);
+  --nova-glass-border: rgba(255, 255, 255, .78);
+  --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.72), 0 6px 22px -12px rgba(45,65,100,.23);
+  background-image: radial-gradient(ellipse at 8% 8%, rgba(127,185,239,.24), transparent 48%), radial-gradient(ellipse at 94% 35%, rgba(181,172,235,.20), transparent 45%), radial-gradient(ellipse at 45% 90%, rgba(131,209,205,.14), transparent 50%);
+}
+.dark .nova-root {
+  --nova-ink-soft: #b9c4d6;
+  --nova-ink-faint: #a5b2c8;
+  --nova-glass-1: rgba(34, 43, 62, .63);
+  --nova-glass-2: rgba(38, 48, 68, .8);
+  --nova-glass-3: rgba(34, 43, 62, .94);
+  --nova-glass-border: rgba(208, 224, 255, .15);
+  --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.09), 0 8px 28px -12px rgba(0,0,0,.36);
+  background-image: radial-gradient(ellipse at 8% 8%, rgba(49,110,185,.17), transparent 48%), radial-gradient(ellipse at 94% 35%, rgba(113,83,175,.15), transparent 45%);
+}
+.nova-bank-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.nova-bank-pill { display: flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; padding: 9px 15px 9px 9px; border-radius: 999px; border: 1px solid var(--nova-glass-border); background: var(--nova-glass-1); box-shadow: var(--nova-shadow-1); text-align: left; cursor: pointer; touch-action: manipulation; }
+.nova-bank-pill:hover { background-color: var(--nova-glass-2); }
+.nova-bank-avatar { width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; overflow: hidden; font-size: 13px; font-weight: 600; color: var(--nova-accent); background: color-mix(in srgb, var(--nova-accent) 12%, transparent); }
+.nova-bank-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.nova-bank-copy { display: flex; flex-direction: column; min-width: 0; max-width: 125px; }
+.nova-bank-name { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nova-bank-owner { font-size: 10px; color: var(--nova-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nova-bank-value { font-size: 13px; font-weight: 650; white-space: nowrap; letter-spacing: -.025em; }
+.nova-credit-total { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 3px 8px; color: var(--nova-ink-soft); font-size: 11px; }
+.nova-credit-total strong { color: var(--nova-ink); font-size: 13px; }
+.nova-credit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+.nova-credit-card { overflow: hidden; min-width: 0; }
+
+
+.nova-credit-face { padding: 20px 18px 16px; background: radial-gradient(ellipse at 110% -10%, rgba(var(--card-tint), .38), transparent 70%), linear-gradient(125deg, rgba(var(--card-tint), .10), rgba(255,255,255,.04)); }
+.nova-credit-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.nova-credit-heading h3 { font-size: 14px; font-weight: 650; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.nova-credit-heading svg { flex-shrink: 0; opacity: .6; }
+.nova-credit-label { font-size: 11px; color: var(--nova-ink-soft); margin-top: 22px; }
+.nova-credit-amount { font-size: clamp(23px, 2.5vw, 29px); font-weight: 600; letter-spacing: -.045em; line-height: 1.3; overflow-wrap: anywhere; }
+.nova-credit-owner { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; font-size: 10px; color: var(--nova-ink-soft); margin-top: 17px; }
+.nova-credit-owner > span { display: flex; align-items: center; gap: 5px; overflow-wrap: anywhere; }
+.nova-credit-owner img { height: 19px; width: 19px; object-fit: cover; border-radius: 50%; }
+.nova-credit-details { padding: 14px 18px; border-top: 1px solid var(--nova-ink-hairline); }
+.nova-credit-committed, .nova-invoice { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 11px; }
+.nova-credit-committed { margin-bottom: 11px; }
+.nova-credit-committed strong { font-size: 13px; font-weight: 600; }
+.nova-invoices { display: grid; gap: 7px; }
+.nova-invoice { color: var(--nova-ink-soft); }
+.nova-invoice strong { color: var(--nova-ink); font-weight: 500; }
+.nova-invoice-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-top: 12px; margin-top: 10px; border-top: 1px solid var(--nova-ink-hairline); color: var(--nova-accent); font-size: 11px; font-weight: 600; cursor: pointer; min-height: 44px; }
+@media (max-width: 440px) { .nova-credit-grid { grid-template-columns: minmax(0, 1fr); } .nova-bank-pill { flex: 0 1 auto; } }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .nova-root { --nova-glass-1: #f8faff; --nova-glass-2: #edf2fa; --nova-glass-3: #ffffff; --nova-glass-border: #8492a7; --nova-blur-card: none; --nova-blur-sheet: none; background-image: none; }
+  .dark .nova-root { --nova-glass-1: #222b3e; --nova-glass-2: #29354c; --nova-glass-3: #222b3e; --nova-glass-border: #8290a8; }
+}
+@media (max-width: 1023px) {
+  .nova-root .nova-desktop-action { display: none; }
+}
+@media (max-width: 639px) {
+  .nova-bank-pills { display: grid; grid-template-rows: repeat(2, auto); grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: min(280px, 85vw); overflow-x: auto; padding: 2px 2px 10px; scroll-snap-type: x proximity; scrollbar-width: thin; }
+  .nova-bank-pill { scroll-snap-align: start; }
+  .nova-brand { font-size: 17px; white-space: nowrap; }
+}
+@media (max-width: 480px) {
+  .nova-page-intro { flex-direction: row; align-items: center; gap: 12px; padding: 0 0 16px; }
+  .nova-page-intro h1 { font-size: 27px; }
+  .nova-text-link { font-size: 11px; }
+}
+
+
+/* Identidade estável por banco, independente da ordem das contas. */
+.nova-bank-itau { --card-tint: 220, 126, 48; --bank-mark: #9d4b0d; }
+.nova-bank-nubank { --card-tint: 149, 95, 203; --bank-mark: #70409e; }
+.nova-bank-inter { --card-tint: 227, 146, 80; --bank-mark: #995218; }
+.nova-bank-caixa { --card-tint: 63, 133, 183; --bank-mark: #23628f; }
+.nova-bank-santander { --card-tint: 199, 86, 86; --bank-mark: #9b353b; }
+.nova-bank-mercantil { --card-tint: 76, 123, 190; --bank-mark: #375e99; }
+.nova-bank-bradesco { --card-tint: 191, 74, 103; --bank-mark: #983b53; }
+.nova-bank-bb { --card-tint: 191, 164, 53; --bank-mark: #786613; }
+.nova-bank-carteira { --card-tint: 91, 154, 127; --bank-mark: #326c53; }
+.nova-bank-neutro { --card-tint: 112, 140, 174; --bank-mark: #4f6886; }
+.nova-bank-pill { width: 100%; min-height: 56px; position: relative; background-image: linear-gradient(90deg, rgba(var(--card-tint), .18), rgba(var(--card-tint), .06) 22%, transparent 42%); }
+/* As pílulas ficam sobre um fundo suave: transparência basta aqui. Evitar
+   backdrop-filter e sombras animadas impede artefatos entre camadas de vidro. */
+.nova-root .nova-bank-pill { transition: background-color 160ms ease; }
+.nova-bank-copy { flex: 1; max-width: none; }
+.nova-bank-value { margin-left: auto; text-align: right; }
+.nova-bank-avatar { box-shadow: 0 0 0 3px rgba(var(--card-tint), .16); color: var(--bank-mark); background: rgba(var(--card-tint), .16); }
+.nova-credit-face { background: radial-gradient(ellipse at 110% -10%, rgba(var(--card-tint), .50), transparent 75%), linear-gradient(125deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .05)); }
+.nova-bank-monogram { flex-shrink: 0; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; border: 1px solid rgba(var(--card-tint), .30); color: var(--bank-mark); background: rgba(var(--card-tint), .16); box-shadow: inset 0 1px 0 rgba(255,255,255,.28); font-size: 19px; font-weight: 750; letter-spacing: -.065em; line-height: 1; }
+.dark .nova-bank-monogram, .dark .nova-bank-avatar { color: #f3f5fa; }
+
+
+
+
+/* Pressão apenas no conteúdo: o fundo e os divisores continuam preenchendo a linha. */
+.nova-extrato-content { transform: scale(1); transition: transform 180ms ease-out; }
+.nova-extrato-row:active .nova-extrato-content { transform: scale(.985); transition-duration: 70ms; }
+@media (prefers-reduced-motion: reduce) {
+  .nova-extrato-content, .nova-extrato-row:active .nova-extrato-content { transform: none; transition: none; }
+}
+
+.nova-account-filter { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 13px; border: 1px solid var(--nova-glass-border); border-radius: 14px; background: var(--nova-glass-1); box-shadow: var(--nova-shadow-1); font-size: 13px; font-weight: 500; cursor: pointer; }
+.nova-account-filter input { position: absolute; right: 13px; width: 38px; height: 24px; opacity: 0; cursor: pointer; }
+.nova-account-switch { width: 38px; height: 24px; flex-shrink: 0; border-radius: 99px; background: var(--nova-ink-hairline); padding: 3px; pointer-events: none; transition: background-color 160ms ease; }
+.nova-account-switch::after { content: ''; display: block; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0003; transition: transform 160ms ease; }
+.nova-account-filter input:checked + .nova-account-switch { background: var(--nova-accent); }
+.nova-account-filter input:checked + .nova-account-switch::after { transform: translateX(14px); }
+.nova-account-filter input:focus-visible + .nova-account-switch { outline: 2px solid var(--nova-accent); outline-offset: 3px; }
+.nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; border-left: 3px solid rgba(var(--card-tint), .65); background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.dark .nova-picker-bank { color: color-mix(in srgb, rgb(var(--card-tint)) 60%, white); }
+@media (prefers-reduced-motion: reduce) { .nova-account-switch, .nova-account-switch::after { transition: none; } }

@@ -26,20 +26,27 @@ export function criarMola(valorInicial: number, aoAtualizar: (v: number) => void
 
   const passo = (agora: number) => {
     // dt limitado: aba em segundo plano não pode explodir a integração
-    const dt = Math.min((agora - ultimo) / 1000, 1 / 30);
+    const dt = Math.max(0, Math.min((agora - ultimo) / 1000, 1 / 30));
     ultimo = agora;
 
     const w = (2 * Math.PI) / cfg.response; // frequência angular
     const z = cfg.damping;                  // razão de amortecimento
 
-    // integração semi-implícita de Euler: estável e barata
-    const a = -w * w * (x - alvo) - 2 * z * w * v;
-    v += a * dt;
-    x += v * dt;
+    // Euler só é estável com passos pequenos em relação à frequência.
+    // A pressão (response .12) já divergia a 60 Hz; limitar dt a 1/30
+    // não bastava. Subpassos adaptativos mantêm a mesma mola em qualquer
+    // taxa de quadros, inclusive na resposta .01 de movimento reduzido.
+    const passos = Math.max(1, Math.ceil(dt * w * (1 + z) / 0.1));
+    const h = dt / passos;
+    for (let i = 0; i < passos; i++) {
+      const a = -w * w * (x - alvo) - 2 * z * w * v;
+      v += a * h;
+      x += v * h;
+    }
 
     aoAtualizar(x);
 
-    const parado = Math.abs(x - alvo) < 0.05 && Math.abs(v) < 0.05;
+    const parado = Math.abs(x - alvo) < 0.0001 && Math.abs(v) < 0.0001;
     if (parado) {
       x = alvo; v = 0; aoAtualizar(x);
       raf = null;

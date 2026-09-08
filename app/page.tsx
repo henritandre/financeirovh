@@ -4,17 +4,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useRouter } from "next/navigation";
+import { useUIVersion } from "./UIVersionContext";
 
 export default function Home() {
   const router = useRouter();
+  const { versao } = useUIVersion();
   const [mensagem, setMensagem] = useState("Verificando seu acesso...");
 
   useEffect(() => {
+    const destino = versao === "nova" ? "/nova/dashboard" : "/dashboard";
+
     // Escuta eventos do Supabase (como quando o usuário clica no link do email)
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN") {
         setMensagem("Email confirmado! Entrando no painel...");
-        setTimeout(() => router.push("/dashboard"), 1500);
+        setTimeout(() => router.push(destino), 1500);
       }
     });
 
@@ -22,7 +26,7 @@ export default function Home() {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        router.push("/dashboard");
+        router.push(destino);
       } else {
         // Se não tiver logado e não for um clique de email, vai pro login
         setTimeout(() => router.push("/login"), 1000);
@@ -34,7 +38,8 @@ export default function Home() {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router, versao]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50">
