@@ -4,10 +4,12 @@ import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
+import { useUIVersion } from "../UIVersionContext";
 
 export default function ParametrosPage() {
   const router = useRouter();
   const { isDarkMode, toggleTheme, isWaving } = useTheme();
+  const { versao, definirVersao } = useUIVersion();
 
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -26,6 +28,8 @@ export default function ParametrosPage() {
   const [insightsQtdCategorias, setInsightsQtdCategorias] = useState(5);
   const [insightsExpandirResto, setInsightsExpandirResto] = useState(true);
   const [insightsQtdTop, setInsightsQtdTop] = useState(3);
+  const [bancoEvolucaoDias, setBancoEvolucaoDias] = useState(30);
+  const [bancoLancamentosQtd, setBancoLancamentosQtd] = useState(5);
 
   // ==========================================
   // DYNAMIC ISLAND 2.0 (LIQUID GLASS + BALLOON)
@@ -54,7 +58,7 @@ export default function ParametrosPage() {
         .from("parametros")
         .select("chave, valor")
         .eq("user_id", uid)
-        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis", "insights_qtd_categorias", "insights_expandir_resto", "insights_qtd_top"]);
+        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis", "insights_qtd_categorias", "insights_expandir_resto", "insights_qtd_top", "banco_evolucao_dias", "banco_lancamentos_qtd"]);
 
       if (error) {
         showIsland("Erro ao carregar configurações", "error", "🛑");
@@ -66,6 +70,8 @@ export default function ParametrosPage() {
           if (p.chave === "insights_qtd_categorias") setInsightsQtdCategorias(Number(p.valor));
           if (p.chave === "insights_expandir_resto") setInsightsExpandirResto(p.valor);
           if (p.chave === "insights_qtd_top") setInsightsQtdTop(Number(p.valor));
+          if (p.chave === "banco_evolucao_dias") setBancoEvolucaoDias(Number(p.valor));
+          if (p.chave === "banco_lancamentos_qtd") setBancoLancamentosQtd(Number(p.valor));
         });
       }
       setIsLoading(false);
@@ -111,13 +117,21 @@ export default function ParametrosPage() {
       return;
     }
 
+    if (bancoEvolucaoDias < 1 || bancoLancamentosQtd < 1) {
+      showIsland("Os valores da Visão Rápida de Bancos devem ser maiores que zero", "error", "🛑");
+      setIsSaving(false);
+      return;
+    }
+
     const payload = [
       { user_id: userId, chave: "notificar_rendimento", valor: notificarRendimento },
       { user_id: userId, chave: "dias_alerta_rendimento", valor: diasAlerta },
       { user_id: userId, chave: "qtd_faturas_visiveis", valor: qtdFaturasVisiveis },
       { user_id: userId, chave: "insights_qtd_categorias", valor: insightsQtdCategorias },
       { user_id: userId, chave: "insights_expandir_resto", valor: insightsExpandirResto },
-      { user_id: userId, chave: "insights_qtd_top", valor: insightsQtdTop }
+      { user_id: userId, chave: "insights_qtd_top", valor: insightsQtdTop },
+      { user_id: userId, chave: "banco_evolucao_dias", valor: bancoEvolucaoDias },
+      { user_id: userId, chave: "banco_lancamentos_qtd", valor: bancoLancamentosQtd }
     ];
 
     // O upsert insere se não existir ou atualiza se já existir a chave para este usuário
@@ -224,6 +238,41 @@ export default function ParametrosPage() {
           {isLoading ? (
             <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600"></div></div>
           ) : (
+            <>
+            <div className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item mb-6 ${isWaving ? 'mac-dock-animate' : ''}`}>
+              <div className="p-6 sm:p-8">
+                <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/></svg>
+                  Aparência
+                </h3>
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Versão da interface</h4>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
+                      A UI Nova está em construção — hoje só o Dashboard está disponível nela. As demais telas continuam abrindo na versão Clássica.
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 rounded-full border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-900/40">
+                    {(["classica", "nova"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => {
+                          if (v === versao) return;
+                          definirVersao(v);
+                          showIsland(v === "nova" ? "UI Nova ativada!" : "Voltando para a UI Clássica.", "success", v === "nova" ? "✨" : "🔙");
+                        }}
+                        className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-colors ${
+                          versao === v ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                        }`}
+                      >
+                        {v === "classica" ? "Clássica" : "Nova"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
             <form onSubmit={handleSalvar} className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
               
               <div className="p-6 sm:p-8 space-y-8">
@@ -301,6 +350,55 @@ export default function ParametrosPage() {
                         className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
                       />
                       <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* BLOCO 2B: VISÃO RÁPIDA DE BANCOS (UI Nova) */}
+                <div>
+                  <h3 className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                    Visão Rápida de Bancos (UI Nova)
+                  </h3>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-4 mb-6">Ao tocar em um banco ou cofre na UI Nova, abre um resumo rápido com o gráfico de evolução do saldo e os últimos lançamentos daquela conta (sem faturas de cartão).</p>
+
+                  <div className="space-y-6">
+                    <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-bold text-emerald-900 dark:text-emerald-300 mb-1">Período do gráfico de evolução</label>
+                        <p className="text-xs font-medium text-emerald-700/70 dark:text-emerald-400/70">Quantos dias corridos o gráfico de saldo mostra.</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          max="365"
+                          required
+                          value={bancoEvolucaoDias}
+                          onChange={(e) => setBancoEvolucaoDias(Number(e.target.value))}
+                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
+                        />
+                        <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">dias</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-bold text-emerald-900 dark:text-emerald-300 mb-1">Lançamentos recentes exibidos</label>
+                        <p className="text-xs font-medium text-emerald-700/70 dark:text-emerald-400/70">Quantos lançamentos aparecem na lista (entradas, débito e PIX — sem fatura de cartão).</p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          max="30"
+                          required
+                          value={bancoLancamentosQtd}
+                          onChange={(e) => setBancoLancamentosQtd(Number(e.target.value))}
+                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
+                        />
+                        <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">itens</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -392,6 +490,7 @@ export default function ParametrosPage() {
               </div>
 
             </form>
+            </>
           )}
         </main>
       </div>
