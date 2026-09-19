@@ -137,23 +137,23 @@ export function Sheet({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex justify-center ${desktop ? "items-center p-6" : "items-end"}`}
+      className={`fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain ${desktop ? "p-6" : "pt-4"}`}
       style={{ pointerEvents: aberto ? "auto" : "none" }}
       role="dialog"
       aria-modal="true"
       aria-label={tituloAcessivel}
     >
-      <div ref={fundo} onClick={aoFechar} className="absolute inset-0 bg-black/35" style={{ opacity: 0, backdropFilter: "blur(2px)" }} />
+      <div ref={fundo} onClick={aoFechar} className="fixed inset-0 bg-black/35" style={{ opacity: 0, backdropFilter: "blur(2px)" }} />
       <div
         ref={painel}
         className={`relative w-full bg-[var(--nova-glass-3)] border-[var(--nova-glass-border)] ${
-          desktop ? `${largura} rounded-[var(--nova-radius-xl)] border max-h-[85vh] overflow-y-auto` : "sm:max-w-lg rounded-t-[var(--nova-radius-xl)] border-t max-h-[90vh] overflow-y-auto"
+          desktop ? `${largura} rounded-[var(--nova-radius-xl)] border my-auto shrink-0` : "sm:max-w-lg rounded-t-[var(--nova-radius-xl)] border-t mt-auto shrink-0"
         }`}
         style={{
           transform: desktop ? "scale(0.96)" : "translate3d(0,100%,0)",
           opacity: desktop ? 0 : 1,
           willChange: "transform, opacity",
-          touchAction: desktop ? "auto" : "none",
+          touchAction: "auto",
           backdropFilter: "var(--nova-blur-sheet)",
           WebkitBackdropFilter: "var(--nova-blur-sheet)",
           boxShadow: desktop ? "var(--nova-shadow-3)" : "var(--nova-shadow-2)",
@@ -170,7 +170,7 @@ export function Sheet({
             </svg>
           </button>
         ) : (
-          <div data-alca className="pt-3 pb-2 cursor-grab active:cursor-grabbing sticky top-0 bg-inherit z-10">
+          <div data-alca style={{ touchAction: "none" }} className="pt-3 pb-2 cursor-grab active:cursor-grabbing sticky top-0 bg-inherit z-10">
             <div className="mx-auto w-10 h-1.5 rounded-full bg-[var(--nova-ink-hairline)]" />
           </div>
         )}

@@ -1,4 +1,10 @@
 "use client";
+import "./melhorias.css";
+import { SeletorContaPagamento, SeletorBanco } from "../nova/_ui/SeletorConta";
+import { identidadeBanco } from "../nova/_lib/identidadeBanco";
+import { DetalheBancoClassico } from "./DetalheBancoClassico";
+
+import { calcularSaldo, centavos } from "../../lib/saldo";
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
@@ -68,6 +74,7 @@ export default function DashboardPage() {
     return new Date(d.getTime() - tzOffset).toISOString().split("T")[0];
   };
 
+  const [bancoDetalhe, setBancoDetalhe] = useState<{nome: string; ids: string[]} | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -92,10 +99,6 @@ export default function DashboardPage() {
   const [ocorrenciaOriginalVinculada, setOcorrenciaOriginalVinculada] = useState<any | null>(null);
   const [descricaoTocada, setDescricaoTocada] = useState(false);
 
-  const [isFormaPagtoOpen, setIsFormaPagtoOpen] = useState(false);
-  const [isBancoOrigemOpen, setIsBancoOrigemOpen] = useState(false);
-  const [isBancoDestinoOpen, setIsBancoDestinoOpen] = useState(false);
-  const [isFaturaDestinoOpen, setIsFaturaDestinoOpen] = useState(false);
 
   const hojeData = new Date();
   const [dataInicio, setDataInicio] = useState(getDatLocal(new Date(hojeData.getFullYear(), hojeData.getMonth(), 1)));
@@ -138,10 +141,6 @@ export default function DashboardPage() {
   const formatarDataNormal = (dStr: string) => {
     const [a, m, d] = dStr.split("-");
     return `${d}/${m}/${a}`;
-  };
-
-  const closeAllDropdowns = () => {
-    setIsFormaPagtoOpen(false); setIsBancoOrigemOpen(false); setIsBancoDestinoOpen(false); setIsFaturaDestinoOpen(false);
   };
 
   const nomesAtalhos: Record<string, string> = {
@@ -300,8 +299,10 @@ export default function DashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tipo, categoriaId, data, parcelas]);
 
-  // Mantém o array de valores manuais em sincronia com a quantidade de
-  // parcelas, preservando o que o usuário já editou e preenchendo as
+  const podeParcelar = tipo === "despesa" && contas.find(c => c.id === formaPagtoId)?.tipo === "credito";
+  useEffect(() => { if (!podeParcelar) { setParcelas(1); setModoParcelamento("ultima"); setValoresParcelasManual([]); } }, [podeParcelar]);
+
+  // Mantém as parcelas manuais em sincronia, preservando o que o usuário já editou e preenchendo as
   // parcelas novas com a divisão padrão (base + diferença na última).
   useEffect(() => {
     if (modoParcelamento !== "manual") return;
@@ -512,16 +513,7 @@ export default function DashboardPage() {
   const saldosBancarios = bancos.map((banco) => {
     const chavesDoBanco = contas.filter((c) => c.conta_bancaria_id === banco.id && c.tipo === "corrente");
     const idsChaves = chavesDoBanco.map((c) => c.id);
-    let saldo = 0;
-    transacoes.forEach((t) => {
-      const v = Number(t.valor);
-      if (t.tipo === "receita" && idsChaves.includes(t.conta_id)) saldo += v;
-      if (t.tipo === "despesa" && idsChaves.includes(t.conta_id)) saldo -= v;
-      if (t.tipo === "transferencia") {
-        if (idsChaves.includes(t.conta_id)) saldo -= v;
-        if (idsChaves.includes(t.conta_destino_id)) saldo += v;
-      }
-    });
+    const saldo = calcularSaldo(transacoes, idsChaves);
     return { ...banco, saldo };
   });
 
@@ -535,38 +527,16 @@ export default function DashboardPage() {
   const saldoDinheiroFisico = (() => {
     const chavesDinheiro = contas.filter((c) => c.tipo === "dinheiro");
     const idsDinheiro = chavesDinheiro.map((c) => c.id);
-    let saldo = 0;
-    transacoes.forEach((t) => {
-      const v = Number(t.valor);
-      if (t.tipo === "receita" && idsDinheiro.includes(t.conta_id)) saldo += v;
-      if (t.tipo === "despesa" && idsDinheiro.includes(t.conta_id)) saldo -= v;
-      if (t.tipo === "transferencia") {
-        if (idsDinheiro.includes(t.conta_id)) saldo -= v;
-        if (idsDinheiro.includes(t.conta_destino_id)) saldo += v;
-      }
-    });
+    const saldo = calcularSaldo(transacoes, idsDinheiro);
     return saldo;
   })();
 
-  const saldoTotalReal = saldoDinheiroFisico + saldosBancarios.reduce((acc, b) => acc + (b.ativo !== false && usuariosSelecionados.includes(b.autor_nome) ? b.saldo : 0), 0);
+  const saldoTotalReal = (centavos(saldoDinheiroFisico) + saldosBancarios.reduce((acc, b) => acc + (b.ativo !== false && usuariosSelecionados.includes(b.autor_nome) ? centavos(b.saldo) : 0), 0)) / 100;
   const totalCartoesGeral = cartoesCredito.reduce((acc, cartao) => {
     if (cartao.ativo !== false && usuariosSelecionados.includes(cartao.autor_nome)) return acc + obterFaturasDoCartao(cartao.id).totalGeral;
     return acc;
   }, 0);
 
-  const getContaAvatar = (c: any) => {
-    const foto = mapPerfis[c.autor_nome];
-    if (c.tipo === "dinheiro") return { photo: null, char: "💵", bg: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400" };
-    if (c.tipo === "credito") return { photo: foto, char: c.autor_nome?.charAt(0).toUpperCase() || "C", bg: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400" };
-    return { photo: foto, char: c.autor_nome?.charAt(0).toUpperCase() || "B", bg: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400" };
-  };
-
-  const getContaSubtitle = (c: any) => {
-    if (c.tipo === "dinheiro") return "Na Carteira / Cofre";
-    if (c.tipo === "corrente" && c.subtipo === "pix") return `PIX: ${c.chave_pix}`;
-    if (c.tipo === "credito" || (c.tipo === "corrente" && c.subtipo === "debito")) return `FINAL ${c.ultimos_digitos || "----"}`;
-    return "";
-  };
 
   const getChavePrincipalDoBanco = (bancoOuDinheiroId: string) => {
     if (bancoOuDinheiroId === "dinheiro") {
@@ -580,7 +550,7 @@ export default function DashboardPage() {
   const resetFields = () => {
     setEditandoId(null); setValor(""); setData(getDatLocal(new Date())); setDescricao("");
     setCategoriaId(""); setParcelas(1); setModoParcelamento("ultima"); setValoresParcelasManual([]); setIsPagamentoFatura(false); setFormaPagtoId("");
-    setBancoOrigemId(""); setBancoDestinoId(""); setFaturaDestinoId(""); closeAllDropdowns();
+    setBancoOrigemId(""); setBancoDestinoId(""); setFaturaDestinoId("");
     setVinculoContaFixa(null); setOcorrenciaOriginalVinculada(null); setDescricaoTocada(false); setContasFixasSugestoes([]);
   };
 
@@ -762,7 +732,7 @@ export default function DashboardPage() {
       showIsland("Atualizado com sucesso!", "success", "✏️");
       novoTransacaoId = editandoId;
     } else {
-      if (tipo !== "transferencia" && parcelas > 1) {
+      if (podeParcelar && parcelas > 1) {
         let valoresParcelas: number[];
         if (modoParcelamento === "manual") {
           valoresParcelas = valoresParcelasManual.map((v) => parseFloat((v || "0").replace(",", ".")) || 0);
@@ -872,7 +842,7 @@ export default function DashboardPage() {
         .mac-dock-animate { animation: macDockWave 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative pb-20 overflow-x-hidden transition-colors duration-300">
+      <div className="classic-root min-h-screen bg-gray-50 dark:bg-gray-900 relative pb-20 overflow-x-hidden transition-colors duration-300">
         
         {/* DYNAMIC ISLAND CENTRALIZADA (LIQUID GLASS + EMOJI) */}
         {island.show && (
@@ -1102,19 +1072,19 @@ export default function DashboardPage() {
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <div className="bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
+                <button type="button" onClick={() => setBancoDetalhe({nome: "Carteira / Casa", ids: contas.filter(c => c.tipo === "dinheiro").map(c => c.id)})} className="text-left cursor-pointer bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-xs">💵</div>
                     <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider truncate">Carteira / Casa</span>
                   </div>
                   <p className="text-lg font-black text-emerald-700 dark:text-emerald-300 truncate">{formatarMoeda(saldoDinheiroFisico, visibilidade.saldos)}</p>
-                </div>
+                </button>
                 
                 {saldosBancariosOrdenados.map((banco) => {
                   if (banco.ativo === false || !usuariosSelecionados.includes(banco.autor_nome)) return null;
                   const fotoBanco = mapPerfis[banco.autor_nome];
                   return (
-                    <div key={banco.id} className="bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-800 p-4 rounded-2xl border border-blue-100 dark:border-blue-800 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
+                    <button type="button" key={banco.id} onClick={() => setBancoDetalhe({nome: `${banco.banco} · @${banco.autor_nome}`, ids: contas.filter(c => c.conta_bancaria_id === banco.id && c.tipo === "corrente").map(c => c.id)})} className={`classic-bank-card nova-bank-${identidadeBanco(banco.banco).chave} text-left p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between hover:brightness-105 active:brightness-95 cursor-pointer`}>
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 overflow-hidden">
                           <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-black shrink-0 overflow-hidden">
@@ -1127,7 +1097,7 @@ export default function DashboardPage() {
                       <p className={`text-lg font-black truncate ${banco.saldo < 0 ? "text-red-600 dark:text-red-400" : "text-blue-700 dark:text-blue-400"}`}>
                         {formatarMoeda(banco.saldo, visibilidade.saldos)}
                       </p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
@@ -1242,7 +1212,7 @@ export default function DashboardPage() {
                   const chaveFaturaAtual = faturaAtual ? faturaAtual.chave : null;
 
                   return (
-                    <div key={cartao.id} className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-purple-100 dark:border-purple-800/30 shadow-sm flex flex-col hover:border-purple-300 dark:hover:border-purple-600 transition-colors group">
+                    <div key={cartao.id} className={`classic-bank-card nova-bank-${identidadeBanco(bancos.find(b => b.id === cartao.conta_bancaria_id)?.banco || cartao.nome).chave} p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors group`}>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3 overflow-hidden">
                           <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center text-xs font-black shrink-0 overflow-hidden">
@@ -1568,6 +1538,7 @@ export default function DashboardPage() {
         {/* ======================================================= */}
         {/* MODAL DE LANÇAMENTO E EDIÇÃO                            */}
         {/* ======================================================= */}
+        {bancoDetalhe && <DetalheBancoClassico nome={bancoDetalhe.nome} contaIds={bancoDetalhe.ids} transacoes={transacoes} mapPerfis={mapPerfis} aoFechar={() => setBancoDetalhe(null)} />}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
@@ -1580,9 +1551,9 @@ export default function DashboardPage() {
 
               <form onSubmit={dispararAuditoriaAtualizacao} className="p-6 space-y-4">
                 <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl relative z-0">
-                  <button type="button" onClick={() => { setTipo("despesa"); closeAllDropdowns(); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
-                  <button type="button" onClick={() => { setTipo("receita"); closeAllDropdowns(); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
-                  <button type="button" onClick={() => { setTipo("transferencia"); closeAllDropdowns(); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${tipo === "transferencia" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🔄 Transf.</button>
+                  <button type="button" onClick={() => { setTipo("despesa"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
+                  <button type="button" onClick={() => { setTipo("receita"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
+                  <button type="button" onClick={() => { setTipo("transferencia"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${tipo === "transferencia" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🔄 Transf.</button>
                 </div>
 
                 {tipo === "transferencia" && (
@@ -1598,7 +1569,7 @@ export default function DashboardPage() {
                     <input type="number" step="0.01" required value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0.00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-lg font-black text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                   </div>
 
-                  {!editandoId && tipo !== "transferencia" && (
+                  {!editandoId && podeParcelar && (
                     <div className="flex-1">
                       <label className="block text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Vezes</label>
                       <select value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-black text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 appearance-none text-center">
@@ -1613,7 +1584,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {!editandoId && tipo !== "transferencia" && parcelas > 1 && (() => {
+                {!editandoId && podeParcelar && parcelas > 1 && (() => {
                   const valorTotalPreview = parseFloat((valor || "0").replace(",", ".")) || 0;
                   const vBasePreview = Math.floor((valorTotalPreview / parcelas) * 100) / 100;
                   const diferencaPreview = Number((valorTotalPreview - vBasePreview * parcelas).toFixed(2));
@@ -1692,362 +1663,44 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* CAMPO 1: BANCO ORIGEM */}
-                  {(tipo === "receita" || tipo === "transferencia") && (
-                    <div className={`relative ${isBancoOrigemOpen ? "z-50" : "z-30"}`}>
-                      <label className={`block text-xs font-bold mb-1 uppercase tracking-wider flex items-center gap-1 ${tipo === "receita" ? "text-green-700 dark:text-green-400" : "text-purple-700 dark:text-purple-400"}`}>
-                        🏦 {tipo === "receita" ? "Onde entrou o dinheiro?" : "De onde sai o dinheiro? (Banco)"}
-                      </label>
-                      <button type="button" onClick={() => { setIsBancoOrigemOpen(!isBancoOrigemOpen); setIsFormaPagtoOpen(false); setIsBancoDestinoOpen(false); setIsFaturaDestinoOpen(false); }} className={`flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:ring-4 transition-all h-[55px] ${tipo === "receita" ? "focus:border-green-500 focus:ring-green-500/20" : "focus:border-purple-500 focus:ring-purple-500/20"}`}>
-                        {bancoOrigemId ? (
-                          bancoOrigemId === "dinheiro" ? (
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">💵</div>
-                              <div className="flex flex-col items-start truncate text-left">
-                                <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">Dinheiro Físico</span>
-                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">Na Carteira / Cofre</span>
-                              </div>
-                            </div>
-                          ) : (
-                            () => {
-                              const b = bancos.find((x) => x.id === bancoOrigemId);
-                              if (!b) return <span className="text-gray-400 font-bold text-sm ml-1">Selecione o banco...</span>;
-                              const fotoBanco = mapPerfis[b.autor_nome];
-                              return (
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 overflow-hidden">
-                                    {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : b.autor_nome?.charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="flex flex-col items-start truncate text-left">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full flex items-center gap-1">
-                                      {b.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{b.autor_nome}</span>
-                                    </span>
-                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{b.nome}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                          )()
-                        ) : (
-                          <span className="text-gray-400 font-bold text-sm ml-1">Apenas o Banco...</span>
-                        )}
-                        <svg className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${isBancoOrigemOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                      </button>
-
-                      {isBancoOrigemOpen && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                          <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                            🏦 Bancos e Cofres
-                          </div>
-                          <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {bancos.filter((b) => b.ativo !== false && (!somenteMinhasContas || b.user_id === userId)).map((banco) => {
-                              const temChave = contas.some((c) => c.conta_bancaria_id === banco.id && c.tipo === "corrente" && c.ativo !== false);
-                              if (!temChave) return null;
-                              const fotoBanco = mapPerfis[banco.autor_nome];
-                              return (
-                                <li key={banco.id}>
-                                  <button type="button" onClick={() => { setBancoOrigemId(banco.id); setFormaPagtoId(""); setIsBancoOrigemOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 overflow-hidden">
-                                      {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : banco.autor_nome?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex flex-col truncate">
-                                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                        {banco.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{banco.autor_nome}</span>
-                                      </span>
-                                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{banco.nome}</span>
-                                    </div>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                            <li key="dinheiro_origem">
-                              <button type="button" onClick={() => { setBancoOrigemId("dinheiro"); setFormaPagtoId(""); setIsBancoOrigemOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">💵</div>
-                                <div className="flex flex-col truncate">
-                                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">Dinheiro Físico</span>
-                                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">Cofre Principal</span>
-                                </div>
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* CAMPO 2: FORMA DE PAGTO */}
-                  {(tipo === "despesa" || (tipo === "transferencia" && bancoOrigemId && bancoOrigemId !== "dinheiro")) && (
-                    <div className={`relative animate-in fade-in slide-in-from-top-4 duration-200 ${isFormaPagtoOpen ? "z-50" : "z-20"}`}>
-                      <label className={`block text-xs font-bold mb-1 uppercase tracking-wider flex items-center gap-1 ${tipo === "despesa" ? "text-red-700 dark:text-red-400" : "text-gray-500 dark:text-gray-400 mt-4"}`}>
-                        {tipo === "despesa" ? "💳 Forma Pagto / Banco" : "↘️ Qual a forma do envio? (PIX, Deb)"}
-                      </label>
-                      <button type="button" onClick={() => { setIsFormaPagtoOpen(!isFormaPagtoOpen); setIsBancoOrigemOpen(false); setIsBancoDestinoOpen(false); setIsFaturaDestinoOpen(false); }} className={`flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:ring-4 transition-all h-[55px] ${tipo === "despesa" ? "focus:border-red-500 focus:ring-red-500/20" : "focus:border-gray-500 focus:ring-gray-500/20"}`}>
-                        {formaPagtoId ? (() => {
-                          const selected = contas.find((c) => c.id === formaPagtoId);
-                          if (!selected) return <span className="text-gray-400 font-bold text-sm ml-1">Selecione...</span>;
-                          const avatar = getContaAvatar(selected);
-                          return (
-                            <div className="flex items-center gap-3 overflow-hidden">
-                              <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                              </div>
-                              <div className="flex flex-col items-start truncate text-left">
-                                <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{selected.nome}</span>
-                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{getContaSubtitle(selected)}</span>
-                              </div>
-                            </div>
-                          );
-                        })() : (
-                          <span className="text-gray-400 font-bold text-sm ml-1">Selecione o meio de pagamento...</span>
-                        )}
-                        <svg className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${isFormaPagtoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                      </button>
-
-                      {isFormaPagtoOpen && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                          {tipo === "despesa" ? (
-                            bancos.filter((b) => b.ativo !== false && (!somenteMinhasContas || b.user_id === userId)).map((banco) => {
-                              const chavesDoBanco = contas.filter((c) => c.conta_bancaria_id === banco.id && c.ativo !== false);
-                              if (chavesDoBanco.length === 0) return null;
-                              return (
-                                <div key={banco.id}>
-                                  <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 flex items-center justify-between">
-                                    <span>🏦 {banco.banco}</span><span>@{banco.autor_nome}</span>
-                                  </div>
-                                  <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                                    {chavesDoBanco.map((c) => {
-                                      const avatar = getContaAvatar(c);
-                                      return (
-                                        <li key={c.id}>
-                                          <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                              {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                                            </div>
-                                            <div className="flex flex-col truncate">
-                                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
-                                            </div>
-                                          </button>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                </div>
-                              );
-                            })
-                          ) : (
-                            <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                              {contas.filter((c) => c.conta_bancaria_id === bancoOrigemId && c.tipo === "corrente" && c.ativo !== false).map((c) => {
-                                const avatar = getContaAvatar(c);
-                                return (
-                                  <li key={c.id}>
-                                    <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                        {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                                      </div>
-                                      <div className="flex flex-col truncate">
-                                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
-                                      </div>
-                                    </button>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          )}
-                          {tipo === "despesa" && (() => {
-                            const chavesDin = contas.filter((c) => c.tipo === "dinheiro" && c.ativo !== false);
-                            if (chavesDin.length === 0) return null;
-                            return (
-                              <div>
-                                <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">💵 Dinheiro Físico</div>
-                                <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                                  {chavesDin.map((c) => {
-                                    const avatar = getContaAvatar(c);
-                                    return (
-                                      <li key={c.id}>
-                                        <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                            {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                                          </div>
-                                          <div className="flex flex-col truncate">
-                                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
-                                          </div>
-                                        </button>
-                                      </li>
-                                    );
-                                  })}
-                                </ul>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* CAMPO 3: DESTINO TRANSFERENCIA */}
-                  {tipo === "transferencia" && (
-                    <div className={`relative mt-4 animate-in fade-in slide-in-from-top-4 duration-200 ${isPagamentoFatura ? (isFaturaDestinoOpen ? "z-50" : "z-10") : isBancoDestinoOpen ? "z-50" : "z-10"}`}>
-                      <div className="absolute -top-4 left-6 text-gray-300 dark:text-gray-600 z-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14" /><path d="m19 12-7 7-7-7" /></svg>
-                      </div>
-                      <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 mb-1 uppercase tracking-wider flex items-center gap-1 pt-2 relative z-10">
-                        📥 {isPagamentoFatura ? "Qual fatura você vai pagar?" : "Para qual Banco/Cofre vai?"}
-                      </label>
-
-                      {isPagamentoFatura ? (
-                        <button type="button" onClick={() => { setIsFaturaDestinoOpen(!isFaturaDestinoOpen); setIsFormaPagtoOpen(false); setIsBancoOrigemOpen(false); }} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all h-[55px] relative z-10">
-                          {faturaDestinoId ? (() => {
-                            const c = contas.find((x) => x.id === faturaDestinoId);
-                            if (!c) return <span className="text-gray-400 font-bold text-sm ml-1">Selecione a fatura...</span>;
-                            const avatar = getContaAvatar(c);
-                            return (
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                  {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                                </div>
-                                <div className="flex flex-col items-start truncate text-left">
-                                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{c.nome}</span>
-                                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{getContaSubtitle(c)}</span>
-                                </div>
-                              </div>
-                            );
-                          })() : (
-                            <span className="text-gray-400 font-bold text-sm ml-1">Selecione a fatura...</span>
-                          )}
-                          <svg className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${isFaturaDestinoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                        </button>
-                      ) : (
-                        <button type="button" onClick={() => { setIsBancoDestinoOpen(!isBancoDestinoOpen); setIsFormaPagtoOpen(false); setIsBancoOrigemOpen(false); }} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all h-[55px] relative z-10">
-                          {bancoDestinoId ? (() => {
-                            if (bancoDestinoId === "dinheiro") {
-                              return (
-                                <div className="flex items-center gap-3 overflow-hidden">
-                                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">💵</div>
-                                  <div className="flex flex-col items-start truncate text-left">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">Dinheiro Físico</span>
-                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">Na Carteira / Cofre</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            const b = bancos.find((x) => x.id === bancoDestinoId);
-                            if (!b) return <span className="text-gray-400 font-bold text-sm ml-1">Selecione o banco...</span>;
-                            const fotoBanco = mapPerfis[b.autor_nome];
-                            return (
-                              <div className="flex items-center gap-3 overflow-hidden">
-                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 overflow-hidden">
-                                  {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : b.autor_nome?.charAt(0).toUpperCase()}
-                                </div>
-                                <div className="flex flex-col items-start truncate text-left">
-                                  <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full flex items-center gap-1">
-                                    {b.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{b.autor_nome}</span>
-                                  </span>
-                                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{b.nome}</span>
-                                </div>
-                              </div>
-                            );
-                          })() : (
-                            <span className="text-gray-400 font-bold text-sm ml-1">Selecione o banco destino...</span>
-                          )}
-                          <svg className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${isBancoDestinoOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
-                        </button>
-                      )}
-
-                      {isPagamentoFatura && isFaturaDestinoOpen && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                          <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300">💳 Faturas em Aberto</div>
-                          <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {contas.filter((c) => c.tipo === "credito" && c.ativo !== false && (!somenteMinhasContas || c.user_id === userId)).map((c) => {
-                              const avatar = getContaAvatar(c);
-                              const faturaAtual = obterFaturasDoCartao(c.id).totalGeral;
-                              return (
-                                <li key={c.id}>
-                                  <button type="button" onClick={() => { setFaturaDestinoId(c.id); setIsFaturaDestinoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-between gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
-                                        {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
-                                      </div>
-                                      <div className="flex flex-col truncate">
-                                        <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
-                                      </div>
-                                    </div>
-                                    <span className={`text-xs font-black shrink-0 ${faturaAtual > 0 ? "text-purple-600 dark:text-purple-400" : "text-gray-400 dark:text-gray-500"}`}>
-                                      {formatarMoeda(faturaAtual)}
-                                    </span>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      )}
-                      
-                      {/* UI INTELIGENTE PARA SELECIONAR E PREENCHER O VALOR DA FATURA */}
-                      {isPagamentoFatura && faturaDestinoId && !isFaturaDestinoOpen && (
-                        <div className="mt-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 p-4 rounded-xl animate-in fade-in duration-300 relative z-0">
-                          <p className="text-xs font-bold text-purple-800 dark:text-purple-400 mb-2">Clique na fatura que deseja pagar:</p>
-                          <div className="space-y-2">
-                            {obterFaturasDoCartao(faturaDestinoId).faturasAbertas.map(f => (
-                               <div key={f.chave} onClick={() => setValor(f.valorAberto.toFixed(2))} className="flex justify-between items-center bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:border-purple-500 dark:hover:border-purple-500 transition-all shadow-sm active:scale-95">
-                                  <div>
-                                     <span className="block text-xs font-bold text-gray-900 dark:text-white">Venc. {f.labelVencimento}</span>
-                                     <span className={`text-[10px] font-black uppercase tracking-wider ${f.status === 'Atrasada' ? 'text-red-600 dark:text-red-400' : f.status === 'Fechada' ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400'}`}>{f.status}</span>
-                                  </div>
-                                  <span className="text-sm font-black text-purple-700 dark:text-purple-400">{formatarMoeda(f.valorAberto)}</span>
-                               </div>
-                            ))}
-                            {obterFaturasDoCartao(faturaDestinoId).faturasAbertas.length === 0 && <p className="text-xs font-bold text-gray-500 dark:text-gray-400 text-center py-2">Nenhuma fatura pendente.</p>}
-                          </div>
-                        </div>
-                      )}
-
-                      {!isPagamentoFatura && isBancoDestinoOpen && (
-                        <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                          <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">🏦 Bancos e Cofres Disponíveis</div>
-                          <ul className="divide-y divide-gray-50 dark:divide-gray-700">
-                            {bancos.filter((b) => b.ativo !== false && b.id !== bancoOrigemId && (!somenteMinhasContas || b.user_id === userId)).map((banco) => {
-                              const temChave = contas.some((c) => c.conta_bancaria_id === banco.id && c.tipo === "corrente" && c.ativo !== false);
-                              if (!temChave) return null;
-                              const fotoBanco = mapPerfis[banco.autor_nome];
-                              return (
-                                <li key={banco.id}>
-                                  <button type="button" onClick={() => { setBancoDestinoId(banco.id); setIsBancoDestinoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 overflow-hidden">
-                                      {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : banco.autor_nome?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div className="flex flex-col truncate">
-                                      <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                        {banco.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{banco.autor_nome}</span>
-                                      </span>
-                                      <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{banco.nome}</span>
-                                    </div>
-                                  </button>
-                                </li>
-                              );
-                            })}
-                            {bancoOrigemId !== "dinheiro" && (
-                              <li key="dinheiro_destino">
-                                <button type="button" onClick={() => { setBancoDestinoId("dinheiro"); setIsBancoDestinoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400">💵</div>
-                                  <div className="flex flex-col truncate">
-                                    <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">Dinheiro Físico</span>
-                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">Cofre Principal</span>
-                                  </div>
-                                </button>
-                              </li>
-                            )}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {(tipo === "receita" || tipo === "transferencia") && <SeletorBanco
+                    rotulo={tipo === "receita" ? "Onde entrou o dinheiro?" : "De onde sai o dinheiro?"}
+                    valor={bancoOrigemId} onSelecionar={id => { setBancoOrigemId(id); setFormaPagtoId(""); }}
+                    bancos={bancos.filter(b => b.ativo !== false && (!somenteMinhasContas || b.user_id === userId) && contas.some(c => c.conta_bancaria_id === b.id && c.tipo === "corrente" && c.ativo !== false))} mapPerfis={mapPerfis} />}
+                  {(tipo === "despesa" || (tipo === "transferencia" && bancoOrigemId && bancoOrigemId !== "dinheiro")) && <SeletorContaPagamento
+                    rotulo={tipo === "despesa" ? "Forma de pagamento" : "Forma do envio"} valor={formaPagtoId} onSelecionar={setFormaPagtoId}
+                    contas={contas.filter(c => c.ativo !== false && (tipo === "transferencia" ? c.conta_bancaria_id === bancoOrigemId && c.tipo === "corrente" : c.tipo === "dinheiro" || bancos.some(b => b.id === c.conta_bancaria_id && b.ativo !== false && (!somenteMinhasContas || b.user_id === userId))))}
+                    bancos={bancos} mapPerfis={mapPerfis} />}
+                  {tipo === "transferencia" && (isPagamentoFatura ? <div className="space-y-3">
+                    <SeletorContaPagamento rotulo="Fatura do cartão" valor={faturaDestinoId} onSelecionar={setFaturaDestinoId} contas={contas.filter(c => c.tipo === "credito" && c.ativo !== false && (!somenteMinhasContas || c.user_id === userId))} bancos={bancos} mapPerfis={mapPerfis} />
+                    {faturaDestinoId && <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 p-3 space-y-2">
+                      <p className="text-xs font-bold text-purple-800 dark:text-purple-300">Qual fatura deseja pagar?</p>
+                      {obterFaturasDoCartao(faturaDestinoId).faturasAbertas.map(f => <button type="button" key={f.chave} onClick={() => {
+                        setValor(f.valorAberto.toFixed(2));
+                        const cartao = contas.find(c => c.id === faturaDestinoId);
+                        const banco = bancos.find(b => b.id === cartao?.conta_bancaria_id);
+                        const [ano, mes] = f.chave.split("-");
+                        setDescricao(`Fatura ${banco?.banco || banco?.nome || cartao?.nome || "Cartão"} Ref.${mes}/${ano}`);
+                      }} className="w-full flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 text-left hover:border-purple-500 active:bg-purple-100 dark:active:bg-purple-900">
+                        <span><span className="block text-sm font-bold text-gray-900 dark:text-gray-100">Venc. {f.labelVencimento}</span><span className="text-xs text-gray-500 dark:text-gray-400">{f.status}</span></span>
+                        <span className="text-sm font-bold text-purple-700 dark:text-purple-300">{formatarMoeda(f.valorAberto)}</span>
+                      </button>)}
+                      {obterFaturasDoCartao(faturaDestinoId).faturasAbertas.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma fatura pendente.</p>}
+                    </div>}
+                  </div> : <SeletorBanco rotulo="Para onde vai?" valor={bancoDestinoId} onSelecionar={setBancoDestinoId} bancos={bancos.filter(b => b.ativo !== false && (!somenteMinhasContas || b.user_id === userId) && contas.some(c => c.conta_bancaria_id === b.id && c.tipo === "corrente" && c.ativo !== false))} mapPerfis={mapPerfis} />)}
 
                   <div className="mt-3 flex items-center gap-2">
-                    <input type="checkbox" id="filtroContas" checked={somenteMinhasContas} onChange={(e) => setSomenteMinhasContas(e.target.checked)} className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer" />
+                    <input type="checkbox" id="filtroContas" checked={somenteMinhasContas} onChange={(e) => {
+                      setSomenteMinhasContas(e.target.checked);
+                      if (e.target.checked) {
+                        const permiteBanco = (id: string) => id === "dinheiro" || bancos.some(b => b.id === id && b.user_id === userId);
+                        const permiteConta = (id: string) => contas.some(c => c.id === id && (c.tipo === "dinheiro" || c.user_id === userId));
+                        if (!permiteBanco(bancoOrigemId)) { setBancoOrigemId(""); setFormaPagtoId(""); }
+                        if (!permiteBanco(bancoDestinoId)) setBancoDestinoId("");
+                        if (!permiteConta(formaPagtoId)) setFormaPagtoId("");
+                        if (!permiteConta(faturaDestinoId)) setFaturaDestinoId("");
+                      }
+                    }} className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 cursor-pointer" />
                     <label htmlFor="filtroContas" className="text-xs font-bold text-gray-500 dark:text-gray-400 cursor-pointer select-none">Visualizar apenas minhas contas</label>
                   </div>
                 </div>
