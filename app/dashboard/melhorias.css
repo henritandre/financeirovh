@@ -41,3 +41,15 @@
 .classic-root .classic-bank-card { background: linear-gradient(120deg, rgba(var(--card-tint), .18), transparent 75%), var(--nova-glass-1); }
 .classic-bank-dialog { margin: auto; width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 32px); border: 1px solid var(--nova-ink-hairline); border-radius: 16px; padding: 24px; background: var(--nova-glass-1); color: var(--nova-ink); }
 .classic-bank-dialog::backdrop { background: #0008; }
+
+.classic-filter-pair { display: flex; flex-direction: column; width: 100%; gap: 20px; min-width: 0; }
+@media (min-width: 640px) { .classic-filter-pair { flex: 2; flex-direction: row; } }
+.classic-filter-trigger { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; min-height: 42px; padding: 10px; border: 1px solid var(--nova-ink-hairline); border-radius: 12px; background: var(--nova-bg-elevated); color: var(--nova-ink); font-size: 14px; font-weight: 700; cursor: pointer; }
+.classic-filter-trigger:focus-visible { outline: 2px solid var(--nova-accent); outline-offset: 2px; }
+.classic-filter-menu { position: absolute; z-index: 40; top: calc(100% + 8px); left: 0; width: 100%; min-width: min(300px, 80vw); border: 1px solid var(--nova-glass-border); border-radius: 14px; background: var(--nova-glass-3); color: var(--nova-ink); box-shadow: var(--nova-shadow-3); overflow: hidden; }
+.classic-filter-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--nova-bg-elevated); font-size: 12px; font-weight: 700; }
+.classic-filter-user img, .classic-filter-initial { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
+.classic-filter-initial { display: grid; place-items: center; background: var(--nova-ink-hairline); }
+.classic-filter-option { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; border-left: 3px solid rgba(var(--card-tint), .4); background: linear-gradient(90deg, rgba(var(--card-tint), .08), transparent 70%); }
+.classic-filter-option:hover { background-color: var(--nova-ink-hairline); }
+.classic-filter-option input { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--nova-accent); }

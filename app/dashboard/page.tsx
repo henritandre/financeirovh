@@ -1,5 +1,7 @@
 "use client";
 import "./melhorias.css";
+import { incluirPorForma } from "../../lib/filtroContas";
+import { FiltrosContas } from "./FiltrosContas";
 import { SeletorContaPagamento, SeletorBanco } from "../nova/_ui/SeletorConta";
 import { identidadeBanco } from "../nova/_lib/identidadeBanco";
 import { DetalheBancoClassico } from "./DetalheBancoClassico";
@@ -116,7 +118,7 @@ export default function DashboardPage() {
 
   const [filtroCategoria, setFiltroCategoria] = useState("");
   const [filtroBanco, setFiltroBanco] = useState("");
-  const [filtroFormaPagto, setFiltroFormaPagto] = useState("");
+  const [formasExcluidas, setFormasExcluidas] = useState<string[]>([]);
 
   const [abaExtrato, setAbaExtrato] = useState<"extrato" | "parcelamentos">("extrato");
 
@@ -380,7 +382,7 @@ export default function DashboardPage() {
     setUsuariosSelecionados(usuariosDisponiveis);
     setFiltroCategoria("");
     setFiltroBanco("");
-    setFiltroFormaPagto("");
+    setFormasExcluidas([]);
     setSomenteMinhasContas(true);
   };
 
@@ -400,7 +402,7 @@ export default function DashboardPage() {
     
     const categoriaOk = filtroCategoria === "" || t.categoria_id === filtroCategoria;
     const bancoOk = filtroBanco === "" || t.conta_origem?.banco_vinculado?.id === filtroBanco || t.conta_destino?.banco_vinculado?.id === filtroBanco;
-    const contaOk = filtroFormaPagto === "" || t.conta_id === filtroFormaPagto || t.conta_destino_id === filtroFormaPagto;
+    const contaOk = incluirPorForma(t, formasExcluidas, filtroBanco, contas);
 
     return dataOk && tipoOk && usuarioOk && categoriaOk && bancoOk && contaOk;
   });
@@ -1009,35 +1011,8 @@ export default function DashboardPage() {
                   {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
-              <div className="w-full sm:flex-1">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Filtrar por Banco / Instituição</label>
-                <select value={filtroBanco} onChange={(e) => setFiltroBanco(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Todos os Bancos</option>
-                  {[...bancos].sort((a,b) => {
-                    const autorA = a.autor_nome || "";
-                    const autorB = b.autor_nome || "";
-                    if (autorA !== autorB) return autorA.localeCompare(autorB);
-                    const bancoA = a.banco || "";
-                    const bancoB = b.banco || "";
-                    return bancoA.localeCompare(bancoB);
-                  }).map(b => (
-                    <option key={b.id} value={b.id}>@{b.autor_nome} • {b.banco}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-full sm:flex-1">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Filtrar por Pagamento</label>
-                <select value={filtroFormaPagto} onChange={(e) => setFiltroFormaPagto(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Todas as Formas de Pagamento</option>
-                  {contas
-                    .filter((c) => filtroBanco === "" || c.conta_bancaria_id === filtroBanco)
-                    .map (c => (
-                      <option key={c.id} value={c.id}>
-                        {c.nome} {c.banco_vinculado ? `(${c.banco_vinculado.banco})` : ""}
-                      </option>
-                  ))}
-                </select>
-              </div>
+              <FiltrosContas bancos={bancos} contas={contas} mapPerfis={mapPerfis} bancoId={filtroBanco}
+                aoBanco={id => { setFiltroBanco(id); setFormasExcluidas([]); }} excluidas={formasExcluidas} aoExcluir={setFormasExcluidas} />
               <div className="w-full sm:w-auto shrink-0">
                 <button 
                   onClick={limparFiltros}
