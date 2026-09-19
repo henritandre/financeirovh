@@ -22,13 +22,12 @@ export function DetalheBanco({
 }) {
   const pontos = useEvolucaoSaldo(transacoes, contaIds, dias);
 
-  // Entradas, débito e PIX desta conta — pagamento de fatura de cartão fica de fora de propósito.
+  // Movimentações que compõem o saldo, incluindo pagamentos de fatura.
   const lancamentos = useMemo(() => {
     return transacoes
       .filter((t) => {
         if (t.tipo === "receita" || t.tipo === "despesa") return contaIds.includes(t.conta_id);
         if (t.tipo === "transferencia") {
-          if (t.conta_destino?.tipo === "credito") return false;
           return contaIds.includes(t.conta_id) || contaIds.includes(t.conta_destino_id);
         }
         return false;
@@ -63,7 +62,7 @@ export function DetalheBanco({
         {lancamentos.length === 0 && <p className="text-[13px] text-[var(--nova-ink-faint)] py-3">Nada por aqui ainda.</p>}
         {lancamentos.map((t, i) => {
           const foto = mapPerfis[t.autor_nome];
-          const receita = t.tipo === "receita";
+          const receita = t.tipo === "receita" || (t.tipo === "transferencia" && contaIds.includes(t.conta_destino_id) && !contaIds.includes(t.conta_id));
           return (
             <div key={t.id} className={`flex items-center gap-3 py-2.5 ${i === 0 ? "" : "border-t border-[var(--nova-ink-hairline)]"}`}>
               <div className="w-7 h-7 rounded-full overflow-hidden shrink-0 bg-[var(--nova-ink-hairline)] flex items-center justify-center text-[11px] font-semibold text-[var(--nova-ink-faint)]">

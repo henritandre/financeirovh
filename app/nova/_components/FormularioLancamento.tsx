@@ -7,6 +7,7 @@ import { Button } from "../_ui/Button";
 import { SegmentedControl } from "../_ui/SegmentedControl";
 import { SeletorContaPagamento, SeletorBanco } from "../_ui/SeletorConta";
 import { brl, dataLocal } from "../_lib/formatar";
+import { identidadeBanco } from "../_lib/identidadeBanco";
 
 export interface DadosFormulario {
   tipo: TipoLancamento;
@@ -34,6 +35,7 @@ export function FormularioLancamento({
   bancos,
   categorias,
   mapPerfis,
+  faturasDoCartao,
   onCancelar,
   onSalvarNovo,
   onPedirMotivoEdicao,
@@ -46,6 +48,7 @@ export function FormularioLancamento({
   bancos: any[];
   categorias: any[];
   mapPerfis: Record<string, string>;
+  faturasDoCartao: (id: string) => { faturas: { competencia: string; venc: Date; aberto: number }[] };
   onCancelar: () => void;
   onSalvarNovo: (dados: DadosFormulario) => void;
   onPedirMotivoEdicao: (dados: DadosFormulario) => void;
@@ -86,6 +89,11 @@ export function FormularioLancamento({
     return "";
   });
   const [faturaDestinoId, setFaturaDestinoId] = useState(() => (transacaoBase?.conta_destino?.tipo === "credito" ? transacaoBase.conta_destino.id : ""));
+  const [referenciaSelecionada, setReferenciaSelecionada] = useState("");
+  const cartaoDestino = contas.find(c => c.id === faturaDestinoId);
+  const bancoCartao = bancos.find(b => b.id === cartaoDestino?.conta_bancaria_id);
+  const nomeBancoCartao = bancoCartao?.banco || bancoCartao?.nome || cartaoDestino?.nome || "Cartão";
+  const faturasPendentes = faturaDestinoId ? faturasDoCartao(faturaDestinoId).faturas : [];
 
   const [vinculoContaFixa, setVinculoContaFixa] = useState<VinculoContaFixa | null>(null);
   const [ocorrenciaOriginalVinculada, setOcorrenciaOriginalVinculada] = useState<any | null>(null);
@@ -330,7 +338,28 @@ export function FormularioLancamento({
           />
 
           {isPagamentoFatura ? (
-            <SeletorContaPagamento rotulo="Fatura do cartão" valor={faturaDestinoId} onSelecionar={setFaturaDestinoId} contas={contasCartao} bancos={bancosVisiveis} mapPerfis={mapPerfis} />
+            <div className="space-y-3">
+              <SeletorContaPagamento rotulo="Fatura do cartão" valor={faturaDestinoId} onSelecionar={(id) => { setFaturaDestinoId(id); setReferenciaSelecionada(""); }} contas={contasCartao} bancos={bancosVisiveis} mapPerfis={mapPerfis} />
+              {faturaDestinoId && <fieldset className={`nova-invoice-picker nova-bank-${identidadeBanco(nomeBancoCartao).chave}`}>
+                <legend className="text-[12px] font-semibold px-1">Qual fatura deseja pagar?</legend>
+                <div className="space-y-2">
+                  {faturasPendentes.map(f => {
+                    const [ano, mes] = f.competencia.split("-");
+                    const referencia = `${mes}/${ano}`;
+                    const selecionada = referenciaSelecionada === `${faturaDestinoId}:${f.competencia}`;
+                    return <button key={f.competencia} type="button" aria-pressed={selecionada} className="nova-invoice-option" onClick={() => {
+                      setReferenciaSelecionada(`${faturaDestinoId}:${f.competencia}`);
+                      setValor(f.aberto.toFixed(2).replace(".", ","));
+                      setDescricao(`Fatura ${nomeBancoCartao} Ref.${referencia}`);
+                    }}>
+                      <span className="min-w-0 text-left"><span className="block text-sm font-semibold">Ref. {referencia}</span><span className="block text-xs text-[var(--nova-ink-soft)]">Venc. {f.venc.toLocaleDateString("pt-BR")}</span></span>
+                      <span className="text-sm font-semibold whitespace-nowrap">{brl(f.aberto)}{selecionada && <span aria-hidden="true"> ✓</span>}</span>
+                    </button>;
+                  })}
+                  {faturasPendentes.length === 0 && <p className="text-sm text-[var(--nova-ink-soft)] py-2">Nenhuma fatura pendente neste cartão.</p>}
+                </div>
+              </fieldset>}
+            </div>
           ) : (
             <SeletorBanco rotulo="Para onde vai" valor={bancoDestinoId} onSelecionar={setBancoDestinoId} bancos={bancosVisiveis} mapPerfis={mapPerfis} />
           )}

@@ -52,7 +52,7 @@ export default function NovaDashboardPage() {
   const { categorias } = useCategorias();
   const { saldosBancarios, saldoDinheiro, saldoTotal } = useSaldos(contas, transacoes, bancos);
   const { resumo, doPeriodo } = useResumoPeriodo(transacoes);
-  const { cartoes, totalCartoes } = useFaturasCartao(contas, transacoes);
+  const { cartoes, totalCartoes, faturasDoCartao } = useFaturasCartao(contas, transacoes);
   const extrato = doPeriodo.slice(0, 12);
 
   const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
@@ -206,6 +206,7 @@ export default function NovaDashboardPage() {
       <Sheet aberto={overlay !== null} aoFechar={fecharOverlay} tituloAcessivel="Lançamento">
         {overlay?.tipo === "novo" && (
           <FormularioLancamento userId={sessao.userId}
+            faturasDoCartao={faturasDoCartao}
             key="novo"
             modo="novo"
             contas={contas}
@@ -228,6 +229,7 @@ export default function NovaDashboardPage() {
         )}
         {overlay?.tipo === "editar" && (
           <FormularioLancamento userId={sessao.userId}
+            faturasDoCartao={faturasDoCartao}
             key={overlay.transacao.id}
             modo="editar"
             transacaoBase={overlay.transacao}

@@ -1,0 +1,43 @@
+/* Shared controls with the classic layout's opaque surfaces and tighter corners. */
+.classic-root { --nova-bg-elevated: #fff; --nova-ink: #111827; --nova-ink-soft: #6b7280; --nova-ink-faint: #6b7280; --nova-ink-hairline: #d1d5db; --nova-glass-1: #fff; --nova-glass-3: #fff; --nova-glass-border: #d1d5db; --nova-radius-md: 12px; --nova-accent: #2563eb; --nova-success: #15803d; --nova-danger: #dc2626; --nova-shadow-3: 0 16px 40px #0003; --nova-blur-sheet: none; }
+.dark .classic-root { --nova-bg-elevated: #111827; --nova-ink: #f3f4f6; --nova-ink-soft: #9ca3af; --nova-ink-faint: #9ca3af; --nova-ink-hairline: #374151; --nova-glass-1: #1f2937; --nova-glass-3: #1f2937; --nova-glass-border: #4b5563; --nova-success: #4ade80; --nova-danger: #f87171; }
+.classic-root .nova-bank-avatar { width: 32px; height: 32px; flex-shrink: 0; display: grid; place-items: center; border-radius: 50%; overflow: hidden; font-size: 13px; font-weight: 600; color: var(--nova-accent); background: color-mix(in srgb, var(--nova-accent) 12%, transparent); }
+.classic-root .nova-bank-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.classic-root .nova-bank-name { font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.classic-root .nova-bank-owner { font-size: 10px; color: var(--nova-ink-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.classic-root .nova-bank-itau { --card-tint: 220, 126, 48; --bank-mark: #9d4b0d; }
+.classic-root .nova-bank-nubank { --card-tint: 149, 95, 203; --bank-mark: #70409e; }
+.classic-root .nova-bank-inter { --card-tint: 227, 146, 80; --bank-mark: #995218; }
+.classic-root .nova-bank-caixa { --card-tint: 63, 133, 183; --bank-mark: #23628f; }
+.classic-root .nova-bank-santander { --card-tint: 199, 86, 86; --bank-mark: #9b353b; }
+.classic-root .nova-bank-mercantil { --card-tint: 76, 123, 190; --bank-mark: #375e99; }
+.classic-root .nova-bank-bradesco { --card-tint: 191, 74, 103; --bank-mark: #983b53; }
+.classic-root .nova-bank-bb { --card-tint: 191, 164, 53; --bank-mark: #786613; }
+.classic-root .nova-bank-carteira { --card-tint: 91, 154, 127; --bank-mark: #326c53; }
+.classic-root .nova-bank-neutro { --card-tint: 112, 140, 174; --bank-mark: #4f6886; }
+.classic-root .nova-bank-avatar { box-shadow: 0 0 0 3px rgba(var(--card-tint), .16); color: var(--bank-mark); background: rgba(var(--card-tint), .16); }
+.classic-root .nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; border-left: 3px solid rgba(var(--card-tint), .65); background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.dark .classic-root .nova-picker-bank { color: color-mix(in srgb, rgb(var(--card-tint)) 60%, white); }
+.classic-root .nova-search-field { position: relative; }
+.classic-root .nova-search-field input { width: 100%; min-height: 52px; border: 1px solid var(--nova-ink-hairline); border-radius: var(--nova-radius-md); background: var(--nova-bg-elevated); color: var(--nova-ink); padding: 12px 36px 12px 14px; font-size: 16px; text-overflow: ellipsis; }
+.classic-root .nova-search-field input::placeholder { color: var(--nova-ink-faint); }
+.classic-root .nova-search-field > span { position: absolute; right: 14px; top: 14px; color: var(--nova-ink-soft); pointer-events: none; }
+.classic-root .nova-search-results { position: fixed; z-index: 60; overflow-y: auto; overscroll-behavior: contain; border-radius: var(--nova-radius-md); border: 1px solid var(--nova-glass-border); background: var(--nova-glass-3); box-shadow: var(--nova-shadow-3); backdrop-filter: var(--nova-blur-sheet); -webkit-backdrop-filter: var(--nova-blur-sheet); }
+.classic-root .nova-search-option { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; }
+.classic-root .nova-search-option:hover, .classic-root .nova-search-option-active { background: var(--nova-ink-hairline); }
+.classic-root .nova-search-field input { min-height: 64px; }
+.classic-root .nova-search-field > span { top: 50%; transform: translateY(-50%); }
+.classic-root .nova-search-selected input { color: transparent; caret-color: transparent; background: var(--nova-glass-1); border-color: rgba(var(--card-tint), .3); }
+.classic-root .nova-payment-selection { position: absolute; inset: 1px; display: flex; align-items: center; gap: 11px; padding: 9px 36px 9px 12px; border-radius: var(--nova-radius-md); background: linear-gradient(100deg, rgba(var(--card-tint), .17), rgba(var(--card-tint), .04) 65%, transparent); pointer-events: none; }
+.classic-root .nova-payment-icon { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; color: var(--bank-mark); background: rgba(var(--card-tint), .16); border: 1px solid rgba(var(--card-tint), .18); }
+.dark .classic-root .nova-payment-icon { color: color-mix(in srgb, rgb(var(--card-tint)) 55%, white); }
+.classic-root .nova-payment-copy { min-width: 0; display: grid; gap: 3px; }
+.classic-root .nova-payment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink); font-size: 14px; font-weight: 600; }
+.classic-root .nova-payment-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink-soft); font-size: 11px; }
+.classic-root .nova-search-results { z-index: 100; }
+.classic-root .nova-search-field input:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+.classic-root .nova-bank-avatar { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; overflow: hidden; }
+.classic-root .nova-bank-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.classic-root .classic-bank-card { background: linear-gradient(120deg, rgba(var(--card-tint), .18), transparent 75%), var(--nova-glass-1); }
+.classic-bank-dialog { margin: auto; width: min(440px, calc(100% - 32px)); max-height: calc(100dvh - 32px); border: 1px solid var(--nova-ink-hairline); border-radius: 16px; padding: 24px; background: var(--nova-glass-1); color: var(--nova-ink); }
+.classic-bank-dialog::backdrop { background: #0008; }

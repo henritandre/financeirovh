@@ -279,3 +279,25 @@
 .nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; border-left: 3px solid rgba(var(--card-tint), .65); background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
 .dark .nova-picker-bank { color: color-mix(in srgb, rgb(var(--card-tint)) 60%, white); }
 @media (prefers-reduced-motion: reduce) { .nova-account-switch, .nova-account-switch::after { transition: none; } }
+
+.nova-search-field { position: relative; }
+.nova-search-field input { width: 100%; min-height: 52px; border: 1px solid var(--nova-ink-hairline); border-radius: var(--nova-radius-md); background: var(--nova-bg-elevated); color: var(--nova-ink); padding: 12px 36px 12px 14px; font-size: 16px; text-overflow: ellipsis; }
+.nova-search-field input::placeholder { color: var(--nova-ink-faint); }
+.nova-search-field > span { position: absolute; right: 14px; top: 14px; color: var(--nova-ink-soft); pointer-events: none; }
+.nova-search-results { position: fixed; z-index: 60; overflow-y: auto; overscroll-behavior: contain; border-radius: var(--nova-radius-md); border: 1px solid var(--nova-glass-border); background: var(--nova-glass-3); box-shadow: var(--nova-shadow-3); backdrop-filter: var(--nova-blur-sheet); -webkit-backdrop-filter: var(--nova-blur-sheet); }
+.nova-search-option { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; }
+.nova-search-option:hover, .nova-search-option-active { background: var(--nova-ink-hairline); }
+.nova-search-field input { min-height: 64px; }
+.nova-search-field > span { top: 50%; transform: translateY(-50%); }
+.nova-search-selected input { color: transparent; caret-color: transparent; background: var(--nova-glass-1); border-color: rgba(var(--card-tint), .3); }
+.nova-payment-selection { position: absolute; inset: 1px; display: flex; align-items: center; gap: 11px; padding: 9px 36px 9px 12px; border-radius: var(--nova-radius-md); background: linear-gradient(100deg, rgba(var(--card-tint), .17), rgba(var(--card-tint), .04) 65%, transparent); pointer-events: none; }
+.nova-payment-icon { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 12px; color: var(--bank-mark); background: rgba(var(--card-tint), .16); border: 1px solid rgba(var(--card-tint), .18); }
+.dark .nova-payment-icon { color: color-mix(in srgb, rgb(var(--card-tint)) 55%, white); }
+.nova-payment-copy { min-width: 0; display: grid; gap: 3px; }
+.nova-invoice-picker { border: 1px solid rgba(var(--card-tint), .24); border-radius: var(--nova-radius-md); padding: 10px 12px 12px; background: rgba(var(--card-tint), .05); }
+.nova-invoice-option { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 12px; border-radius: 12px; border: 1px solid var(--nova-ink-hairline); background: var(--nova-glass-1); color: var(--nova-ink); cursor: pointer; }
+.nova-invoice-option:hover, .nova-invoice-option:active { background: rgba(var(--card-tint), .14); }
+.nova-invoice-option[aria-pressed="true"] { border-color: rgba(var(--card-tint), .6); background: rgba(var(--card-tint), .16); }
+.nova-invoice-option:focus-visible { outline: 2px solid var(--nova-accent); outline-offset: 2px; }
+.nova-payment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink); font-size: 14px; font-weight: 600; }
+.nova-payment-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink-soft); font-size: 11px; }

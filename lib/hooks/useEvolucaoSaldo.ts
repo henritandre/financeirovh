@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { calcularSaldo } from "../saldo";
 
 function dataLocalStr(d: Date) {
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -25,17 +26,7 @@ export function useEvolucaoSaldo(transacoes: any[], contaIds: string[], dias: nu
       const d = new Date(hoje);
       d.setDate(d.getDate() - i);
       const dataStr = dataLocalStr(d);
-      let saldo = 0;
-      transacoes.forEach((t) => {
-        if (t.data > dataStr) return;
-        const v = Number(t.valor);
-        if (t.tipo === "receita" && contaIds.includes(t.conta_id)) saldo += v;
-        if (t.tipo === "despesa" && contaIds.includes(t.conta_id)) saldo -= v;
-        if (t.tipo === "transferencia") {
-          if (contaIds.includes(t.conta_id)) saldo -= v;
-          if (contaIds.includes(t.conta_destino_id)) saldo += v;
-        }
-      });
+      const saldo = calcularSaldo(transacoes, contaIds, dataStr);
       pontos.push({ data: dataStr, saldo });
     }
     return pontos;
