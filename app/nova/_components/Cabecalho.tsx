@@ -5,13 +5,14 @@ import { BotaoIcone, Button } from "../_ui/Button";
 export function Cabecalho({
   isDarkMode,
   toggleTheme,
-  onVoltarClassica,
+  onParametros,
   onNovo,
   onPix,
 }: {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  onVoltarClassica: () => void;
+  /** A UI Nova não tem menu: este é o acesso aos Parâmetros (onde se troca a versão da interface). */
+  onParametros: () => void;
   onNovo: () => void;
   onPix: () => void;
 }) {
@@ -22,11 +23,6 @@ export function Cabecalho({
     >
       <div className="px-4 lg:px-8 py-3 max-w-2xl lg:max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <BotaoIcone onClick={onVoltarClassica} rotulo="Voltar para a UI Clássica">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m15 18-6-6 6-6" />
-            </svg>
-          </BotaoIcone>
           <p className="nova-brand">financeiro<span>vh.</span></p>
         </div>
         <div className="flex items-center gap-2">
@@ -43,6 +39,12 @@ export function Cabecalho({
             </svg>
             Novo lançamento
           </Button>
+          <BotaoIcone onClick={onParametros} rotulo="Parâmetros">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </BotaoIcone>
           <BotaoIcone onClick={toggleTheme} rotulo="Alternar tema">
             {isDarkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">

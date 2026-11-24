@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../../ThemeContext";
-import { useUIVersion } from "../../UIVersionContext";
 import { useSessao } from "../../../lib/hooks/useSessao";
 import { usePerfis } from "../../../lib/hooks/usePerfis";
 import { useContasEBancos } from "../../../lib/hooks/useContasEBancos";
@@ -13,6 +12,7 @@ import { useSaldos } from "../../../lib/hooks/useSaldos";
 import { useResumoPeriodo } from "../../../lib/hooks/useResumoPeriodo";
 import { useFaturasCartao } from "../../../lib/hooks/useFaturasCartao";
 import { buscarParametros } from "../../../lib/hooks/useParametros";
+import { calcularFaturas } from "../../../lib/faturas";
 import { criarLancamento, editarLancamento, excluirLancamento, buscarMotivosFrequentes } from "../../../lib/hooks/useLancamentos";
 import { usarPressao } from "../_ui/motion";
 import { Sheet } from "../_ui/Sheet";
@@ -28,6 +28,7 @@ import { FormularioLancamento, type DadosFormulario } from "../_components/Formu
 import { ModalAuditoria } from "../_components/ModalAuditoria";
 import { PixSheet } from "../_components/PixSheet";
 import { DetalheBanco } from "../_components/DetalheBanco";
+import { PainelFaturas } from "../_components/PainelFaturas";
 
 type Overlay =
   | { tipo: "novo" }
@@ -37,12 +38,12 @@ type Overlay =
   | { tipo: "confirmarExclusao"; transacao: any }
   | { tipo: "pix" }
   | { tipo: "detalheBanco"; nome: string; contaIds: string[] }
+  | { tipo: "fatura"; cartaoId: string; competencia: string | null }
   | null;
 
 export default function NovaDashboardPage() {
   const router = useRouter();
   const { isDarkMode, toggleTheme } = useTheme();
-  const { definirVersao } = useUIVersion();
   const { island, mostrar } = useNovaToast();
 
   const sessao = useSessao();
@@ -56,6 +57,8 @@ export default function NovaDashboardPage() {
   const extrato = doPeriodo.slice(0, 12);
 
   const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
+  const [qtdFaturasHistorico, setQtdFaturasHistorico] = useState(5);
+  const [apenasCartoesComFatura, setApenasCartoesComFatura] = useState(true);
   const [bancoEvolucaoDias, setBancoEvolucaoDias] = useState(30);
   const [bancoLancamentosQtd, setBancoLancamentosQtd] = useState(5);
   const [overlay, setOverlay] = useState<Overlay>(null);
@@ -64,9 +67,11 @@ export default function NovaDashboardPage() {
 
   useEffect(() => {
     if (!sessao.userId) return;
-    buscarParametros(sessao.userId, ["qtd_faturas_visiveis", "banco_evolucao_dias", "banco_lancamentos_qtd"])
+    buscarParametros(sessao.userId, ["qtd_faturas_visiveis", "qtd_faturas_historico", "cartoes_apenas_com_fatura", "banco_evolucao_dias", "banco_lancamentos_qtd"])
       .then((p) => {
         if (p.qtd_faturas_visiveis) setQtdFaturasVisiveis(Number(p.qtd_faturas_visiveis));
+        if (p.qtd_faturas_historico) setQtdFaturasHistorico(Number(p.qtd_faturas_historico));
+        if (p.cartoes_apenas_com_fatura !== undefined) setApenasCartoesComFatura(p.cartoes_apenas_com_fatura !== false && p.cartoes_apenas_com_fatura !== "false");
         if (p.banco_evolucao_dias) setBancoEvolucaoDias(Number(p.banco_evolucao_dias));
         if (p.banco_lancamentos_qtd) setBancoLancamentosQtd(Number(p.banco_lancamentos_qtd));
       })
@@ -74,6 +79,11 @@ export default function NovaDashboardPage() {
   }, [sessao.userId]);
 
   const carregando = sessao.carregando || carregandoContas || carregandoTransacoes;
+
+  // Parâmetro "Visualizar apenas cartões com fatura": esconde cartões sem nada em aberto.
+  const cartoesVisiveis = apenasCartoesComFatura ? cartoes.filter((c) => c.faturas.length > 0) : cartoes;
+  const cartaoDaFatura = overlay?.tipo === "fatura" ? contas.find((c) => c.id === overlay.cartaoId) : undefined;
+  const historicoFaturas = useMemo(() => calcularFaturas(cartaoDaFatura, transacoes), [cartaoDaFatura, transacoes]);
 
   const fecharOverlay = () => setOverlay(null);
   const abrirDetalhe = (t: any) => setOverlay({ tipo: "detalhe", transacao: t });
@@ -161,15 +171,10 @@ export default function NovaDashboardPage() {
     }
   };
 
-  const voltarParaClassica = () => {
-    definirVersao("classica");
-    router.push("/dashboard");
-  };
-
   return (
     <div className="min-h-screen">
       <Toast island={island} />
-      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onVoltarClassica={voltarParaClassica} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
+      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onParametros={() => router.push("/parametros")} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
 
       <main className="relative px-4 lg:px-8 pb-32 lg:pb-16 max-w-2xl lg:max-w-6xl mx-auto pt-5 lg:pt-7">
         <div className="nova-page-intro">
@@ -189,7 +194,7 @@ export default function NovaDashboardPage() {
             <div className="lg:col-span-3 space-y-7">
               <SaldoHero saldo={saldoTotal} receitas={resumo.receitas} despesas={resumo.despesas} />
               <Bancos bancos={saldosBancarios} dinheiro={saldoDinheiro} mapPerfis={mapPerfis} usuarioAtual={sessao.username} onAbrir={abrirDetalheBanco} />
-              <Cartoes cartoes={cartoes} total={totalCartoes} qtdFaturasVisiveis={qtdFaturasVisiveis} mapPerfis={mapPerfis} />
+              <Cartoes cartoes={cartoesVisiveis} total={totalCartoes} qtdFaturasVisiveis={qtdFaturasVisiveis} mapPerfis={mapPerfis} onAbrirFatura={(cartaoId, competencia) => setOverlay({ tipo: "fatura", cartaoId, competencia })} />
             </div>
             <div className="lg:col-span-2 space-y-7 lg:sticky lg:top-20">
               <ResumoPeriodo resumo={resumo} />
@@ -254,6 +259,16 @@ export default function NovaDashboardPage() {
         )}
         {overlay?.tipo === "detalheBanco" && (
           <DetalheBanco nome={overlay.nome} contaIds={overlay.contaIds} transacoes={transacoes} dias={bancoEvolucaoDias} qtdLancamentos={bancoLancamentosQtd} mapPerfis={mapPerfis} />
+        )}
+        {overlay?.tipo === "fatura" && (
+          <PainelFaturas
+            key={`${overlay.cartaoId}-${overlay.competencia}`}
+            nomeCartao={cartaoDaFatura?.nome || "Cartão"}
+            historico={historicoFaturas}
+            competenciaInicial={overlay.competencia}
+            qtdHistorico={qtdFaturasHistorico}
+            mapPerfis={mapPerfis}
+          />
         )}
       </Sheet>
     </div>
