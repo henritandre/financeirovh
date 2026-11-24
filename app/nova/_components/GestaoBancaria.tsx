@@ -1,6 +1,9 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useCallback, useId, useState, type ReactNode } from "react";
+import { EasterEggMaster, tocarSomMaster } from "./EasterEggMaster";
+
+const ehMaster = (nome: string) => /\bmaster\b/.test(nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase());
 import { Surface } from "../_ui/Surface";
 import { Button } from "../_ui/Button";
 import { SegmentedControl } from "../_ui/SegmentedControl";
@@ -153,9 +156,17 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
     tipoConta: (banco?.tipo_conta as TipoContaBancaria) || "corrente",
   });
   const [tentou, setTentou] = useState(false);
+  const [cela, setCela] = useState(false);
+  const fecharCela = useCallback(() => setCela(false), []);
   const reconhecido = d.banco.trim() !== "" && !["neutro", "carteira"].includes(identidadeBanco(d.banco).chave);
-  // Easter egg: o Banco Master foi liquidado pelo Banco Central em novembro de 2025.
-  const ehMaster = /\bmaster\b/.test(d.banco.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
+  // Easter egg: digitar "Banco Master" fecha a cela (o BC liquidou o banco em novembro de 2025).
+  const mudarBanco = (valor: string) => {
+    if (ehMaster(valor) && !ehMaster(d.banco)) {
+      setCela(true);
+      tocarSomMaster();
+    }
+    setD({ ...d, banco: valor });
+  };
   const erros = { banco: !d.banco.trim() ? "Informe o banco ou instituição." : undefined, nome: !d.nome.trim() ? "Dê um nome para reconhecer esta conta." : undefined };
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,17 +180,13 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
       <Campo id={`${uid}-banco`} label="Banco ou instituição" ajuda={reconhecido ? undefined : "Escolha da lista para o app mostrar a logo do banco."} erro={tentou ? erros.banco : undefined}>
         <div className="flex items-center gap-2">
           {reconhecido && <LogoBanco nome={d.banco} tamanho={40} />}
-          <input id={`${uid}-banco`} list={`${uid}-lista`} className={`${campo} ${borda(tentou ? erros.banco : undefined)}`} value={d.banco} onChange={(e) => setD({ ...d, banco: e.target.value })} placeholder="Comece a digitar: Nubank, Itaú, C6…" autoComplete="off" />
+          <input id={`${uid}-banco`} list={`${uid}-lista`} className={`${campo} ${borda(tentou ? erros.banco : undefined)}`} value={d.banco} onChange={(e) => mudarBanco(e.target.value)} placeholder="Comece a digitar: Nubank, Itaú, C6…" autoComplete="off" />
         </div>
         <datalist id={`${uid}-lista`}>
           {BANCOS_CONHECIDOS.map((n) => <option key={n} value={n} />)}
         </datalist>
-        {ehMaster && (
-          <p role="status" className="mt-2 rounded-[var(--nova-radius-md)] bg-[var(--nova-ink-hairline)] px-3 py-2 text-[13px] text-[var(--nova-ink)]">
-            Banco Master? Esse o Banco Central liquidou em novembro de 2025. Seu dinheiro merece um banco que ainda abre amanhã.
-          </p>
-        )}
       </Campo>
+      {cela && <EasterEggMaster aoTerminar={fecharCela} />}
       <Campo id={`${uid}-nome`} label="Nome para exibir" ajuda="Como a conta aparece nas listas do app." erro={tentou ? erros.nome : undefined}>
         <input id={`${uid}-nome`} className={`${campo} ${borda(tentou ? erros.nome : undefined)}`} value={d.nome} onChange={(e) => setD({ ...d, nome: e.target.value })} placeholder="Conta principal" autoComplete="off" />
       </Campo>

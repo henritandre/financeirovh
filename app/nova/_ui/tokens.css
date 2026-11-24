@@ -337,3 +337,29 @@ html[data-paleta="violeta"] .nova-root { --nova-accent: oklch(54.1% 0.281 293.00
 html[data-paleta="grafite"] .nova-root { --nova-accent: oklch(44.6% 0.043 257.281); }
 html.dark[data-paleta="petroleo"] .nova-root { --nova-accent: oklch(60% 0.118 184.704); }
 html.dark[data-paleta="grafite"] .nova-root { --nova-accent: oklch(55.4% 0.046 257.417); }
+
+/* Easter egg "Banco Master": cela descendo sobre o modal + giroflex */
+.nova-cela { position: absolute; inset: 0; z-index: 30; overflow: hidden; border-radius: var(--nova-radius-xl); cursor: pointer; background: rgba(10, 14, 24, .38); animation: nova-cela-sai 400ms ease-in 3.8s forwards; }
+.nova-cela-barras { position: absolute; inset: 0; display: flex; justify-content: space-evenly; }
+.nova-cela-barras span { width: 12px; height: 100%; border-radius: 6px; background: linear-gradient(90deg, #3d4350, #a9b0bd 45%, #e4e8ef 55%, #4a505c); box-shadow: 2px 0 6px rgba(0, 0, 0, .45); transform: translateY(-105%); animation: nova-cela-desce 650ms cubic-bezier(.3, 1.4, .5, 1) forwards; }
+.nova-cela-trave { position: absolute; left: 0; right: 0; height: 12px; background: linear-gradient(180deg, #4a505c, #c7ccd5 50%, #4a505c); box-shadow: 0 2px 6px rgba(0, 0, 0, .45); transform: translateY(-120vh); animation: nova-cela-desce 650ms cubic-bezier(.3, 1.4, .5, 1) 220ms forwards; }
+.nova-cela-trave-alta { top: 18%; }
+.nova-cela-trave-baixa { top: 78%; }
+@keyframes nova-cela-desce { to { transform: translateY(0); } }
+@keyframes nova-cela-sai { to { opacity: 0; } }
+
+.nova-giroflex { position: absolute; left: 50%; top: 46%; width: 96px; height: 110px; transform: translate(-50%, -50%) scale(0); animation: nova-giroflex-entra 300ms cubic-bezier(.3, 1.5, .5, 1) 500ms forwards; }
+.nova-giroflex-luz { position: absolute; left: 8px; right: 8px; top: 0; height: 78px; border-radius: 40px 40px 10px 10px; overflow: hidden; background: #5a0a14; animation: nova-giroflex-pisca 260ms steps(2) infinite; }
+.nova-giroflex-luz::before { content: ""; position: absolute; inset: -45%; background: conic-gradient(#ff1e2d 0 25%, #2a6bff 25% 50%, #ff1e2d 50% 75%, #2a6bff 75% 100%); animation: nova-giroflex-gira 520ms linear infinite; }
+.nova-giroflex-luz::after { content: ""; position: absolute; z-index: 1; inset: 8px 14px auto; height: 18px; border-radius: 12px; background: rgba(255, 255, 255, .55); }
+.nova-giroflex-base { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; border-radius: 8px; background: linear-gradient(180deg, #2b2f38, #11141a); }
+@keyframes nova-giroflex-entra { to { transform: translate(-50%, -50%) scale(1); } }
+@keyframes nova-giroflex-gira { to { transform: rotate(1turn); } }
+@keyframes nova-giroflex-pisca { 0% { box-shadow: 0 0 40px 18px rgba(255, 30, 45, .75); } 100% { box-shadow: 0 0 40px 18px rgba(42, 107, 255, .75); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .nova-cela, .nova-cela-barras span, .nova-cela-trave, .nova-giroflex, .nova-giroflex-luz, .nova-giroflex-luz::before { animation: none; }
+  .nova-cela-barras span, .nova-cela-trave { transform: none; }
+  .nova-giroflex { transform: translate(-50%, -50%); }
+  .nova-giroflex-luz { box-shadow: 0 0 40px 18px rgba(255, 30, 45, .6); }
+}
