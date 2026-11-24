@@ -166,8 +166,8 @@
   --nova-glass-1: rgba(255, 255, 255, .57);
   --nova-glass-2: rgba(255, 255, 255, .72);
   --nova-glass-border: rgba(255, 255, 255, .78);
-  --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.72), 0 6px 22px -12px rgba(45,65,100,.23);
-  background-image: linear-gradient(180deg, #f4f6fa, #eceff5);
+  --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.72), 0 1px 2px rgba(15,23,42,.05), 0 8px 26px -12px rgba(45,65,100,.30);
+  background-image: linear-gradient(180deg, #edf0f5, #e5e9f0);
 }
 .dark .nova-root {
   --nova-ink-soft: #b9c4d6;
@@ -300,3 +300,21 @@
 .nova-invoice-option:focus-visible { outline: 2px solid var(--nova-accent); outline-offset: 2px; }
 .nova-payment-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink); font-size: 14px; font-weight: 600; }
 .nova-payment-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--nova-ink-soft); font-size: 11px; }
+
+/* Menu de navegação */
+.nova-menu { position: absolute; right: 0; top: calc(100% + 10px); z-index: 50; width: 256px; padding: 6px; border-radius: var(--nova-radius-md); border: 1px solid var(--nova-glass-border); background: var(--nova-glass-3); box-shadow: var(--nova-shadow-3); backdrop-filter: var(--nova-blur-sheet); -webkit-backdrop-filter: var(--nova-blur-sheet); }
+.nova-menu-item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: var(--nova-ink); text-align: left; cursor: pointer; }
+.nova-menu-item svg { flex-shrink: 0; color: var(--nova-ink-soft); }
+.nova-menu-item:hover { background: var(--nova-ink-hairline); }
+.nova-menu-item:focus-visible { outline: 2px solid var(--nova-accent); outline-offset: -2px; }
+.nova-menu-item-ativo { font-weight: 600; color: var(--nova-accent); background: color-mix(in srgb, var(--nova-accent) 10%, transparent); }
+.nova-menu-item-ativo svg { color: var(--nova-accent); }
+.nova-menu-sair, .nova-menu-sair svg { color: var(--nova-danger); }
+.nova-menu-divisor { height: 1px; margin: 4px 8px; background: var(--nova-ink-hairline); }
+
+/* Paletas de cor: o destaque da UI Nova acompanha a escolha em Parâmetros. */
+html[data-paleta="petroleo"] .nova-root { --nova-accent: oklch(51.1% 0.096 186.391); }
+html[data-paleta="violeta"] .nova-root { --nova-accent: oklch(54.1% 0.281 293.009); }
+html[data-paleta="grafite"] .nova-root { --nova-accent: oklch(44.6% 0.043 257.281); }
+html.dark[data-paleta="petroleo"] .nova-root { --nova-accent: oklch(60% 0.118 184.704); }
+html.dark[data-paleta="grafite"] .nova-root { --nova-accent: oklch(55.4% 0.046 257.417); }

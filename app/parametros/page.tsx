@@ -1,15 +1,18 @@
 "use client";
+import { MenuClassico } from "../_navegacao/MenuClassico";
 
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "../../lib/supabase";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../ThemeContext";
 import { useUIVersion } from "../UIVersionContext";
+import { PALETAS, usePaleta } from "../PaletaContext";
 
 export default function ParametrosPage() {
   const router = useRouter();
   const { isDarkMode, toggleTheme, isWaving } = useTheme();
   const { versao, definirVersao } = useUIVersion();
+  const { paleta, definirPaleta } = usePaleta();
 
   const [userId, setUserId] = useState("");
   const [email, setEmail] = useState("");
@@ -122,7 +125,7 @@ export default function ParametrosPage() {
     }
 
     if (bancoEvolucaoDias < 1 || bancoLancamentosQtd < 1) {
-      showIsland("Os valores da Visão Rápida de Bancos devem ser maiores que zero", "error", "🛑");
+      showIsland("Os valores da visão rápida de bancos devem ser maiores que zero", "error", "🛑");
       setIsSaving(false);
       return;
     }
@@ -173,7 +176,7 @@ export default function ParametrosPage() {
         .mac-dock-animate { animation: macDockWave 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative pb-20 overflow-x-hidden transition-colors duration-300">
+      <div className="min-h-screen bg-fundo dark:bg-gray-900 relative pb-20 overflow-x-hidden transition-colors duration-300">
         
         {/* DYNAMIC ISLAND */}
         {island.show && (
@@ -207,27 +210,7 @@ export default function ParametrosPage() {
               <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
-              {isMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                  <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
-                    <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
-                      <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
-                    </div>
-                  </div>
-                </>
-              )}
+              <MenuClassico aberto={isMenuOpen} aoFechar={() => setIsMenuOpen(false)} />
             </div>
           </div>
         </nav>
@@ -251,7 +234,7 @@ export default function ParametrosPage() {
                   <div>
                     <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Versão da interface</h4>
                     <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                      A UI Nova está em construção. Hoje só o Dashboard está disponível nela. As demais telas continuam abrindo na versão Clássica.
+                      A UI Nova está em construção. Hoje o Dashboard e a Insights estão disponíveis nela; as demais telas continuam abrindo na versão Clássica.
                     </p>
                   </div>
                   <div className="flex shrink-0 rounded-full border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-900/40">
@@ -274,6 +257,30 @@ export default function ParametrosPage() {
                     ))}
                   </div>
                 </div>
+
+                <div className="mt-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div>
+                    <h4 id="rotulo-paleta" className="text-base font-bold text-gray-900 dark:text-gray-100">Cor de destaque</h4>
+                    <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">Vale para as duas interfaces e para todos os seus aparelhos.</p>
+                  </div>
+                  <div role="radiogroup" aria-labelledby="rotulo-paleta" className="flex flex-wrap gap-2 shrink-0">
+                    {PALETAS.map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={paleta === p.id}
+                        onClick={() => definirPaleta(p.id)}
+                        className={`flex items-center gap-2 pl-1.5 pr-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${paleta === p.id
+                          ? "border-gray-900 dark:border-gray-100 text-gray-900 dark:text-gray-100"
+                          : "border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500"}`}
+                      >
+                        <span className="h-5 w-5 rounded-full" style={{ background: p.amostra }} aria-hidden="true" />
+                        {p.nome}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
             <form onSubmit={handleSalvar} className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
@@ -284,7 +291,7 @@ export default function ParametrosPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                    Gestão de Patrimônio
+                    Gestão de patrimônio
                   </h3>
 
                   <div className="space-y-6">
@@ -334,7 +341,7 @@ export default function ParametrosPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-purple-600 dark:text-purple-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
-                    Cartões de Crédito
+                    Cartões de crédito
                   </h3>
 
                   <div className="bg-purple-50/50 dark:bg-purple-900/10 p-5 rounded-2xl border border-purple-100 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
@@ -398,7 +405,7 @@ export default function ParametrosPage() {
                 <div>
                   <h3 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-                    Visão Rápida de Bancos (UI Nova)
+                    Visão rápida de bancos (UI Nova)
                   </h3>
                   <p className="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-4 mb-6">Ao tocar em um banco ou cofre na UI Nova, abre um resumo rápido com o gráfico de evolução do saldo e os últimos lançamentos daquela conta (sem faturas de cartão).</p>
 

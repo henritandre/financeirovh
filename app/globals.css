@@ -2,8 +2,15 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #eceff4;
   --foreground: #171717;
+}
+
+/* Fundo do app no modo claro (menos branco que o gray-50) e sombra dos
+   containers um pouco mais presente, em tom neutro-azulado. */
+@theme {
+  --color-fundo: #eceff4;
+  --shadow-sm: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 2px 8px -2px rgb(15 23 42 / 0.10);
 }
 
 @theme inline {
@@ -37,4 +44,46 @@ body {
 }
 .mac-dock-animate { 
   animation: macDockWave 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; 
+}
+/* ===== Paletas de cor (Parâmetros > Aparência) =====
+   O destaque do app é o azul do Tailwind (bg-blue-600, text-blue-400...).
+   Cada paleta redefine essas variáveis; "azul" é o padrão, sem atributo. */
+html[data-paleta="petroleo"] {
+  --color-blue-50: oklch(98.4% 0.014 180.72);
+  --color-blue-100: oklch(95.3% 0.051 180.801);
+  --color-blue-200: oklch(91% 0.096 180.426);
+  --color-blue-300: oklch(85.5% 0.138 181.071);
+  --color-blue-400: oklch(77.7% 0.152 181.912);
+  --color-blue-500: oklch(60% 0.118 184.704);
+  --color-blue-600: oklch(51.1% 0.096 186.391);
+  --color-blue-700: oklch(43.7% 0.078 188.216);
+  --color-blue-800: oklch(38.6% 0.063 188.416);
+  --color-blue-900: oklch(27.7% 0.046 192.524);
+  --color-blue-950: oklch(27.7% 0.046 192.524);
+}
+html[data-paleta="violeta"] {
+  --color-blue-50: oklch(96.9% 0.016 293.756);
+  --color-blue-100: oklch(94.3% 0.029 294.588);
+  --color-blue-200: oklch(89.4% 0.057 293.283);
+  --color-blue-300: oklch(81.1% 0.111 293.571);
+  --color-blue-400: oklch(70.2% 0.183 293.541);
+  --color-blue-500: oklch(60.6% 0.25 292.717);
+  --color-blue-600: oklch(54.1% 0.281 293.009);
+  --color-blue-700: oklch(49.1% 0.27 292.581);
+  --color-blue-800: oklch(43.2% 0.232 292.759);
+  --color-blue-900: oklch(38% 0.189 293.745);
+  --color-blue-950: oklch(28.3% 0.141 291.089);
+}
+html[data-paleta="grafite"] {
+  --color-blue-50: oklch(98.4% 0.003 247.858);
+  --color-blue-100: oklch(96.8% 0.007 247.896);
+  --color-blue-200: oklch(92.9% 0.013 255.508);
+  --color-blue-300: oklch(86.9% 0.022 252.894);
+  --color-blue-400: oklch(70.4% 0.04 256.788);
+  --color-blue-500: oklch(55.4% 0.046 257.417);
+  --color-blue-600: oklch(44.6% 0.043 257.281);
+  --color-blue-700: oklch(37.2% 0.044 257.287);
+  --color-blue-800: oklch(27.9% 0.041 260.031);
+  --color-blue-900: oklch(20.8% 0.042 265.755);
+  --color-blue-950: oklch(12.9% 0.042 264.695);
 }

@@ -8,15 +8,7 @@ import { useState, useEffect, type ReactNode } from "react";
 // Sem grade de fundo — os valores aparecem no hover. Ordem categórica FIXA.
 // ============================================================================
 
-export const PALETA = {
-  receita: "#10b981",
-  despesa: "#ef4444",
-  saldo: "#3b82f6",
-  fixo: "#6366f1",
-  variavel: "#f59e0b",
-  poupanca: "#14b8a6",
-  categorias: ["#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#14b8a6", "#ef4444", "#64748b"],
-};
+export { PALETA } from "../../lib/insights";
 
 const brl = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
 const fmtK = (v: number) => {
@@ -89,6 +81,19 @@ export function GaugeSaude({ score, corHex, label, compact = false }: { score: n
   );
 }
 
+// Posição do mouse em coordenadas do viewBox. O SVG ocupa a largura do card,
+// mas o desenho mantém a proporção e fica centralizado (sobras nas laterais):
+// medir pela largura do elemento faria a sobra apontar para um ponto do gráfico.
+function xNoDesenho(e: React.MouseEvent<SVGSVGElement>): number | null {
+  const svg = e.currentTarget;
+  const ctm = svg.getScreenCTM();
+  if (!ctm) return null;
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  return pt.matrixTransform(ctm.inverse()).x;
+}
+
 // Tooltip SVG reutilizável (fontes maiores no mobile).
 function Tooltip({ x, w, title, items, mobile }: { x: number; w: number; title: string; items: { nome: string; cor: string; v: number }[]; mobile: boolean }) {
   const tw = mobile ? 232 : 176;
@@ -138,8 +143,9 @@ export function Linhas({ labels, series, height = 210, marcadorIndex = -1 }: { l
   const yl = [maxV, (maxV + minV) / 2, minV];
   const xIdx = n <= (mobile ? 4 : 8) ? labels.map((_, i) => i) : [0, Math.floor((n - 1) / 2), n - 1];
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const sx = ((e.clientX - r.left) / r.width) * w;
+    const sx = xNoDesenho(e);
+    // Fora da área do gráfico (sobra lateral ou margem dos eixos), não destaca nada.
+    if (sx == null || sx < padL - 6 || sx > w - padR + 6) { setHi(null); return; }
     let i = Math.round(((sx - padL) / (w - padL - padR || 1)) * (n - 1));
     i = Math.max(0, Math.min(n - 1, i));
     setHi(i);
@@ -197,8 +203,8 @@ export function Barras({ labels, series, empilhado = false, linha }: { labels: s
   const barW = empilhado ? Math.min(grupoW * 0.5, barMax) : Math.min((grupoW * 0.7) / series.length, barMax);
   const yl = [maxV, (maxV + base) / 2, base];
   const onMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const sx = ((e.clientX - r.left) / r.width) * w;
+    const sx = xNoDesenho(e);
+    if (sx == null || sx < padL || sx > w - padR) { setHi(null); return; }
     let i = Math.floor((sx - padL) / grupoW);
     i = Math.max(0, Math.min(n - 1, i));
     setHi(i);

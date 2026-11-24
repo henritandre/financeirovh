@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTheme } from "../../ThemeContext";
 import { useSessao } from "../../../lib/hooks/useSessao";
 import { usePerfis } from "../../../lib/hooks/usePerfis";
@@ -42,7 +41,6 @@ type Overlay =
   | null;
 
 export default function NovaDashboardPage() {
-  const router = useRouter();
   const { isDarkMode, toggleTheme } = useTheme();
   const { island, mostrar } = useNovaToast();
 
@@ -86,6 +84,25 @@ export default function NovaDashboardPage() {
   const historicoFaturas = useMemo(() => calcularFaturas(cartaoDaFatura, transacoes), [cartaoDaFatura, transacoes]);
 
   const fecharOverlay = () => setOverlay(null);
+
+  // Atalho vindo da Insights: /nova/dashboard?editar=<id> abre o lançamento
+  // (edição se for seu, detalhe se for de outra pessoa). Roda uma vez, com os dados carregados.
+  const deepLinkFeito = useRef(false);
+  useEffect(() => {
+    if (deepLinkFeito.current || carregando || !sessao.userId) return;
+    const id = new URLSearchParams(window.location.search).get("editar");
+    if (!id) return;
+    deepLinkFeito.current = true;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("editar");
+    window.history.replaceState({}, "", url.toString());
+    const alvo = transacoes.find((t) => t.id === id);
+    const abrir = () => {
+      if (!alvo) mostrar("Lançamento não encontrado.", "error");
+      else setOverlay(alvo.user_id === sessao.userId ? { tipo: "editar", transacao: alvo } : { tipo: "detalhe", transacao: alvo });
+    };
+    queueMicrotask(abrir);
+  }, [carregando, sessao.userId, transacoes, mostrar]);
   const abrirDetalhe = (t: any) => setOverlay({ tipo: "detalhe", transacao: t });
 
   const abrirDetalheBanco = (id: string, nome: string) => {
@@ -174,14 +191,14 @@ export default function NovaDashboardPage() {
   return (
     <div className="min-h-screen">
       <Toast island={island} />
-      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onParametros={() => router.push("/parametros")} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
+      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
 
       <main className="relative px-4 lg:px-8 pb-32 lg:pb-16 max-w-2xl lg:max-w-6xl mx-auto pt-5 lg:pt-7">
         <div className="nova-page-intro">
           <div>
             <h1>Visão geral</h1>
           </div>
-          <a href="/insights" className="nova-text-link">Explorar insights</a>
+          <a href="/nova/insights" className="nova-text-link">Explorar insights</a>
         </div>
         {carregando ? (
           <div className="space-y-4">

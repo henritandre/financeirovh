@@ -189,7 +189,7 @@ export default function LoginPage() {
         .animate-icon-pop { animation: iconPop 0.3s ease-in-out; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-700">
+      <div className="min-h-screen bg-fundo dark:bg-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden transition-colors duration-700">
         
         {/* DYNAMIC ISLAND CENTRALIZADA (LIQUID GLASS + EMOJI) */}
         {island.show && (
