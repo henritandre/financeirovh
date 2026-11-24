@@ -57,18 +57,16 @@ test('quem pode editar', () => {
   assert.equal(podeEditarForma({ tipo: 'credito', user_id: 'eu' }, 'eu'), true);
 });
 
-test('ordenação de bancos: por usuário ou banco, desempate pela quantidade de formas', () => {
+test('ordenação de bancos: usuário, depois banco, desempate pela quantidade de formas', () => {
   const { ordenarBancos } = ctx.exports;
   const bancos = [
     { id: 'a', banco: 'Nubank', autor_nome: 'beto' },
     { id: 'b', banco: 'Itaú', autor_nome: 'ana' },
     { id: 'c', banco: 'Nubank', autor_nome: 'ana' },
     { id: 'd', banco: 'Inter', autor_nome: 'ana' },
+    { id: 'e', banco: 'Nubank', autor_nome: 'ana' },
   ];
-  const qtd = { a: 3, b: 1, c: 1, d: 2 };
-  const ids = (l) => l.map((b) => b.id).join('');
-  // usuário: ana (d=2, b=1 e c=1 empatam -> por banco: Itaú, Nubank), depois beto
-  assert.equal(ids(ordenarBancos(bancos, 'usuario', (b) => qtd[b.id])), 'dbca');
-  // banco: Inter, Itaú, Nubank (a=3 antes de c=1)
-  assert.equal(ids(ordenarBancos(bancos, 'banco', (b) => qtd[b.id])), 'dbac');
+  const qtd = { a: 3, b: 1, c: 1, d: 2, e: 4 };
+  // ana: Inter, Itaú, Nubank (e=4 antes de c=1); depois beto
+  assert.equal(ordenarBancos(bancos, (b) => qtd[b.id]).map((b) => b.id).join(''), 'dbeca');
 });

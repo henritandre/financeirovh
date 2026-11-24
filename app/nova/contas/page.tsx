@@ -7,7 +7,7 @@ import { usePerfis } from "../../../lib/hooks/usePerfis";
 import { useContasEBancos } from "../../../lib/hooks/useContasEBancos";
 import {
   apagarBanco, apagarForma, contarMovimentacoesForma, contarVinculosBanco, definirAtivoBanco, definirAtivoForma,
-  ordenarBancos, podeEditarForma, ROTULO_TIPO_CONTA, type OrdemBancos, salvarBanco, salvarForma, type DadosBanco, type DadosForma, type TipoContaBancaria, type TipoForma,
+  ordenarBancos, podeEditarForma, ROTULO_TIPO_CONTA, salvarBanco, salvarForma, type DadosBanco, type DadosForma, type TipoContaBancaria, type TipoForma,
 } from "../../../lib/contasBancarias";
 import { Cabecalho } from "../_components/Cabecalho";
 import { Secao } from "../_components/Secao";
@@ -38,7 +38,6 @@ export default function NovaContasPage() {
   const { contas, bancos, carregando: carregandoDados, recarregar } = useContasEBancos();
 
   const [filtro, setFiltro] = useState<"todos" | "meus">("todos");
-  const [ordem, setOrdem] = useState<OrdemBancos>("usuario");
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [usos, setUsos] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -51,8 +50,8 @@ export default function NovaContasPage() {
   const grupos = useMemo(() => {
     const formasDe = (bancoId: string, ativas: boolean) => contas.filter((c) => c.conta_bancaria_id === bancoId && c.tipo !== "dinheiro" && (c.ativo !== false) === ativas).sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
     const qtd = (b: any) => formasDe(b.id, true).length;
-    const ativos = ordenarBancos(bancos.filter((b) => b.ativo !== false), ordem, qtd);
-    const inativos = ordenarBancos(bancos.filter((b) => b.ativo === false), ordem, qtd);
+    const ativos = ordenarBancos(bancos.filter((b) => b.ativo !== false), qtd);
+    const inativos = ordenarBancos(bancos.filter((b) => b.ativo === false), qtd);
     const idsBancos = new Set(bancos.map((b) => b.id));
     return {
       ativos,
@@ -62,7 +61,7 @@ export default function NovaContasPage() {
       dinheiroInativo: contas.filter((c) => c.tipo === "dinheiro" && c.ativo === false),
       semBanco: contas.filter((c) => c.tipo !== "dinheiro" && c.ativo !== false && (!c.conta_bancaria_id || !idsBancos.has(c.conta_bancaria_id))),
     };
-  }, [bancos, contas, ordem]);
+  }, [bancos, contas]);
 
   const qtdInativos = grupos.inativos.filter(meu).length
     + grupos.ativos.reduce((a, b) => a + grupos.formasDe(b.id, false).filter(meu).length, 0)
@@ -138,19 +137,11 @@ export default function NovaContasPage() {
           </Surface>
         ) : (
           <div className="space-y-7">
-            <div className="max-w-xs space-y-2">
-              <SegmentedControl opcoes={[{ valor: "todos", rotulo: "Todos" }, { valor: "meus", rotulo: "Só meus" }]} valor={filtro} aoMudar={(v) => setFiltro(v as "todos" | "meus")} />
-              <div>
-                <p className="text-[12px] font-medium text-[var(--nova-ink-faint)] mb-1 px-1">Ordenar por</p>
-                <SegmentedControl opcoes={[{ valor: "usuario", rotulo: "Usuário" }, { valor: "banco", rotulo: "Banco" }]} valor={ordem} aoMudar={(v) => setOrdem(v as OrdemBancos)} />
-              </div>
-            </div>
-
-            <Secao titulo="Bancos">
+            <Secao titulo="Bancos" acao={<div className="w-[200px]"><SegmentedControl opcoes={[{ valor: "todos", rotulo: "Todos" }, { valor: "meus", rotulo: "Só meus" }]} valor={filtro} aoMudar={(v) => setFiltro(v as "todos" | "meus")} /></div>}>
               {grupos.ativos.filter(meu).length === 0 ? (
                 <Surface className="p-5"><p className="text-[14px] text-[var(--nova-ink-soft)]">{filtro === "meus" ? "Você ainda não cadastrou bancos." : "Nenhum banco ativo."}</p></Surface>
               ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+                <div className="columns-1 lg:columns-2 xl:columns-3 gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
                   {grupos.ativos.filter(meu).map((b) => {
                     const formas = grupos.formasDe(b.id, true).filter(meu);
                     const proprio = b.user_id === eu;
@@ -185,7 +176,7 @@ export default function NovaContasPage() {
                   {mostrarInativos ? "Ocultar desativados" : `Ver desativados (${qtdInativos})`}
                 </button>
                 {mostrarInativos && (
-                  <div className="mt-2 grid grid-cols-1 lg:grid-cols-2 gap-4 items-start opacity-80">
+                  <div className="mt-2 opacity-80 columns-1 lg:columns-2 xl:columns-3 gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
                     {grupos.inativos.filter(meu).map((b) => (
                       <CartaoBanco key={b.id} banco={b} formas={grupos.formasDe(b.id, true).concat(grupos.formasDe(b.id, false)).filter(meu)} foto={mapPerfis[b.autor_nome]} podeEditar={b.user_id === eu} aoEditar={() => abrirBanco(b)}>
                         {linhas(grupos.formasDe(b.id, true).concat(grupos.formasDe(b.id, false)).filter(meu))}

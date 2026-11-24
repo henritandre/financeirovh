@@ -28,7 +28,9 @@ test('grafias comuns dos bancos novos', () => {
 test('sorteio de som do easter egg: nunca repete o anterior e usa todos', () => {
   const src = fs.readFileSync('app/nova/_components/EasterEggMaster.tsx', 'utf8');
   const ini = src.indexOf('export function sortearSom');
-  const fim = src.indexOf('\n}\n', ini) + 3;
+  // Fim da função: aceita fim de linha LF e CRLF (o Git no Windows pode converter).
+  const fimMatch = /\r?\n}\r?\n/.exec(src.slice(ini));
+  const fim = ini + fimMatch.index + fimMatch[0].length;
   const c = { exports: {}, Math };
   vm.runInNewContext(ts.transpileModule(src.slice(ini, fim), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText, c);
   const { sortearSom } = c.exports;
