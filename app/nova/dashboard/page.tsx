@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useTheme } from "../../ThemeContext";
 import { useSessao } from "../../../lib/hooks/useSessao";
 import { usePerfis } from "../../../lib/hooks/usePerfis";
@@ -42,7 +41,6 @@ type Overlay =
   | null;
 
 export default function NovaDashboardPage() {
-  const router = useRouter();
   const { isDarkMode, toggleTheme } = useTheme();
   const { island, mostrar } = useNovaToast();
 
@@ -174,7 +172,7 @@ export default function NovaDashboardPage() {
   return (
     <div className="min-h-screen">
       <Toast island={island} />
-      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onParametros={() => router.push("/parametros")} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
+      <Cabecalho isDarkMode={isDarkMode} toggleTheme={toggleTheme} onNovo={() => setOverlay({ tipo: "novo" })} onPix={() => setOverlay({ tipo: "pix" })} />
 
       <main className="relative px-4 lg:px-8 pb-32 lg:pb-16 max-w-2xl lg:max-w-6xl mx-auto pt-5 lg:pt-7">
         <div className="nova-page-intro">

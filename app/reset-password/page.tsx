@@ -143,7 +143,7 @@ export default function ResetPasswordPage() {
         .animate-float-2 { animation: float2 18s infinite ease-in-out alternate; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 flex flex-col justify-center py-12 px-6 relative overflow-hidden transition-colors duration-700">
+      <div className="min-h-screen bg-fundo dark:bg-gray-950 flex flex-col justify-center py-12 px-6 relative overflow-hidden transition-colors duration-700">
         
         {/* DYNAMIC ISLAND CENTRALIZADA (LIQUID GLASS + EMOJI) */}
         {island.show && (

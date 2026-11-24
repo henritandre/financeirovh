@@ -160,7 +160,7 @@ export default function PerfilPage() {
         .mac-dock-animate { animation: macDockWave 0.6s cubic-bezier(0.25, 1, 0.5, 1) both; }
       `}</style>
 
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-10 transition-colors duration-300 relative">
+      <div className="min-h-screen bg-fundo dark:bg-gray-900 pb-10 transition-colors duration-300 relative">
         
         {/* DYNAMIC ISLAND CENTRALIZADA (LIQUID GLASS + EMOJI) */}
         {island.show && (
@@ -179,7 +179,7 @@ export default function PerfilPage() {
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
           <h1 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Meu Perfil
+            Meu perfil
           </h1>
           <div className="flex items-center gap-4">
             <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors focus:outline-none" title="Modo escuro">
