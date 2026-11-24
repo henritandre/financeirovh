@@ -8,7 +8,7 @@
 .classic-root .nova-bank-itau { --card-tint: 220, 126, 48; --bank-mark: #9d4b0d; }
 .classic-root .nova-bank-nubank { --card-tint: 149, 95, 203; --bank-mark: #70409e; }
 .classic-root .nova-bank-inter { --card-tint: 227, 146, 80; --bank-mark: #995218; }
-.classic-root .nova-bank-caixa { --card-tint: 63, 133, 183; --bank-mark: #23628f; }
+.classic-root .nova-bank-caixa { --card-tint: 0, 51, 255; --bank-mark: #0029cc; }
 .classic-root .nova-bank-santander { --card-tint: 199, 86, 86; --bank-mark: #9b353b; }
 .classic-root .nova-bank-mercantil { --card-tint: 76, 123, 190; --bank-mark: #375e99; }
 .classic-root .nova-bank-bradesco { --card-tint: 191, 74, 103; --bank-mark: #983b53; }

@@ -13,5 +13,5 @@ Ajustes locais:
 - itau.svg: versão nova da marca (logo-nova-letras-brancas.svg do mesmo repositório).
 - inter.svg: montado aqui com o "in" do arquivo original em branco sobre o laranja da
   marca (#FF7A00), com margem, no formato de ícone de app.
-- caixa.svg: símbolo X. A Caixa anunciou nova identidade em 09/11/2026 (mantém o X,
-  muda letras e tons); o repositório ainda não tem a versão nova.
+- caixa.svg: nova identidade (09/11/2026), montado aqui a partir do SVG oficial do
+  logotipo: só o símbolo X sobre o azul da marca (#0033FF), pernas azuis em branco.
