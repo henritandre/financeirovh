@@ -11,8 +11,9 @@ export function Cabecalho({
 }: {
   isDarkMode: boolean;
   toggleTheme: () => void;
-  onNovo: () => void;
-  onPix: () => void;
+  /** Sem eles (telas que não lançam), os botões PIX e Novo lançamento não aparecem. */
+  onNovo?: () => void;
+  onPix?: () => void;
 }) {
   return (
     <header
@@ -21,22 +22,22 @@ export function Cabecalho({
     >
       <div className="px-4 lg:px-8 py-3 max-w-2xl lg:max-w-6xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="nova-brand">financeiro<span>vh.</span></p>
+          <a href="/nova/dashboard" className="nova-brand" aria-label="Ir para o Dashboard">financeiro<span>vh.</span></a>
         </div>
         <div className="flex items-center gap-2">
-          <Button variante="secondary" tamanho="sm" onClick={onPix}>
+          {onPix && <Button variante="secondary" tamanho="sm" onClick={onPix}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="11" width="18" height="10" rx="2" />
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
             PIX
-          </Button>
-          <Button onClick={onNovo} tamanho="sm" className="nova-desktop-action">
+          </Button>}
+          {onNovo && <Button onClick={onNovo} tamanho="sm" className="nova-desktop-action">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
             Novo lançamento
-          </Button>
+          </Button>}
           <BotaoIcone onClick={toggleTheme} rotulo="Alternar tema">
             {isDarkMode ? (
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
