@@ -154,6 +154,8 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
   });
   const [tentou, setTentou] = useState(false);
   const reconhecido = d.banco.trim() !== "" && !["neutro", "carteira"].includes(identidadeBanco(d.banco).chave);
+  // Easter egg: o Banco Master foi liquidado pelo Banco Central em novembro de 2025.
+  const ehMaster = /\bmaster\b/.test(d.banco.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase());
   const erros = { banco: !d.banco.trim() ? "Informe o banco ou instituição." : undefined, nome: !d.nome.trim() ? "Dê um nome para reconhecer esta conta." : undefined };
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +174,11 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
         <datalist id={`${uid}-lista`}>
           {BANCOS_CONHECIDOS.map((n) => <option key={n} value={n} />)}
         </datalist>
+        {ehMaster && (
+          <p role="status" className="mt-2 rounded-[var(--nova-radius-md)] bg-[var(--nova-ink-hairline)] px-3 py-2 text-[13px] text-[var(--nova-ink)]">
+            Banco Master? Esse o Banco Central liquidou em novembro de 2025. Seu dinheiro merece um banco que ainda abre amanhã.
+          </p>
+        )}
       </Campo>
       <Campo id={`${uid}-nome`} label="Nome para exibir" ajuda="Como a conta aparece nas listas do app." erro={tentou ? erros.nome : undefined}>
         <input id={`${uid}-nome`} className={`${campo} ${borda(tentou ? erros.nome : undefined)}`} value={d.nome} onChange={(e) => setD({ ...d, nome: e.target.value })} placeholder="Conta principal" autoComplete="off" />
