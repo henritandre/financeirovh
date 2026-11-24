@@ -4,7 +4,8 @@ import { useId, useState, type ReactNode } from "react";
 import { Surface } from "../_ui/Surface";
 import { Button } from "../_ui/Button";
 import { SegmentedControl } from "../_ui/SegmentedControl";
-import { identidadeBanco } from "../_lib/identidadeBanco";
+import { BANCOS_CONHECIDOS, identidadeBanco } from "../_lib/identidadeBanco";
+import { LogoBanco } from "../_ui/LogoBanco";
 import {
   ROTULO_CHAVE_PIX, ROTULO_TIPO_CONTA, tipoDaForma, validarForma,
   type DadosBanco, type DadosForma, type TipoChavePix, type TipoContaBancaria, type TipoForma,
@@ -86,7 +87,7 @@ export function CartaoBanco({ banco, formas, foto, podeEditar, aoEditar, aoAdici
   return (
     <Surface as="article" className={`p-4 nova-bank-${id.chave}`}>
       <button type="button" onClick={aoEditar} className="w-full flex items-start gap-3 text-left cursor-pointer rounded-lg -m-1 p-1 hover:bg-[var(--nova-ink-hairline)]" aria-label={`${podeEditar ? "Editar" : "Ver"} ${banco.banco}`}>
-        <span className="nova-bank-monogram" aria-hidden="true">{id.sigla}</span>
+        <LogoBanco nome={banco.banco || banco.nome} />
         <span className="min-w-0 flex-1">
           <span className="block text-[16px] font-semibold text-[var(--nova-ink)] truncate">{banco.banco}</span>
           <span className="block text-[12px] text-[var(--nova-ink-faint)] truncate">{banco.nome} · {ROTULO_TIPO_CONTA[banco.tipo_conta as TipoContaBancaria] || "Conta"}{dadosConta ? ` · ${dadosConta}` : ""}</span>
@@ -152,6 +153,7 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
     tipoConta: (banco?.tipo_conta as TipoContaBancaria) || "corrente",
   });
   const [tentou, setTentou] = useState(false);
+  const reconhecido = d.banco.trim() !== "" && !["neutro", "carteira"].includes(identidadeBanco(d.banco).chave);
   const erros = { banco: !d.banco.trim() ? "Informe o banco ou instituição." : undefined, nome: !d.nome.trim() ? "Dê um nome para reconhecer esta conta." : undefined };
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
@@ -162,8 +164,14 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
   return (
     <form onSubmit={enviar} className="space-y-4" noValidate>
       <h3 className="text-[22px] font-semibold text-[var(--nova-ink)] pr-10">{banco ? "Editar banco" : "Novo banco"}</h3>
-      <Campo id={`${uid}-banco`} label="Banco ou instituição" erro={tentou ? erros.banco : undefined}>
-        <input id={`${uid}-banco`} className={`${campo} ${borda(tentou ? erros.banco : undefined)}`} value={d.banco} onChange={(e) => setD({ ...d, banco: e.target.value })} placeholder="Nubank, Itaú, Inter…" autoComplete="off" />
+      <Campo id={`${uid}-banco`} label="Banco ou instituição" ajuda={reconhecido ? undefined : "Escolha da lista para o app mostrar a logo do banco."} erro={tentou ? erros.banco : undefined}>
+        <div className="flex items-center gap-2">
+          {reconhecido && <LogoBanco nome={d.banco} tamanho={40} />}
+          <input id={`${uid}-banco`} list={`${uid}-lista`} className={`${campo} ${borda(tentou ? erros.banco : undefined)}`} value={d.banco} onChange={(e) => setD({ ...d, banco: e.target.value })} placeholder="Comece a digitar: Nubank, Itaú, C6…" autoComplete="off" />
+        </div>
+        <datalist id={`${uid}-lista`}>
+          {BANCOS_CONHECIDOS.map((n) => <option key={n} value={n} />)}
+        </datalist>
       </Campo>
       <Campo id={`${uid}-nome`} label="Nome para exibir" ajuda="Como a conta aparece nas listas do app." erro={tentou ? erros.nome : undefined}>
         <input id={`${uid}-nome`} className={`${campo} ${borda(tentou ? erros.nome : undefined)}`} value={d.nome} onChange={(e) => setD({ ...d, nome: e.target.value })} placeholder="Conta principal" autoComplete="off" />

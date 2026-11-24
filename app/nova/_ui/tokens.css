@@ -246,6 +246,25 @@
 .nova-bank-bradesco { --card-tint: 191, 74, 103; --bank-mark: #983b53; }
 .nova-bank-bb { --card-tint: 191, 164, 53; --bank-mark: #786613; }
 .nova-bank-carteira { --card-tint: 91, 154, 127; --bank-mark: #326c53; }
+.nova-bank-c6 { --card-tint: 36, 36, 36; --bank-mark: #242424; }
+.nova-bank-btg { --card-tint: 13, 40, 85; --bank-mark: #0d2855; }
+.nova-bank-picpay { --card-tint: 33, 194, 94; --bank-mark: #11a14b; }
+.nova-bank-mercadopago { --card-tint: 0, 158, 227; --bank-mark: #0079b3; }
+.nova-bank-pagbank { --card-tint: 25, 165, 80; --bank-mark: #128a3e; }
+.nova-bank-neon { --card-tint: 0, 181, 232; --bank-mark: #0a8fbd; }
+.nova-bank-xp { --card-tint: 30, 30, 30; --bank-mark: #1e1e1e; }
+.nova-bank-stone { --card-tint: 0, 166, 80; --bank-mark: #008a42; }
+.nova-bank-cora { --card-tint: 254, 60, 110; --bank-mark: #d42a59; }
+.nova-bank-safra { --card-tint: 22, 32, 72; --bank-mark: #162048; }
+.nova-bank-bmg { --card-tint: 255, 102, 0; --bank-mark: #c24e00; }
+.nova-bank-pan { --card-tint: 0, 175, 239; --bank-mark: #0089bd; }
+.nova-bank-original { --card-tint: 0, 165, 80; --bank-mark: #007f3d; }
+.nova-bank-banrisul { --card-tint: 0, 82, 160; --bank-mark: #00468a; }
+.nova-bank-brb { --card-tint: 0, 93, 170; --bank-mark: #004f91; }
+.nova-bank-bnb { --card-tint: 180, 22, 40; --bank-mark: #96111f; }
+.nova-bank-sicoob { --card-tint: 0, 128, 128; --bank-mark: #00616a; }
+.nova-bank-sicredi { --card-tint: 50, 160, 60; --bank-mark: #26782d; }
+.nova-bank-unicred { --card-tint: 0, 82, 55; --bank-mark: #004d33; }
 .nova-bank-neutro { --card-tint: 112, 140, 174; --bank-mark: #4f6886; }
 .nova-bank-pill { width: 100%; min-height: 56px; position: relative; background-image: linear-gradient(90deg, rgba(var(--card-tint), .18), rgba(var(--card-tint), .06) 22%, transparent 42%); }
 /* As pílulas ficam sobre um fundo suave: transparência basta aqui. Evitar

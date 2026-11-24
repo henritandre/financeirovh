@@ -7,7 +7,7 @@ import { usePerfis } from "../../../lib/hooks/usePerfis";
 import { useContasEBancos } from "../../../lib/hooks/useContasEBancos";
 import {
   apagarBanco, apagarForma, contarMovimentacoesForma, contarVinculosBanco, definirAtivoBanco, definirAtivoForma,
-  podeEditarForma, ROTULO_TIPO_CONTA, salvarBanco, salvarForma, type DadosBanco, type DadosForma, type TipoContaBancaria, type TipoForma,
+  ordenarBancos, podeEditarForma, ROTULO_TIPO_CONTA, type OrdemBancos, salvarBanco, salvarForma, type DadosBanco, type DadosForma, type TipoContaBancaria, type TipoForma,
 } from "../../../lib/contasBancarias";
 import { Cabecalho } from "../_components/Cabecalho";
 import { Secao } from "../_components/Secao";
@@ -38,6 +38,7 @@ export default function NovaContasPage() {
   const { contas, bancos, carregando: carregandoDados, recarregar } = useContasEBancos();
 
   const [filtro, setFiltro] = useState<"todos" | "meus">("todos");
+  const [ordem, setOrdem] = useState<OrdemBancos>("usuario");
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [usos, setUsos] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -48,11 +49,11 @@ export default function NovaContasPage() {
   const meu = (x: any) => filtro === "todos" || x.user_id === eu;
 
   const grupos = useMemo(() => {
-    const ordenaBancos = (a: any, b: any) => (a.autor_nome || "").localeCompare(b.autor_nome || "") || (a.banco || "").localeCompare(b.banco || "");
-    const ativos = bancos.filter((b) => b.ativo !== false).sort(ordenaBancos);
-    const inativos = bancos.filter((b) => b.ativo === false).sort(ordenaBancos);
-    const idsBancos = new Set(bancos.map((b) => b.id));
     const formasDe = (bancoId: string, ativas: boolean) => contas.filter((c) => c.conta_bancaria_id === bancoId && c.tipo !== "dinheiro" && (c.ativo !== false) === ativas).sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+    const qtd = (b: any) => formasDe(b.id, true).length;
+    const ativos = ordenarBancos(bancos.filter((b) => b.ativo !== false), ordem, qtd);
+    const inativos = ordenarBancos(bancos.filter((b) => b.ativo === false), ordem, qtd);
+    const idsBancos = new Set(bancos.map((b) => b.id));
     return {
       ativos,
       inativos,
@@ -61,7 +62,7 @@ export default function NovaContasPage() {
       dinheiroInativo: contas.filter((c) => c.tipo === "dinheiro" && c.ativo === false),
       semBanco: contas.filter((c) => c.tipo !== "dinheiro" && c.ativo !== false && (!c.conta_bancaria_id || !idsBancos.has(c.conta_bancaria_id))),
     };
-  }, [bancos, contas]);
+  }, [bancos, contas, ordem]);
 
   const qtdInativos = grupos.inativos.filter(meu).length
     + grupos.ativos.reduce((a, b) => a + grupos.formasDe(b.id, false).filter(meu).length, 0)
@@ -137,8 +138,12 @@ export default function NovaContasPage() {
           </Surface>
         ) : (
           <div className="space-y-7">
-            <div className="max-w-xs">
+            <div className="max-w-xs space-y-2">
               <SegmentedControl opcoes={[{ valor: "todos", rotulo: "Todos" }, { valor: "meus", rotulo: "Só meus" }]} valor={filtro} aoMudar={(v) => setFiltro(v as "todos" | "meus")} />
+              <div>
+                <p className="text-[12px] font-medium text-[var(--nova-ink-faint)] mb-1 px-1">Ordenar por</p>
+                <SegmentedControl opcoes={[{ valor: "usuario", rotulo: "Usuário" }, { valor: "banco", rotulo: "Banco" }]} valor={ordem} aoMudar={(v) => setOrdem(v as OrdemBancos)} />
+              </div>
             </div>
 
             <Secao titulo="Bancos">
