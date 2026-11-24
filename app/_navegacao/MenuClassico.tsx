@@ -16,7 +16,7 @@ export function MenuClassico({ aberto, aoFechar }: { aberto: boolean; aoFechar: 
   const { versao } = useUIVersion();
   if (!aberto) return null;
 
-  const { principais, conta } = itensNavegacao(versao === "nova" ? "/nova/dashboard" : "/dashboard");
+  const { principais, conta } = itensNavegacao(versao === "nova");
   const sair = async () => { await supabase.auth.signOut(); router.push("/login"); };
 
   const item = (it: ItemNavegacao) => {

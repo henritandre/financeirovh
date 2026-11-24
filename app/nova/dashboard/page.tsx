@@ -84,6 +84,25 @@ export default function NovaDashboardPage() {
   const historicoFaturas = useMemo(() => calcularFaturas(cartaoDaFatura, transacoes), [cartaoDaFatura, transacoes]);
 
   const fecharOverlay = () => setOverlay(null);
+
+  // Atalho vindo da Insights: /nova/dashboard?editar=<id> abre o lançamento
+  // (edição se for seu, detalhe se for de outra pessoa). Roda uma vez, com os dados carregados.
+  const deepLinkFeito = useRef(false);
+  useEffect(() => {
+    if (deepLinkFeito.current || carregando || !sessao.userId) return;
+    const id = new URLSearchParams(window.location.search).get("editar");
+    if (!id) return;
+    deepLinkFeito.current = true;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("editar");
+    window.history.replaceState({}, "", url.toString());
+    const alvo = transacoes.find((t) => t.id === id);
+    const abrir = () => {
+      if (!alvo) mostrar("Lançamento não encontrado.", "error");
+      else setOverlay(alvo.user_id === sessao.userId ? { tipo: "editar", transacao: alvo } : { tipo: "detalhe", transacao: alvo });
+    };
+    queueMicrotask(abrir);
+  }, [carregando, sessao.userId, transacoes, mostrar]);
   const abrirDetalhe = (t: any) => setOverlay({ tipo: "detalhe", transacao: t });
 
   const abrirDetalheBanco = (id: string, nome: string) => {
@@ -179,7 +198,7 @@ export default function NovaDashboardPage() {
           <div>
             <h1>Visão geral</h1>
           </div>
-          <a href="/insights" className="nova-text-link">Explorar insights</a>
+          <a href="/nova/insights" className="nova-text-link">Explorar insights</a>
         </div>
         {carregando ? (
           <div className="space-y-4">

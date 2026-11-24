@@ -12,7 +12,7 @@ export function MenuNova() {
   const pathname = usePathname();
   const router = useRouter();
   const id = useId();
-  const { principais, conta } = itensNavegacao("/nova/dashboard");
+  const { principais, conta } = itensNavegacao(true);
 
   useEffect(() => {
     if (!aberto) return;
