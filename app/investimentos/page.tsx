@@ -225,10 +225,10 @@ export default function InvestimentosPage() {
 
     if (caixinhaId) {
       const { error } = await supabase.from("caixinhas").update(payload).eq("id", caixinhaId);
-      if (error) showIsland(error.message, "error", "🛑"); else showIsland("Caixinha atualizada!", "success", "✏️");
+      if (error) showIsland(error.message, "error", "🛑"); else showIsland("Caixinha atualizada.", "success", "✏️");
     } else {
       const { error } = await supabase.from("caixinhas").insert([payload]);
-      if (error) showIsland(error.message, "error", "🛑"); else showIsland("Caixinha criada!", "success", "🎉");
+      if (error) showIsland(error.message, "error", "🛑"); else showIsland("Caixinha criada.", "success", "🎉");
     }
     setIsSubmitting(false); setIsModalCaixinhaOpen(false); carregarDados(false);
   };
@@ -281,7 +281,7 @@ export default function InvestimentosPage() {
       tipo: tipoAcao, 
       valor: valorParaHistorico, 
       data: dataAcao, 
-      descricao: tipoAcao === "rendimento" ? "Atualização de Saldo" : (tipoAcao === "aporte" ? "Aporte realizado" : "Resgate realizado"), 
+      descricao: tipoAcao === "rendimento" ? "Atualização de saldo" : (tipoAcao === "aporte" ? "Aporte realizado" : "Resgate realizado"), 
       transacao_id: idTransacaoGerada 
     };
     const { error: errH } = await supabase.from("caixinhas_historico").insert([payloadHistorico]);
@@ -292,7 +292,7 @@ export default function InvestimentosPage() {
     if (errC) { showIsland("Erro atualizar saldo: " + errC.message, "error", "🛑"); setIsSubmitting(false); return; }
 
     setIsSubmitting(false); setIsModalAcaoOpen(false);
-    showIsland(tipoAcao === "rendimento" ? "Saldo atualizado!" : "Movimentação concluída!", "success", tipoAcao === "rendimento" ? "📈" : "💰");
+    showIsland(tipoAcao === "rendimento" ? "Saldo atualizado." : "Movimentação concluída.", "success", tipoAcao === "rendimento" ? "📈" : "💰");
     carregarDados(false);
   };
 
@@ -320,9 +320,9 @@ export default function InvestimentosPage() {
     setMenuCardId(null);
     setConfirmacao({
       titulo: "Liquidar saldo",
-      mensagem: `Zerar o saldo de ${formatarMoeda(Number(c.saldo))} de "${c.nome}"? Isso não gera lançamento no Dashboard — serve pra descartar resíduos (ex.: IR retido).`,
+      mensagem: `Zerar o saldo de ${formatarMoeda(Number(c.saldo))} de "${c.nome}"? Isso não gera lançamento no Dashboard. Serve pra descartar resíduos (ex.: IR retido).`,
       primarioLabel: "Liquidar",
-      onPrimario: async () => { const ok = await liquidarCaixinha(c); setConfirmacao(null); if (ok) { showIsland("Saldo liquidado!", "success", "🧹"); carregarDados(false); } },
+      onPrimario: async () => { const ok = await liquidarCaixinha(c); setConfirmacao(null); if (ok) { showIsland("Saldo liquidado.", "success", "🧹"); carregarDados(false); } },
     });
   };
 
@@ -334,7 +334,7 @@ export default function InvestimentosPage() {
         titulo: "Arquivar caixinha",
         mensagem: `"${c.nome}" ainda tem ${formatarMoeda(saldo)}. Deseja liquidar esse saldo (sem lançamento no Dashboard) antes de arquivar?`,
         primarioLabel: "Liquidar e arquivar",
-        onPrimario: async () => { const okL = await liquidarCaixinha(c); if (!okL) { setConfirmacao(null); return; } const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Liquidada e arquivada!", "success", "🗄️"); carregarDados(false); } },
+        onPrimario: async () => { const okL = await liquidarCaixinha(c); if (!okL) { setConfirmacao(null); return; } const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Liquidada e arquivada.", "success", "🗄️"); carregarDados(false); } },
         secundarioLabel: "Arquivar mantendo saldo",
         onSecundario: async () => { const ok = await setArquivada(c, true); setConfirmacao(null); if (ok) { showIsland("Caixinha arquivada.", "success", "🗄️"); carregarDados(false); } },
       });
@@ -351,7 +351,7 @@ export default function InvestimentosPage() {
   const reativarCaixinha = async (c: any) => {
     setMenuCardId(null);
     const ok = await setArquivada(c, false);
-    if (ok) { showIsland("Caixinha reativada!", "success", "♻️"); carregarDados(false); }
+    if (ok) { showIsland("Caixinha reativada.", "success", "♻️"); carregarDados(false); }
   };
 
   const confirmarExcluir = (c: any) => {
@@ -421,20 +421,17 @@ export default function InvestimentosPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? 'animate-balloon-pop' : 'animate-balloon-inflate'} ${
-              island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300' :
-              island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300' :
-              'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300'
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === 'error' ? 'animate-[islandShake_0.5s_ease-in-out]' : island.type === 'success' ? 'animate-[islandExplode_0.6s_ease-out_forwards]' : ''}`}>
-                {island.icon}
-              </span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300' :
+ island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300' :
+ 'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300'
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 tracking-tight">
+          <h1 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2 tracking-tight">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
             Investimentos
           </h1>
@@ -448,7 +445,7 @@ export default function InvestimentosPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -456,17 +453,17 @@ export default function InvestimentosPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -478,17 +475,16 @@ export default function InvestimentosPage() {
         <main className="p-6 max-w-5xl mx-auto space-y-6 mt-4">
           <div className={`flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
             <div>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100">Gestão de Patrimônio</h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">O dinheiro que trabalha para você, isolado do dia a dia.</p>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gestão de patrimônio</h2>
             </div>
             
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mr-2">Visão de:</span>
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 mr-2">Visão de:</span>
               {usuariosDisponiveis.map((user) => {
                 const isSelected = usuariosSelecionados.includes(user);
                 const fotoUser = mapPerfis[user];
                 return (
-                  <button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2 rounded-xl border text-xs font-bold transition-all active:scale-95 flex items-center gap-2 ${isSelected ? "bg-gray-900 dark:bg-gray-700 text-white border-gray-900 dark:border-gray-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
+                  <button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2 rounded-xl border text-xs font-bold transition active:scale-[0.97] flex items-center gap-2 ${isSelected ? "bg-gray-900 dark:bg-gray-700 text-white border-gray-900 dark:border-gray-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
                     <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-[9px]">{fotoUser ? <img src={fotoUser} className="w-full h-full object-cover" alt="" /> : user.charAt(0).toUpperCase()}</div>
                     {user}
                   </button>
@@ -497,21 +493,20 @@ export default function InvestimentosPage() {
             </div>
           </div>
 
-          <div className={`bg-gradient-to-tr from-blue-900 to-indigo-900 dark:from-blue-950 dark:to-indigo-950 p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-white relative overflow-hidden gap-6 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
-            <div className="absolute -right-10 -top-10 w-40 h-40 bg-white opacity-5 rounded-full blur-2xl"></div>
+          <div className={`bg-blue-900 dark:bg-blue-950 p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center text-white relative overflow-hidden gap-6 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
             <div>
-              <h3 className="text-sm font-bold text-blue-200 dark:text-blue-300 uppercase tracking-widest mb-2">Patrimônio Total Acumulado</h3>
-              <p className="text-4xl sm:text-5xl font-black break-words">{formatarMoeda(totalInvestido)}</p>
+              <h3 className="text-sm font-bold text-blue-200 dark:text-blue-300 mb-2">Patrimônio total acumulado</h3>
+              <p className="text-4xl sm:text-5xl font-semibold break-words">{formatarMoeda(totalInvestido)}</p>
             </div>
-            <button onClick={abrirModalNovaCaixinha} className="bg-white text-blue-900 px-6 py-3.5 rounded-xl font-black shadow-md active:scale-95 transition-all w-full sm:w-auto relative z-10 hover:bg-gray-50">
-              + Nova Caixinha
+            <button onClick={abrirModalNovaCaixinha} className="bg-white text-blue-900 px-6 py-3.5 rounded-xl font-semibold shadow-md active:scale-[0.97] transition w-full sm:w-auto relative z-10 hover:bg-gray-50">
+              + Nova caixinha
             </button>
           </div>
 
           <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit gap-1">
-            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all whitespace-nowrap ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
-            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all flex items-center justify-center gap-1 whitespace-nowrap ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Arquivadas{qtdArquivadas > 0 &&<span className="text-[10px] font-black bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded-full">{qtdArquivadas}</span>}</button>
-            <button onClick={() => setAba("evolucao")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-black rounded-lg transition-all whitespace-nowrap ${aba === "evolucao" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>📈 Evolução</button>
+            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg transition whitespace-nowrap ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
+            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-1 whitespace-nowrap ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Arquivadas{qtdArquivadas > 0 &&<span className="text-[10px] font-semibold bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-1.5 py-0.5 rounded-full">{qtdArquivadas}</span>}</button>
+            <button onClick={() => setAba("evolucao")} className={`flex-1 sm:flex-none px-2 sm:px-6 py-2 text-xs sm:text-sm font-semibold rounded-lg transition whitespace-nowrap ${aba === "evolucao" ? "bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Evolução</button>
           </div>
 
           {isLoading ? (
@@ -519,7 +514,7 @@ export default function InvestimentosPage() {
           ) : aba === "evolucao" ? (
             mesesEvolucao.length === 0 ? (
               <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">
-                <span className="text-5xl opacity-30 mb-3 block">📈</span>
+                
                 <p className="text-lg font-bold text-gray-600 dark:text-gray-400">Ainda não há movimentações para montar a evolução.</p>
                 <p className="text-sm font-bold text-gray-400 dark:text-gray-500 mt-1">Faça um aporte ou atualize um rendimento para começar a série.</p>
               </div>
@@ -529,36 +524,35 @@ export default function InvestimentosPage() {
                 {/* RESUMO */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Patrimônio hoje</p>
-                    <p className="text-xl font-black text-blue-600 dark:text-blue-400 mt-1">{formatarMoeda(patrimonioAtual)}</p>
+                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">Patrimônio hoje</p>
+                    <p className="text-xl font-semibold text-blue-600 dark:text-blue-400 mt-1">{formatarMoeda(patrimonioAtual)}</p>
                     {saldoArquivadas > 0.005 && <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">inclui {formatarMoeda(saldoArquivadas)} em arquivadas</p>}
                   </div>
                   <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Você aportou</p>
-                    <p className="text-xl font-black text-gray-800 dark:text-gray-100 mt-1">{formatarMoeda(totalAportado)}</p>
+                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">Você aportou</p>
+                    <p className="text-xl font-semibold text-gray-800 dark:text-gray-100 mt-1">{formatarMoeda(totalAportado)}</p>
                   </div>
                   <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Rendeu</p>
-                    <p className={`text-xl font-black mt-1 ${totalRendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{formatarMoeda(totalRendido)}</p>
+                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">Rendeu</p>
+                    <p className={`text-xl font-semibold mt-1 ${totalRendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{formatarMoeda(totalRendido)}</p>
                     <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mt-0.5">{rentabilidade >= 0 ? "+" : ""}{rentabilidade.toFixed(1)}% sobre o aportado</p>
                   </div>
                   <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-                    <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">No último mês</p>
-                    <p className={`text-xl font-black mt-1 ${variacaoMes >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{variacaoMes >= 0 ? "+" : ""}{formatarMoeda(variacaoMes)}</p>
+                    <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">No último mês</p>
+                    <p className={`text-xl font-semibold mt-1 ${variacaoMes >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{variacaoMes >= 0 ? "+" : ""}{formatarMoeda(variacaoMes)}</p>
                   </div>
                 </div>
 
                 {/* PATRIMÔNIO ACUMULADO */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Evolução do patrimônio</h3>
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-4">Saldo acumulado mês a mês · passe o mouse</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Evolução do patrimônio</h3>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-0.5 mb-4">Saldo acumulado mês a mês</p>
                   <Linhas labels={labelsEvolucao} series={[{ nome: "Patrimônio", valores: seriePatrimonio, cor: PALETA.saldo, area: true }]} height={230} />
                 </div>
 
                 {/* APORTES x RENDIMENTOS */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Seu dinheiro × o que rendeu</h3>
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">Quanto do patrimônio veio de aporte e quanto o dinheiro trabalhou</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Seu dinheiro × o que rendeu</h3>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
                     <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.saldo }}></span>Aportado</span>
                     <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.receita }}></span>Rendimento</span>
@@ -569,8 +563,7 @@ export default function InvestimentosPage() {
                 {/* APORTADO x RENDEU POR CAIXINHA */}
                 {porCaixinhaAtiva.length > 0 && (
                   <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-                    <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Aportado × rendeu, por caixinha</h3>
-                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">Quais caixinhas estão fazendo o dinheiro trabalhar</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Aportado × rendeu, por caixinha</h3>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.saldo }}></span>Aportado</span>
                       <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-600 dark:text-gray-300"><span className="inline-block w-3 h-3 rounded-sm" style={{ background: PALETA.receita }}></span>Rendimento</span>
@@ -588,7 +581,7 @@ export default function InvestimentosPage() {
                         return (
                           <div key={c.nome} className="flex items-center justify-between gap-3 text-xs">
                             <span className="font-bold text-gray-600 dark:text-gray-300 truncate">{c.nome}</span>
-                            <span className={`font-black whitespace-nowrap ${c.rendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                            <span className={`font-semibold whitespace-nowrap ${c.rendido >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {c.rendido >= 0 ? "+" : ""}{formatarMoeda(c.rendido)} <span className="text-gray-400 dark:text-gray-500 font-bold">({pct >= 0 ? "+" : ""}{pct.toFixed(1)}%)</span>
                             </span>
                           </div>
@@ -600,8 +593,8 @@ export default function InvestimentosPage() {
 
                 {/* POR CAIXINHA */}
                 <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">Evolução por caixinha</h3>
-                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5 mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Evolução por caixinha</h3>
+                  <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mt-0.5 mb-3">
                     {seriesPorCaixinha.length >= 6 ? "As 6 maiores" : `${seriesPorCaixinha.length} caixinha(s)`} · saldo acumulado
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mb-3">
@@ -615,7 +608,7 @@ export default function InvestimentosPage() {
             )
           ) : caixinhasFiltradas.length === 0 ? (
             <div className="bg-white dark:bg-gray-800 p-10 rounded-3xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">
-              <span className="text-5xl opacity-30 mb-3 block">{aba === "arquivadas" ? "🗄️" : "🏦"}</span>
+              
               <p className="text-lg font-bold text-gray-600 dark:text-gray-400">{aba === "arquivadas" ? "Nenhuma caixinha arquivada." : "Nenhum investimento encontrado para este filtro."}</p>
             </div>
           ) : (
@@ -630,52 +623,52 @@ export default function InvestimentosPage() {
                   <div key={c.id} className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border flex flex-col hover:shadow-md transition-shadow group ${arquivada ? "border-gray-200 dark:border-gray-700 opacity-80" : "border-gray-100 dark:border-gray-700"}`}>
                     <div className="p-6 border-b border-gray-50 dark:border-gray-700">
                       <div className="flex justify-between items-start mb-4 gap-2">
-                        <span className="text-[10px] font-black text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-md uppercase tracking-wider flex items-center gap-1">
-                          🏦 {c.banco?.banco || "Cofre Físico"}
+                        <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-md flex items-center gap-1">
+                          🏦 {c.banco?.banco || "Cofre físico"}
                         </span>
                         <div className="flex items-center gap-1.5">
                           <div className="flex items-center gap-1.5 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">
-                            <div className="w-4 h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[8px] font-black">
+                            <div className="w-4 h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300 flex items-center justify-center text-[8px] font-semibold">
                               {fotoAutor ? <img src={fotoAutor} alt="" className="w-full h-full object-cover" /> : c.autor_nome?.charAt(0).toUpperCase()}
                             </div>
                             <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">@{c.autor_nome}</span>
                           </div>
                           <div className="relative">
-                            <button onClick={() => setMenuCardId(menuAberto ? null : c.id)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none font-black" title="Opções">⋮</button>
+                            <button onClick={() => setMenuCardId(menuAberto ? null : c.id)} className="w-7 h-7 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-lg leading-none font-semibold" title="Opções">⋮</button>
                             {menuAberto && (
                               <>
                                 <div className="fixed inset-0 z-40" onClick={() => setMenuCardId(null)}></div>
                                 <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 p-1 space-y-0.5">
-                                  <button onClick={() => abrirModalEditarCaixinha(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>✏️ Editar</button>
-                                  {!arquivada && temSaldo && <button onClick={() => confirmarLiquidar(c)} className={`${menuItemCls} text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20`}>🧹 Liquidar saldo</button>}
-                                  {!arquivada && <button onClick={() => confirmarArquivar(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>🗄️ Arquivar</button>}
-                                  {arquivada && <button onClick={() => reativarCaixinha(c)} className={`${menuItemCls} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20`}>♻️ Reativar</button>}
-                                  <button onClick={() => confirmarExcluir(c)} className={`${menuItemCls} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20`}>🗑️ Excluir</button>
+                                  <button onClick={() => abrirModalEditarCaixinha(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>Editar</button>
+                                  {!arquivada && temSaldo && <button onClick={() => confirmarLiquidar(c)} className={`${menuItemCls} text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20`}>Liquidar saldo</button>}
+                                  {!arquivada && <button onClick={() => confirmarArquivar(c)} className={`${menuItemCls} text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700`}>Arquivar</button>}
+                                  {arquivada && <button onClick={() => reativarCaixinha(c)} className={`${menuItemCls} text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20`}>Reativar</button>}
+                                  <button onClick={() => confirmarExcluir(c)} className={`${menuItemCls} text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20`}>Excluir</button>
                                 </div>
                               </>
                             )}
                           </div>
                         </div>
                       </div>
-                      <h3 className="text-xl font-black text-gray-900 dark:text-gray-100 truncate mb-1">{c.nome}</h3>
-                      <p className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-3">{formatarMoeda(c.saldo)}</p>
-                      {arquivada && <span className="inline-block mt-2 text-[10px] font-black bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded uppercase tracking-wider">Arquivada</span>}
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 truncate mb-1">{c.nome}</h3>
+                      <p className="text-3xl font-semibold text-blue-600 dark:text-blue-400 mt-3">{formatarMoeda(c.saldo)}</p>
+                      {arquivada && <span className="inline-block mt-2 text-[10px] font-semibold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded">Arquivada</span>}
                     </div>
                     {arquivada ? (
                       <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex gap-2 rounded-b-3xl">
-                        <button onClick={() => reativarCaixinha(c)} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-blue-600 dark:text-blue-400 font-bold text-xs rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors shadow-sm flex items-center justify-center gap-1.5">♻️ Reativar</button>
+                        <button onClick={() => reativarCaixinha(c)} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-blue-600 dark:text-blue-400 font-bold text-xs rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors shadow-sm flex items-center justify-center gap-1.5">Reativar</button>
                         <button onClick={() => confirmarExcluir(c)} className="py-2.5 px-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors shadow-sm" title="Excluir">🗑️</button>
                       </div>
                     ) : (
                       <div className="p-4 bg-gray-50 dark:bg-gray-900/50 flex justify-between gap-2 rounded-b-3xl">
                         <button onClick={() => abrirModalAcao(c, 'aporte')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-green-700 dark:text-green-400 font-bold text-xs rounded-xl hover:bg-green-50 dark:hover:bg-green-900/30 hover:border-green-200 dark:hover:border-green-800 transition-colors shadow-sm flex flex-col items-center gap-1">
-                          <span className="text-lg">📥</span> Guardar
+                          Guardar
                         </button>
                         <button onClick={() => abrirModalAcao(c, 'resgate')} className="flex-1 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-red-600 dark:text-red-400 font-bold text-xs rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 hover:border-red-200 dark:hover:border-red-800 transition-colors shadow-sm flex flex-col items-center gap-1">
-                          <span className="text-lg">📤</span> Resgatar
+                          Resgatar
                         </button>
                         <button onClick={() => abrirModalAcao(c, 'rendimento')} className="flex-1 py-2.5 bg-blue-600 dark:bg-blue-500 text-white font-bold text-xs rounded-xl hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm flex flex-col items-center gap-1">
-                          <span className="text-lg">📈</span> Render
+                          Render
                         </button>
                       </div>
                     )}
@@ -692,26 +685,26 @@ export default function InvestimentosPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalCaixinhaOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center rounded-t-3xl">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{caixinhaId ? "Editar Caixinha" : "Nova Caixinha / Fundo"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{caixinhaId ? "Editar Caixinha" : "Nova Caixinha / Fundo"}</h3>
                 <button type="button" onClick={() => setIsModalCaixinhaOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
               
               <form onSubmit={handleSalvarCaixinha} className="p-6 space-y-5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Nome da Reserva</label>
-                  <input type="text" required value={nomeCaixinha} onChange={(e) => setNomeCaixinha(e.target.value)} placeholder="Ex: Viagem Chile 2026..." className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all" />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nome da reserva</label>
+                  <input type="text" required value={nomeCaixinha} onChange={(e) => setNomeCaixinha(e.target.value)} placeholder="Ex: Viagem Chile 2026..." className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition" />
                 </div>
 
                 <div className={`relative ${isBancoDropdownOpen ? "z-50" : "z-30"}`}>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Onde este dinheiro vai ficar?</label>
-                  <button type="button" onClick={() => setIsBancoDropdownOpen(!isBancoDropdownOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all h-[55px]">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Onde este dinheiro vai ficar?</label>
+                  <button type="button" onClick={() => setIsBancoDropdownOpen(!isBancoDropdownOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition h-[55px]">
                     {bancoId ? (
                       bancoId === "dinheiro" ? (
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">💵</div>
+                          <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">💵</div>
                           <div className="flex flex-col items-start truncate text-left">
-                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">Cofre Físico</span>
-                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">Em casa / Na Carteira</span>
+                            <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">Cofre físico</span>
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate w-full mt-0.5">Em casa / na carteira</span>
                           </div>
                         </div>
                       ) : (
@@ -721,14 +714,14 @@ export default function InvestimentosPage() {
                           const fotoBanco = mapPerfis[b.autor_nome];
                           return (
                             <div className="flex items-center gap-3 overflow-hidden">
-                              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 overflow-hidden">
+                              <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 overflow-hidden">
                                 {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : b.autor_nome?.charAt(0).toUpperCase()}
                               </div>
                               <div className="flex flex-col items-start truncate text-left">
                                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full flex items-center gap-1">
                                   {b.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{b.autor_nome}</span>
                                 </span>
-                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{b.nome}</span>
+                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate w-full mt-0.5">{b.nome}</span>
                               </div>
                             </div>
                           );
@@ -742,21 +735,21 @@ export default function InvestimentosPage() {
 
                   {isBancoDropdownOpen && (
                     <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                      <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">🏦 Bancos Cadastrados</div>
+                      <div className="px-4 py-1.5 text-[10px] font-semibold border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Bancos cadastrados</div>
                       <ul className="divide-y divide-gray-50 dark:divide-gray-700">
                         {bancos.filter((b) => !somenteMinhasContas || b.user_id === userId).map((banco) => {
                           const fotoBanco = mapPerfis[banco.autor_nome];
                           return (
                             <li key={banco.id}>
                               <button type="button" onClick={() => { setBancoId(banco.id); setIsBancoDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 overflow-hidden">
+                                <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 overflow-hidden">
                                   {fotoBanco ? <img src={fotoBanco} className="w-full h-full object-cover" alt="" /> : banco.autor_nome?.charAt(0).toUpperCase()}
                                 </div>
                                 <div className="flex flex-col truncate">
                                   <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
                                     {banco.banco} <span className="text-[10px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-1.5 py-0.5 rounded">@{banco.autor_nome}</span>
                                   </span>
-                                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{banco.nome}</span>
+                                  <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate mt-0.5">{banco.nome}</span>
                                 </div>
                               </button>
                             </li>
@@ -764,10 +757,10 @@ export default function InvestimentosPage() {
                         })}
                         <li key="dinheiro_caixinha">
                           <button type="button" onClick={() => { setBancoId("dinheiro"); setIsBancoDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">💵</div>
+                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">💵</div>
                             <div className="flex flex-col truncate">
-                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">Cofre Físico</span>
-                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">Dinheiro em espécie</span>
+                              <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">Cofre físico</span>
+                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate mt-0.5">Dinheiro em espécie</span>
                             </div>
                           </button>
                         </li>
@@ -782,8 +775,8 @@ export default function InvestimentosPage() {
                 </div>
 
                 <div className="pt-2">
-                  <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white bg-gray-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 font-black uppercase tracking-wide transition-all shadow-md active:scale-95 disabled:opacity-50">
-                    {isSubmitting ? "Salvando..." : caixinhaId ? "Salvar Alterações" : "Salvar Caixinha"}
+                  <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white bg-gray-900 hover:bg-black dark:bg-blue-600 dark:hover:bg-blue-700 font-semibold tracking-wide transition shadow-md active:scale-[0.97] disabled:opacity-50">
+                    {isSubmitting ? "Salvando..." : caixinhaId ? "Salvar alterações" : "Salvar Caixinha"}
                   </button>
                 </div>
               </form>
@@ -799,40 +792,40 @@ export default function InvestimentosPage() {
               
               <div className={`px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center rounded-t-3xl ${tipoAcao === 'rendimento' ? 'bg-blue-50 dark:bg-blue-900/20' : tipoAcao === 'aporte' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
                 <div>
-                  <h3 className={`text-lg font-black flex items-center gap-2 ${tipoAcao === 'rendimento' ? 'text-blue-700 dark:text-blue-400' : tipoAcao === 'aporte' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
-                    {tipoAcao === 'rendimento' ? '📈 Atualizar Rendimento' : tipoAcao === 'aporte' ? '📥 Guardar Dinheiro' : '📤 Resgatar Dinheiro'}
+                  <h3 className={`text-lg font-semibold flex items-center gap-2 ${tipoAcao === 'rendimento' ? 'text-blue-700 dark:text-blue-400' : tipoAcao === 'aporte' ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}`}>
+                    {tipoAcao === 'rendimento' ? 'Atualizar rendimento' : tipoAcao === 'aporte' ? 'Guardar dinheiro' : 'Resgatar dinheiro'}
                   </h3>
-                  <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 mt-1 uppercase tracking-wider">{caixinhaAlvo.nome} • Saldo atual: {formatarMoeda(caixinhaAlvo.saldo)}</p>
+                  <p className="text-[11px] font-bold text-gray-600 dark:text-gray-400 mt-1">{caixinhaAlvo.nome} • Saldo atual: {formatarMoeda(caixinhaAlvo.saldo)}</p>
                 </div>
                 <button type="button" onClick={() => setIsModalAcaoOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold self-start">&times;</button>
               </div>
               
               <form onSubmit={handleSalvarAcao} className="p-6 space-y-5">
                 {tipoAcao === 'rendimento' && (
-                  <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50 text-xs font-bold text-blue-800 dark:text-blue-400 leading-relaxed">💡 <strong>Nota:</strong> O rendimento não altera o saldo do seu Dashboard diário. Ele apenas multiplica o valor desta caixinha.</div>
+                  <div className="bg-blue-50/50 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/50 text-xs font-bold text-blue-800 dark:text-blue-400 leading-relaxed">O rendimento não altera o saldo do seu Dashboard diário. Ele apenas multiplica o valor desta caixinha.</div>
                 )}
                 {tipoAcao === 'aporte' && (
-                  <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-900/50 text-xs font-bold text-green-800 dark:text-green-400 leading-relaxed">💡 <strong>Nota:</strong> Isso vai gerar uma <u>Despesa</u> no seu Dashboard diário para tirar o dinheiro da sua conta corrente.</div>
+                  <div className="bg-green-50/50 dark:bg-green-900/10 p-4 rounded-xl border border-green-100 dark:border-green-900/50 text-xs font-bold text-green-800 dark:text-green-400 leading-relaxed">Isso vai gerar uma <u>Despesa</u> no seu Dashboard diário para tirar o dinheiro da sua conta corrente.</div>
                 )}
                 {tipoAcao === 'resgate' && (
-                  <div className="bg-red-50/50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/50 text-xs font-bold text-red-800 dark:text-red-400 leading-relaxed">💡 <strong>Nota:</strong> Isso vai gerar uma <u>Receita</u> no seu Dashboard diário simulando o dinheiro voltando para a sua conta.</div>
+                  <div className="bg-red-50/50 dark:bg-red-900/10 p-4 rounded-xl border border-red-100 dark:border-red-900/50 text-xs font-bold text-red-800 dark:text-red-400 leading-relaxed">Isso vai gerar uma <u>Receita</u> no seu Dashboard diário simulando o dinheiro voltando para a sua conta.</div>
                 )}
 
                 <div className="flex gap-4">
                   <div className="flex-[2]">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Qual o valor? (R$)</label>
-                    <input type="number" step="0.01" required value={valorAcao} onChange={(e) => setValorAcao(e.target.value)} placeholder="0.00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-lg font-black text-gray-900 dark:text-gray-100 focus:ring-4 focus:border-blue-500 focus:ring-blue-500/20 transition-all" />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Qual o valor? (R$)</label>
+                    <input type="number" step="0.01" required value={valorAcao} onChange={(e) => setValorAcao(e.target.value)} placeholder="0.00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-lg font-semibold text-gray-900 dark:text-gray-100 focus:ring-4 focus:border-blue-500 focus:ring-blue-500/20 transition" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Data</label>
-                    <input type="date" required value={dataAcao} onChange={(e) => setDataAcao(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:border-blue-500 focus:ring-blue-500/20 transition-all" />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Data</label>
+                    <input type="date" required value={dataAcao} onChange={(e) => setDataAcao(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:ring-4 focus:border-blue-500 focus:ring-blue-500/20 transition" />
                   </div>
                 </div>
 
                 {tipoAcao !== 'rendimento' && (
                   <div className={`relative ${isContaPonteDropdownOpen ? "z-50" : "z-30"}`}>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">{tipoAcao === 'aporte' ? 'O dinheiro vai sair de qual conta sua?' : 'O dinheiro vai cair em qual conta sua?'}</label>
-                    <button type="button" onClick={() => setIsContaPonteDropdownOpen(!isContaPonteDropdownOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all h-[55px]">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{tipoAcao === 'aporte' ? 'O dinheiro vai sair de qual conta sua?' : 'O dinheiro vai cair em qual conta sua?'}</label>
+                    <button type="button" onClick={() => setIsContaPonteDropdownOpen(!isContaPonteDropdownOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-2.5 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition h-[55px]">
                       {contaPonteId ? (() => {
                         const selected = contasCorrentes.find((c) => c.id === contaPonteId);
                         if (!selected) return <span className="text-gray-400 font-bold text-sm ml-1">Selecione...</span>;
@@ -840,12 +833,12 @@ export default function InvestimentosPage() {
                         const isDinheiro = selected.tipo === "dinheiro";
                         return (
                           <div className="flex items-center gap-3 overflow-hidden">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${isDinheiro ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden ${isDinheiro ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
                               {isDinheiro ? "💵" : (fotoConta ? <img src={fotoConta} className="w-full h-full object-cover" alt="" /> : selected.autor_nome?.charAt(0).toUpperCase())}
                             </div>
                             <div className="flex flex-col items-start truncate text-left">
                               <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{selected.nome}</span>
-                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{isDinheiro ? "Dinheiro Físico" : `🏦 ${selected.banco_vinculado?.banco} • @${selected.autor_nome}`}</span>
+                              <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate w-full mt-0.5">{isDinheiro ? "Dinheiro físico" : `${selected.banco_vinculado?.banco} • @${selected.autor_nome}`}</span>
                             </div>
                           </div>
                         );
@@ -855,7 +848,7 @@ export default function InvestimentosPage() {
 
                     {isContaPonteDropdownOpen && (
                       <div className="absolute top-[calc(100%+8px)] left-0 w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden z-[100] max-h-56 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                        <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">💳 Contas Disponíveis</div>
+                        <div className="px-4 py-1.5 text-[10px] font-semibold border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">Contas disponíveis</div>
                         <ul className="divide-y divide-gray-50 dark:divide-gray-700">
                           {contasCorrentes.filter(c => !somenteMinhasContas || c.user_id === userId).map((c) => {
                             const fotoConta = mapPerfis[c.autor_nome];
@@ -863,12 +856,12 @@ export default function InvestimentosPage() {
                             return (
                               <li key={c.id}>
                                 <button type="button" onClick={() => { setContaPonteId(c.id); setIsContaPonteDropdownOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${isDinheiro ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
+                                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden ${isDinheiro ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' : 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'}`}>
                                     {isDinheiro ? "💵" : (fotoConta ? <img src={fotoConta} className="w-full h-full object-cover" alt="" /> : c.autor_nome?.charAt(0).toUpperCase())}
                                   </div>
                                   <div className="flex flex-col truncate">
                                     <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{isDinheiro ? "Dinheiro Físico" : `🏦 ${c.banco_vinculado?.banco} • @${c.autor_nome}`}</span>
+                                    <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate mt-0.5">{isDinheiro ? "Dinheiro físico" : `${c.banco_vinculado?.banco} • @${c.autor_nome}`}</span>
                                   </div>
                                 </button>
                               </li>
@@ -885,8 +878,8 @@ export default function InvestimentosPage() {
                 )}
 
                 <div className="pt-2 relative z-0">
-                  <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 disabled:opacity-50 ${tipoAcao === 'rendimento' ? 'bg-blue-600 hover:bg-blue-700' : tipoAcao === 'aporte' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>
-                    {isSubmitting ? "Processando..." : "Confirmar Movimentação"}
+                  <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] disabled:opacity-50 ${tipoAcao === 'rendimento' ? 'bg-blue-600 hover:bg-blue-700' : tipoAcao === 'aporte' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}>
+                    {isSubmitting ? "Processando..." : "Confirmar movimentação"}
                   </button>
                 </div>
               </form>
@@ -898,14 +891,14 @@ export default function InvestimentosPage() {
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setConfirmacao(null)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
-              <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 mb-1">{confirmacao.titulo}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-1">{confirmacao.titulo}</h3>
               <p className="text-sm font-bold text-gray-600 dark:text-gray-300 mb-5 leading-relaxed">{confirmacao.mensagem}</p>
               <div className="flex flex-col gap-2">
-                <button type="button" onClick={confirmacao.onPrimario} className={`w-full py-3 rounded-xl font-black text-white transition-all active:scale-95 ${confirmacao.tom === "perigo" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>{confirmacao.primarioLabel}</button>
+                <button type="button" onClick={confirmacao.onPrimario} className={`w-full py-3 rounded-xl font-semibold text-white transition active:scale-[0.97] ${confirmacao.tom === "perigo" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}>{confirmacao.primarioLabel}</button>
                 {confirmacao.secundarioLabel && (
-                  <button type="button" onClick={confirmacao.onSecundario} className="w-full py-3 rounded-xl font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">{confirmacao.secundarioLabel}</button>
+                  <button type="button" onClick={confirmacao.onSecundario} className="w-full py-3 rounded-xl font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-[0.97]">{confirmacao.secundarioLabel}</button>
                 )}
-                <button type="button" onClick={() => setConfirmacao(null)} className="w-full py-2.5 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all">Cancelar</button>
+                <button type="button" onClick={() => setConfirmacao(null)} className="w-full py-2.5 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">Cancelar</button>
               </div>
             </div>
           </div>

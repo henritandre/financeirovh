@@ -27,7 +27,7 @@ export function FiltrosContas({ bancos, contas, mapPerfis, bancoId, aoBanco, exc
   const selecionado = bancos.find(b => b.id === bancoId);
   return <div ref={raiz} className="classic-filter-pair" onKeyDown={e => { if (e.key === "Escape" && aberto) { e.stopPropagation(); gatilhos.current[aberto]?.focus(); setAberto(null); } }}>
     {(["banco", "pagamento"] as const).map(modo => <div key={modo} className="relative min-w-0 flex-1">
-      <span className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">{modo === "banco" ? "Filtrar por banco / instituição" : "Formas de pagamento incluídas"}</span>
+      <span className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1">{modo === "banco" ? "Filtrar por banco / instituição" : "Formas de pagamento incluídas"}</span>
       <button ref={el => { gatilhos.current[modo] = el; }} type="button" aria-expanded={aberto === modo} aria-controls={`filtro-${modo}`} onClick={() => { setAberto(aberto === modo ? null : modo); setBusca(""); }} className="classic-filter-trigger">
         <span className="truncate">{modo === "banco" ? selecionado ? `@${selecionado.autor_nome} · ${selecionado.banco || selecionado.nome}` : "Todos os bancos" : excluidasVisiveis ? `${visiveis.length - excluidasVisiveis} de ${visiveis.length} incluídas` : "Todas as formas incluídas"}</span><span aria-hidden="true">⌄</span>
       </button>

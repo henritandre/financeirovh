@@ -163,7 +163,7 @@ export default function ContasFixasPage() {
     }
     setIsSubmitting(false);
     if (error) showIsland("Erro ao salvar: " + error.message, "error", "🛑");
-    else { showIsland(contaEditandoId ? "Conta atualizada!" : "Conta fixa cadastrada!", "success", contaEditandoId ? "✏️" : "🎉"); setIsModalContaOpen(false); carregarDados(); }
+    else { showIsland(contaEditandoId ? "Conta atualizada." : "Conta fixa cadastrada.", "success", contaEditandoId ? "✏️" : "🎉"); setIsModalContaOpen(false); carregarDados(); }
   };
 
   const toggleArquivar = (conta: any) => {
@@ -174,7 +174,7 @@ export default function ContasFixasPage() {
         setConfirmacao(null);
         const { error } = await supabase.from("contas_fixas").update({ arquivada: arquivar, arquivada_em: arquivar ? new Date().toISOString() : null }).eq("id", conta.id);
         if (error) showIsland("Erro: " + error.message, "error", "🛑");
-        else { showIsland(arquivar ? "Conta arquivada." : "Conta reativada!", "success", arquivar ? "🗄️" : "♻️"); carregarDados(); }
+        else { showIsland(arquivar ? "Conta arquivada." : "Conta reativada.", "success", arquivar ? "🗄️" : "♻️"); carregarDados(); }
       },
     });
   };
@@ -204,7 +204,7 @@ export default function ContasFixasPage() {
     if (error) {
       if (error.code === "23505") showIsland("Já existe uma ocorrência para esse mês nessa conta.", "error", "🛑");
       else showIsland("Erro: " + error.message, "error", "🛑");
-    } else { showIsland("Salvo com sucesso!", "success", "🎉"); setIsModalPendenciaOpen(false); carregarDados(); }
+    } else { showIsland("Salvo com sucesso.", "success", "🎉"); setIsModalPendenciaOpen(false); carregarDados(); }
   };
 
   const handleExcluirOcorrencia = () => {
@@ -332,18 +332,17 @@ export default function ContasFixasPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? "animate-balloon-pop" : "animate-balloon-inflate"} ${
-              island.type === "error" ? "bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300" :
-              island.type === "success" ? "bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300" :
-              "bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300"
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === "error" ? "animate-[islandShake_0.5s_ease-in-out]" : island.type === "success" ? "animate-[islandExplode_0.6s_ease-out_forwards]" : ""}`}>{island.icon}</span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === "error" ? "bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300" :
+ island.type === "success" ? "bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300" :
+ "bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300"
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-amber-600 dark:text-amber-400 tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-amber-600 dark:text-amber-400 tracking-tight flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></svg>
             Contas Fixas
           </h1>
@@ -357,7 +356,7 @@ export default function ContasFixasPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -365,18 +364,18 @@ export default function ContasFixasPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-black text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -389,17 +388,16 @@ export default function ContasFixasPage() {
 
           <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 mac-dock-item ${isWaving ? "mac-dock-animate" : ""}`} style={{ animationDelay: "0s" }}>
             <div>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100">Contas Fixas</h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">Acompanhe o que já foi pago e o que ainda está pendente, mês a mês.</p>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Contas fixas</h2>
             </div>
-            <button onClick={abrirModalNovaConta} className="flex items-center gap-2 bg-amber-600 dark:bg-amber-500 hover:bg-amber-700 dark:hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap">
+            <button onClick={abrirModalNovaConta} className="flex items-center gap-2 bg-amber-600 dark:bg-amber-500 hover:bg-amber-700 dark:hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm active:scale-[0.97] whitespace-nowrap">
               <span className="text-xl leading-none">+</span> Cadastrar nova conta
             </button>
           </div>
 
           <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit mb-6">
-            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-amber-700 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
-            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-amber-700 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Arquivadas</button>
+            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-amber-700 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
+            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-amber-700 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Arquivadas</button>
           </div>
 
           {loading ? (
@@ -428,10 +426,10 @@ export default function ContasFixasPage() {
                       <div className="flex items-center gap-3 min-w-0">
                         <span className={`text-lg text-gray-400 dark:text-gray-500 transition-transform shrink-0 ${expandido ? "rotate-90" : ""}`}>›</span>
                         <div className="min-w-0">
-                          <h3 className="text-base font-black text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 truncate flex items-center gap-1.5">
                             {conta.nome}
-                            {agregado && <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">Soma</span>}
-                            {cartao && <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800">Cartões</span>}
+                            {agregado && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded tracking-wide bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800">Soma</span>}
+                            {cartao && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded tracking-wide bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-800">Cartões</span>}
                           </h3>
                           <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
                             {cartao ? `${cartoesCredito.length} cartão(ões) de crédito` : (conta.categorias?.nome || "Sem categoria")}
@@ -440,7 +438,7 @@ export default function ContasFixasPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className={`text-[10px] font-black px-2 py-1 rounded uppercase tracking-wide whitespace-nowrap ${statusColor}`}>{statusLabel}{statusValor != null ? ` · R$ ${Number(statusValor).toFixed(2)}` : ""}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-1 rounded tracking-wide whitespace-nowrap ${statusColor}`}>{statusLabel}{statusValor != null ? ` · R$ ${Number(statusValor).toFixed(2)}` : ""}</span>
                         <span onClick={(e) => { e.stopPropagation(); abrirModalEditarConta(conta); }} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer" title="Editar conta">
                           ✏️
                         </span>
@@ -455,11 +453,11 @@ export default function ContasFixasPage() {
                         <div className="flex items-center justify-between flex-wrap gap-3 pt-4">
                           <div className="flex p-1 bg-gray-100 dark:bg-gray-700 rounded-xl gap-1 overflow-x-auto">
                             {([["ano", "Ano atual"], ["trimestre", "Trimestre atual"], ["semestre", "Semestre atual"], ["tudo", "Todo período"]] as const).map(([val, label]) => (
-                              <button key={val} onClick={() => setPeriodoPorConta((prev) => ({ ...prev, [conta.id]: val }))} className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap ${periodo === val ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>{label}</button>
+                              <button key={val} onClick={() => setPeriodoPorConta((prev) => ({ ...prev, [conta.id]: val }))} className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition whitespace-nowrap ${periodo === val ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>{label}</button>
                             ))}
                           </div>
                           {!somatorio && !conta.arquivada && (
-                            <button onClick={() => abrirModalPendencia(conta)} className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors whitespace-nowrap">📋 Gerenciar mês</button>
+                            <button onClick={() => abrirModalPendencia(conta)} className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-colors whitespace-nowrap">Gerenciar mês</button>
                           )}
                         </div>
 
@@ -484,17 +482,17 @@ export default function ContasFixasPage() {
                         {stats && (
                           <div className="grid grid-cols-3 gap-3">
                             <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Média</span>
-                              <span className="block text-sm font-black text-gray-900 dark:text-gray-100 mt-0.5">R$ {stats.media.toFixed(2)}</span>
+                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Média</span>
+                              <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">R$ {stats.media.toFixed(2)}</span>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Maior desvio</span>
-                              <span className="block text-sm font-black text-red-600 dark:text-red-400 mt-0.5">R$ {Number(stats.maior.valor).toFixed(2)}</span>
+                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Maior desvio</span>
+                              <span className="block text-sm font-semibold text-red-600 dark:text-red-400 mt-0.5">R$ {Number(stats.maior.valor).toFixed(2)}</span>
                               <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500">Ref. {String(stats.maior.competencia_mes).padStart(2, "0")}/{stats.maior.competencia_ano}</span>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Menor desvio</span>
-                              <span className="block text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">R$ {Number(stats.menor.valor).toFixed(2)}</span>
+                              <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Menor desvio</span>
+                              <span className="block text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">R$ {Number(stats.menor.valor).toFixed(2)}</span>
                               <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500">Ref. {String(stats.menor.competencia_mes).padStart(2, "0")}/{stats.menor.competencia_ano}</span>
                             </div>
                           </div>
@@ -502,9 +500,9 @@ export default function ContasFixasPage() {
 
                         {cartao && (
                           <div className="space-y-3 pt-2">
-                            <span className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Por cartão</span>
+                            <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">Por cartão</span>
                             {cartoesCredito.length === 0 && (
-                              <p className="text-xs font-bold text-gray-400 dark:text-gray-500">Nenhum cartão de crédito cadastrado em "Gestão Bancária".</p>
+                              <p className="text-xs font-bold text-gray-400 dark:text-gray-500">Nenhum cartão de crédito cadastrado em "Gestão bancária".</p>
                             )}
                             {cartoesCredito.map((c) => {
                               const dadosCartao = aplicarFiltroPeriodo(agregarPagamentosCartao(c.id), conta.id);
@@ -513,11 +511,11 @@ export default function ContasFixasPage() {
                                 <div key={c.id} className={`rounded-xl border p-3 ${c.ativo === false ? "border-gray-100 dark:border-gray-700 opacity-60" : "border-purple-100 dark:border-purple-900/50 bg-purple-50/30 dark:bg-purple-900/10"}`}>
                                   <div className="flex items-center justify-between gap-2 mb-2">
                                     <div className="flex items-center gap-2 min-w-0">
-                                      <span className="text-sm font-black text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wide bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 shrink-0">@{c.autor_nome}</span>
-                                      {c.ativo === false && <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 shrink-0">INATIVO</span>}
+                                      <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
+                                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded tracking-wide bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 shrink-0">@{c.autor_nome}</span>
+                                      {c.ativo === false && <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 shrink-0">INATIVO</span>}
                                     </div>
-                                    <span className="text-xs font-black text-gray-700 dark:text-gray-300 whitespace-nowrap shrink-0">R$ {totalMesCartao.toFixed(2)} <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 uppercase">este mês</span></span>
+                                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap shrink-0">R$ {totalMesCartao.toFixed(2)} <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">Este mês</span></span>
                                   </div>
                                   {dadosCartao.length === 0 ? (
                                     <div className="text-center py-6 text-xs font-bold text-gray-400 dark:text-gray-500">Sem pagamentos neste período.</div>
@@ -537,7 +535,7 @@ export default function ContasFixasPage() {
 
               {contasFiltradas.length === 0 && (
                 <div className="text-center py-14 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                  <span className="text-4xl opacity-50 mb-2 block">📌</span>
+                  
                   <p className="font-bold text-gray-500 dark:text-gray-400">{aba === "ativas" ? "Nenhuma conta fixa cadastrada ainda." : "Nenhuma conta arquivada."}</p>
                 </div>
               )}
@@ -550,20 +548,20 @@ export default function ContasFixasPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalContaOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{contaEditandoId ? "Editar Conta Fixa" : "Nova Conta Fixa"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{contaEditandoId ? "Editar conta fixa" : "Nova conta fixa"}</h3>
                 <button onClick={() => setIsModalContaOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
               <form onSubmit={handleSalvarConta} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Nome</label>
-                  <input type="text" required value={nomeConta} onChange={(e) => setNomeConta(e.target.value)} placeholder="Ex: Água, Aluguel, Mercado" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                  <input type="text" required value={nomeConta} onChange={(e) => setNomeConta(e.target.value)} placeholder="Ex: Água, Aluguel, Mercado" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Como acompanhar</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Como acompanhar</label>
                   <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
-                    <button type="button" onClick={() => setModoConta("unico")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoConta === "unico" ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Pagamento único</button>
-                    <button type="button" onClick={() => setModoConta("agregado")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoConta === "agregado" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Soma de lançamentos</button>
-                    <button type="button" onClick={() => setModoConta("cartao")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoConta === "cartao" ? "bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Cartões de crédito</button>
+                    <button type="button" onClick={() => setModoConta("unico")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoConta === "unico" ? "bg-white dark:bg-gray-800 text-amber-600 dark:text-amber-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Pagamento único</button>
+                    <button type="button" onClick={() => setModoConta("agregado")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoConta === "agregado" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Soma de lançamentos</button>
+                    <button type="button" onClick={() => setModoConta("cartao")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoConta === "cartao" ? "bg-white dark:bg-gray-800 text-purple-600 dark:text-purple-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Cartões de crédito</button>
                   </div>
                   <p className="text-[11px] font-bold text-gray-400 dark:text-gray-500 mt-1.5">
                     {modoConta === "unico" && "Um valor por mês: você marca como pago direto aqui, ou vincula um lançamento do Dashboard. Ideal pra água, aluguel, internet."}
@@ -573,22 +571,22 @@ export default function ContasFixasPage() {
                 </div>
                 {modoConta !== "cartao" && (
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Categoria</label>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                     <select required value={categoriaIdConta} onChange={(e) => setCategoriaIdConta(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20">
                       <option value="" disabled>Selecione...</option>
                       {categorias.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                     </select>
-                    {categorias.length === 0 && <p className="text-[11px] font-bold text-orange-600 dark:text-orange-400 mt-1">Nenhuma categoria de despesa cadastrada — crie uma em "Categorias" primeiro.</p>}
+                    {categorias.length === 0 && <p className="text-[11px] font-bold text-orange-600 dark:text-orange-400 mt-1">Nenhuma categoria de despesa cadastrada. Crie uma em "Categorias" primeiro.</p>}
                   </div>
                 )}
                 {modoConta === "unico" && (
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia de vencimento (opcional)</label>
-                    <input type="number" min="1" max="31" value={diaVencimentoConta} onChange={(e) => setDiaVencimentoConta(e.target.value)} placeholder="Ex: 10" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Dia de vencimento (opcional)</label>
+                    <input type="number" min="1" max="31" value={diaVencimentoConta} onChange={(e) => setDiaVencimentoConta(e.target.value)} placeholder="Ex: 10" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition" />
                   </div>
                 )}
-                <button type="submit" disabled={isSubmitting || (modoConta !== "cartao" && !categoriaIdConta)} className="w-full py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
-                  {isSubmitting ? "Salvando..." : contaEditandoId ? "Salvar Alterações" : "Cadastrar Conta"}
+                <button type="submit" disabled={isSubmitting || (modoConta !== "cartao" && !categoriaIdConta)} className="w-full py-3.5 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
+                  {isSubmitting ? "Salvando..." : contaEditandoId ? "Salvar alterações" : "Cadastrar conta"}
                 </button>
               </form>
             </div>
@@ -600,54 +598,54 @@ export default function ContasFixasPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalPendenciaOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{contaFixaAlvo.nome}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{contaFixaAlvo.nome}</h3>
                 <button onClick={() => setIsModalPendenciaOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
 
               <div className="p-6 space-y-4">
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Mês</label>
+                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">Mês</label>
                     <select value={mesPendencia} onChange={(e) => setMesPendencia(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20">
                       {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                     </select>
                   </div>
                   <div className="flex-1">
-                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">Ano</label>
+                    <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 mb-1">Ano</label>
                     <input type="number" required value={anoPendencia} onChange={(e) => setAnoPendencia(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20" />
                   </div>
                 </div>
 
                 {ocorrenciaEditandoVinculo ? (
                   <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 space-y-1">
-                    <p className="text-xs font-bold text-blue-800 dark:text-blue-400">🔗 Este mês está vinculado a um lançamento do Dashboard (R$ {Number(ocorrenciaEditandoVinculo.valor).toFixed(2)}).</p>
+                    <p className="text-xs font-bold text-blue-800 dark:text-blue-400">Este mês está vinculado a um lançamento do Dashboard (R$ {Number(ocorrenciaEditandoVinculo.valor).toFixed(2)}).</p>
                     <p className="text-[11px] font-bold text-blue-600 dark:text-blue-400">Para alterar valor ou desfazer, edite ou exclua o lançamento por lá.</p>
                   </div>
                 ) : (
                   <form onSubmit={handleSalvarPendencia} className="space-y-4">
                     <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
-                      <button type="button" onClick={() => setStatusPendencia("pendente")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${statusPendencia === "pendente" ? "bg-white dark:bg-gray-800 text-orange-600 dark:text-orange-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Pendente</button>
-                      <button type="button" onClick={() => setStatusPendencia("pago")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${statusPendencia === "pago" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Já paguei</button>
+                      <button type="button" onClick={() => setStatusPendencia("pendente")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${statusPendencia === "pendente" ? "bg-white dark:bg-gray-800 text-orange-600 dark:text-orange-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Pendente</button>
+                      <button type="button" onClick={() => setStatusPendencia("pago")} className={`flex-1 py-2 text-xs font-bold rounded-lg transition ${statusPendencia === "pago" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Já paguei</button>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">{statusPendencia === "pago" ? "Valor pago" : "Valor esperado (opcional)"}</label>
-                      <input type="text" inputMode="decimal" required={statusPendencia === "pago"} value={valorPendencia} onChange={(e) => setValorPendencia(e.target.value)} placeholder="Ex: 50,00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" />
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{statusPendencia === "pago" ? "Valor pago" : "Valor esperado (opcional)"}</label>
+                      <input type="text" inputMode="decimal" required={statusPendencia === "pago"} value={valorPendencia} onChange={(e) => setValorPendencia(e.target.value)} placeholder="Ex: 50,00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition" />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Observação (opcional)</label>
-                      <input type="text" value={observacaoPendencia} onChange={(e) => setObservacaoPendencia(e.target.value)} placeholder="Ex: Pago com Vale Home Office" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition-all" />
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Observação (opcional)</label>
+                      <input type="text" value={observacaoPendencia} onChange={(e) => setObservacaoPendencia(e.target.value)} placeholder="Ex: Pago com Vale Home Office" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 outline-none transition" />
                     </div>
 
                     <div className="flex gap-3">
                       {ocorrenciaEditandoId && (
-                        <button type="button" onClick={handleExcluirOcorrencia} disabled={isSubmitting} className="px-4 py-3.5 rounded-xl font-bold transition-all active:scale-95 shrink-0 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800" title="Excluir registro deste mês">
+                        <button type="button" onClick={handleExcluirOcorrencia} disabled={isSubmitting} className="px-4 py-3.5 rounded-xl font-bold transition active:scale-[0.97] shrink-0 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800" title="Excluir registro deste mês">
                           🗑️
                         </button>
                       )}
-                      <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
-                        {isSubmitting ? "Salvando..." : ocorrenciaEditandoId ? "Salvar Alterações" : "Registrar"}
+                      <button type="submit" disabled={isSubmitting} className="flex-1 py-3.5 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] bg-amber-600 hover:bg-amber-700 disabled:opacity-50">
+                        {isSubmitting ? "Salvando..." : ocorrenciaEditandoId ? "Salvar alterações" : "Registrar"}
                       </button>
                     </div>
                   </form>
@@ -663,8 +661,8 @@ export default function ContasFixasPage() {
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
               <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-5">{confirmacao.mensagem}</p>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
-                <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition-all active:scale-95">Confirmar</button>
+                <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-[0.97]">Cancelar</button>
+                <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-amber-600 hover:bg-amber-700 transition active:scale-[0.97]">Confirmar</button>
               </div>
             </div>
           </div>

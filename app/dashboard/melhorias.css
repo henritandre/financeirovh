@@ -16,7 +16,7 @@
 .classic-root .nova-bank-carteira { --card-tint: 91, 154, 127; --bank-mark: #326c53; }
 .classic-root .nova-bank-neutro { --card-tint: 112, 140, 174; --bank-mark: #4f6886; }
 .classic-root .nova-bank-avatar { box-shadow: 0 0 0 3px rgba(var(--card-tint), .16); color: var(--bank-mark); background: rgba(var(--card-tint), .16); }
-.classic-root .nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; border-left: 3px solid rgba(var(--card-tint), .65); background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.classic-root .nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
 .dark .classic-root .nova-picker-bank { color: color-mix(in srgb, rgb(var(--card-tint)) 60%, white); }
 .classic-root .nova-search-field { position: relative; }
 .classic-root .nova-search-field input { width: 100%; min-height: 52px; border: 1px solid var(--nova-ink-hairline); border-radius: var(--nova-radius-md); background: var(--nova-bg-elevated); color: var(--nova-ink); padding: 12px 36px 12px 14px; font-size: 16px; text-overflow: ellipsis; }
@@ -50,6 +50,6 @@
 .classic-filter-user { display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--nova-bg-elevated); font-size: 12px; font-weight: 700; }
 .classic-filter-user img, .classic-filter-initial { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
 .classic-filter-initial { display: grid; place-items: center; background: var(--nova-ink-hairline); }
-.classic-filter-option { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; border-left: 3px solid rgba(var(--card-tint), .4); background: linear-gradient(90deg, rgba(var(--card-tint), .08), transparent 70%); }
+.classic-filter-option { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; background: linear-gradient(90deg, rgba(var(--card-tint), .08), transparent 70%); }
 .classic-filter-option:hover { background-color: var(--nova-ink-hairline); }
 .classic-filter-option input { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--nova-accent); }

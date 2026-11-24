@@ -148,7 +148,7 @@ export default function ParametrosPage() {
     if (error) {
       showIsland(`Erro ao salvar: ${error.message}`, "error", "🛑");
     } else {
-      showIsland("Configurações salvas com sucesso!", "success", "💾");
+      showIsland("Configurações salvas com sucesso.", "success", "💾");
     }
     
     setIsSaving(false);
@@ -179,26 +179,23 @@ export default function ParametrosPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? 'animate-balloon-pop' : 'animate-balloon-inflate'} ${
-              island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300' :
-              island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300' :
-              'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300'
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === 'error' ? 'animate-[islandShake_0.5s_ease-in-out]' : island.type === 'success' ? 'animate-[islandExplode_0.6s_ease-out_forwards]' : ''}`}>
-                {island.icon}
-              </span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300' :
+ island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300' :
+ 'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300'
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         {/* NAVBAR */}
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-blue-600 dark:text-blue-400 flex items-center gap-2 tracking-tight">
+          <h1 className="text-xl font-semibold text-blue-600 dark:text-blue-400 flex items-center gap-2 tracking-tight">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
             Parâmetros
           </h1>
           <div className="flex items-center">
-            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo Escuro">
+            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo escuro">
               <span className="absolute left-2 text-[10px]">🌙</span><span className="absolute right-2 text-[10px]">☀️</span>
               <span className={`inline-block w-5 h-5 transform rounded-full bg-white shadow-sm transition-transform z-10 ${isDarkMode ? "translate-x-8" : "translate-x-1"}`} />
             </button>
@@ -207,7 +204,7 @@ export default function ParametrosPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -215,18 +212,18 @@ export default function ParametrosPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">👤 Meu Perfil</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -237,8 +234,7 @@ export default function ParametrosPage() {
 
         <main className="p-6 max-w-4xl mx-auto space-y-6 mt-4 relative z-0">
           <div className={`flex flex-col mb-8 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">Preferências</h2>
-            <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">Ajuste o comportamento do sistema para a sua conta.</p>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">Preferências</h2>
           </div>
 
           {isLoading ? (
@@ -247,7 +243,7 @@ export default function ParametrosPage() {
             <>
             <div className={`bg-white dark:bg-gray-800 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item mb-6 ${isWaving ? 'mac-dock-animate' : ''}`}>
               <div className="p-6 sm:p-8">
-                <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="m4.93 4.93 14.14 14.14"/><path d="M2 12h20"/></svg>
                   Aparência
                 </h3>
@@ -255,7 +251,7 @@ export default function ParametrosPage() {
                   <div>
                     <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Versão da interface</h4>
                     <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                      A UI Nova está em construção — hoje só o Dashboard está disponível nela. As demais telas continuam abrindo na versão Clássica.
+                      A UI Nova está em construção. Hoje só o Dashboard está disponível nela. As demais telas continuam abrindo na versão Clássica.
                     </p>
                   </div>
                   <div className="flex shrink-0 rounded-full border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-900/40">
@@ -266,12 +262,12 @@ export default function ParametrosPage() {
                         onClick={() => {
                           if (v === versao) return;
                           definirVersao(v);
-                          showIsland(v === "nova" ? "UI Nova ativada!" : "Voltando para a UI Clássica.", "success", v === "nova" ? "✨" : "🔙");
+                          showIsland(v === "nova" ? "UI Nova ativada." : "Voltando para a UI Clássica.", "success", v === "nova" ? "✨" : "🔙");
                           setTimeout(() => router.push(v === "nova" ? "/nova/dashboard" : "/dashboard"), 900);
                         }}
-                        className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-colors ${
-                          versao === v ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                        }`}
+                        className={`px-4 py-2 rounded-full text-xs font-semibold tracking-wide transition-colors ${
+ versao === v ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+ }`}
                       >
                         {v === "classica" ? "Clássica" : "Nova"}
                       </button>
@@ -286,7 +282,7 @@ export default function ParametrosPage() {
                 
                 {/* BLOCO 1: GESTÃO DE PATRIMÔNIO (CAIXINHAS) */}
                 <div>
-                  <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                     Gestão de Patrimônio
                   </h3>
@@ -295,7 +291,7 @@ export default function ParametrosPage() {
                     {/* TOGGLE: ALERTAS DE RENDIMENTO */}
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Lembrete de Rendimentos</h4>
+                        <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Lembrete de rendimentos</h4>
                         <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">O sistema te avisa caso você esqueça de atualizar o saldo das suas caixinhas e fundos de investimento.</p>
                       </div>
                       <button
@@ -325,7 +321,7 @@ export default function ParametrosPage() {
                             required={notificarRendimento}
                             value={diasAlerta}
                             onChange={(e) => setDiasAlerta(Number(e.target.value))}
-                            className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                            className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
                           />
                           <span className="text-sm font-bold text-blue-800 dark:text-blue-300">dias</span>
                         </div>
@@ -336,7 +332,7 @@ export default function ParametrosPage() {
 
                 {/* BLOCO 2: CARTÕES DE CRÉDITO */}
                 <div>
-                  <h3 className="text-sm font-black text-purple-600 dark:text-purple-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-purple-600 dark:text-purple-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
                     Cartões de Crédito
                   </h3>
@@ -354,7 +350,7 @@ export default function ParametrosPage() {
                         required
                         value={qtdFaturasVisiveis}
                         onChange={(e) => setQtdFaturasVisiveis(Number(e.target.value))}
-                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
+                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
                       />
                       <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
                     </div>
@@ -374,7 +370,7 @@ export default function ParametrosPage() {
                         required
                         value={qtdFaturasHistorico}
                         onChange={(e) => setQtdFaturasHistorico(Number(e.target.value))}
-                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
+                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
                       />
                       <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
                     </div>
@@ -400,7 +396,7 @@ export default function ParametrosPage() {
 
                 {/* BLOCO 2B: VISÃO RÁPIDA DE BANCOS (UI Nova) */}
                 <div>
-                  <h3 className="text-sm font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                     Visão Rápida de Bancos (UI Nova)
                   </h3>
@@ -420,7 +416,7 @@ export default function ParametrosPage() {
                           required
                           value={bancoEvolucaoDias}
                           onChange={(e) => setBancoEvolucaoDias(Number(e.target.value))}
-                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
+                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
                         />
                         <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">dias</span>
                       </div>
@@ -429,7 +425,7 @@ export default function ParametrosPage() {
                     <div className="bg-emerald-50/50 dark:bg-emerald-900/10 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
                       <div className="flex-1">
                         <label className="block text-sm font-bold text-emerald-900 dark:text-emerald-300 mb-1">Lançamentos recentes exibidos</label>
-                        <p className="text-xs font-medium text-emerald-700/70 dark:text-emerald-400/70">Quantos lançamentos aparecem na lista (entradas, débito e PIX — sem fatura de cartão).</p>
+                        <p className="text-xs font-medium text-emerald-700/70 dark:text-emerald-400/70">Quantos lançamentos aparecem na lista (entradas, débito e PIX, sem fatura de cartão).</p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <input
@@ -439,7 +435,7 @@ export default function ParametrosPage() {
                           required
                           value={bancoLancamentosQtd}
                           onChange={(e) => setBancoLancamentosQtd(Number(e.target.value))}
-                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
+                          className="w-20 text-center rounded-xl border border-emerald-200 dark:border-emerald-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-emerald-900 dark:text-emerald-100 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20"
                         />
                         <span className="text-sm font-bold text-emerald-800 dark:text-emerald-300">itens</span>
                       </div>
@@ -449,7 +445,7 @@ export default function ParametrosPage() {
 
                 {/* BLOCO 3: INSIGHTS */}
                 <div>
-                  <h3 className="text-sm font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-gray-100 dark:border-gray-700 pb-2 mb-6 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
                     Insights
                   </h3>
@@ -469,7 +465,7 @@ export default function ParametrosPage() {
                           required
                           value={insightsQtdCategorias}
                           onChange={(e) => setInsightsQtdCategorias(Number(e.target.value))}
-                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
                         />
                         <span className="text-sm font-bold text-blue-800 dark:text-blue-300">categorias</span>
                       </div>
@@ -507,7 +503,7 @@ export default function ParametrosPage() {
                           required
                           value={insightsQtdTop}
                           onChange={(e) => setInsightsQtdTop(Number(e.target.value))}
-                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
+                          className="w-20 text-center rounded-xl border border-blue-200 dark:border-blue-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-semibold text-blue-900 dark:text-blue-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20"
                         />
                         <span className="text-sm font-bold text-blue-800 dark:text-blue-300">itens</span>
                       </div>
@@ -520,7 +516,7 @@ export default function ParametrosPage() {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-wide transition-all shadow-md active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl text-white bg-blue-600 hover:bg-blue-700 font-semibold tracking-wide transition shadow-md active:scale-[0.97] disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSaving ? (
                     <>
@@ -528,7 +524,7 @@ export default function ParametrosPage() {
                       Salvando...
                     </>
                   ) : (
-                    "Salvar Configurações"
+                    "Salvar configurações"
                   )}
                 </button>
               </div>

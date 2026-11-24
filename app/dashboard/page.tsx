@@ -152,8 +152,8 @@ export default function DashboardPage() {
   };
 
   const nomesAtalhos: Record<string, string> = {
-    h: "Hoje", o: "Ontem", s: "Acumulado da Semana", sa: "Semana Anterior",
-    m: "Acumulado do Mês", ma: "Mês Anterior", a: "Acumulado do Ano", aa: "Ano Anterior"
+    h: "Hoje", o: "Ontem", s: "Acumulado da semana", sa: "Semana anterior",
+    m: "Acumulado do mês", ma: "Mês anterior", a: "Acumulado do ano", aa: "Ano anterior"
   };
 
   const carregarDados = async (isInitialLoad = false, usernameOverride?: string) => {
@@ -240,7 +240,7 @@ export default function DashboardPage() {
 
               if (deveAlertar) {
                 setTimeout(() => {
-                  showIsland(`Investimentos há mais de ${diasAlerta} dias sem atualizar rendimento!`, "info", "💡");
+                  showIsland(`Investimentos há mais de ${diasAlerta} dias sem atualizar rendimento.`, "info", "💡");
                 }, 3500);
               }
             }
@@ -281,7 +281,7 @@ export default function DashboardPage() {
         // lembrete de rendimento das caixinhas.
         const { data: assinaturasGeradas } = await supabase.rpc("processar_assinaturas");
         if (assinaturasGeradas && assinaturasGeradas > 0) {
-          showIsland(`${assinaturasGeradas} lançamento(s) de assinatura gerado(s)!`, "success", "🔁");
+          showIsland(`${assinaturasGeradas} lançamento(s) de assinatura gerado(s).`, "success", "🔁");
         }
 
         // Passa o username já resolvido: o estado "username" ainda não foi
@@ -640,9 +640,9 @@ export default function DashboardPage() {
     if (ok) {
       setPixCopiadoId(c.id);
       setTimeout(() => setPixCopiadoId((id) => (id === c.id ? null : id)), 2000);
-      showIsland("Chave PIX copiada!", "success", "📋");
+      showIsland("Chave PIX copiada.", "success", "📋");
     } else {
-      showIsland("Não consegui copiar — toque e segure na chave.", "error", "🛑");
+      showIsland("Não consegui copiar. Toque e segure na chave.", "error", "🛑");
     }
   };
 
@@ -694,20 +694,20 @@ export default function DashboardPage() {
     const alvo = transacoes.find((t) => t.id === editarId);
     const url = new URL(window.location.href); url.searchParams.delete("editar"); window.history.replaceState({}, "", url.toString());
     if (!alvo) { showIsland("Lançamento não encontrado.", "error", "🔍"); return; }
-    if (alvo.user_id !== userId) { showIsland("Lançamento de outro usuário — veja pelo extrato.", "info", "👤"); return; }
+    if (alvo.user_id !== userId) { showIsland("Lançamento de outro usuário. Veja pelo extrato.", "info", "👤"); return; }
     abrirModalEditar(alvo);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingData, userId, transacoes]);
 
   const dispararAuditoriaAtualizacao = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (tipo === "despesa" && !formaPagtoId) { showIsland("Selecione a forma de pagamento!", "error", "🛑"); return; }
-    if (tipo === "receita" && !bancoOrigemId) { showIsland("Selecione onde recebeu!", "error", "🛑"); return; }
+    if (tipo === "despesa" && !formaPagtoId) { showIsland("Selecione a forma de pagamento.", "error", "🛑"); return; }
+    if (tipo === "receita" && !bancoOrigemId) { showIsland("Selecione onde recebeu.", "error", "🛑"); return; }
     if (tipo === "transferencia") {
-      if (!bancoOrigemId || !formaPagtoId) { showIsland("Preencha a origem completa!", "error", "🛑"); return; }
-      if (isPagamentoFatura && !faturaDestinoId) { showIsland("Selecione a fatura!", "error", "🛑"); return; }
-      if (!isPagamentoFatura && !bancoDestinoId) { showIsland("Selecione o banco de destino!", "error", "🛑"); return; }
-      if (!isPagamentoFatura && bancoOrigemId === bancoDestinoId) { showIsland("Origem e destino devem ser diferentes!", "error", "🛑"); return; }
+      if (!bancoOrigemId || !formaPagtoId) { showIsland("Preencha a origem completa.", "error", "🛑"); return; }
+      if (isPagamentoFatura && !faturaDestinoId) { showIsland("Selecione a fatura.", "error", "🛑"); return; }
+      if (!isPagamentoFatura && !bancoDestinoId) { showIsland("Selecione o banco de destino.", "error", "🛑"); return; }
+      if (!isPagamentoFatura && bancoOrigemId === bancoDestinoId) { showIsland("Origem e destino devem ser diferentes.", "error", "🛑"); return; }
     }
 
     if (editandoId) {
@@ -743,7 +743,7 @@ export default function DashboardPage() {
       await supabase.from("transacoes_atualizadas").insert([{ transacao_id: editandoId, descricao: transacaoAlvo.descricao, valor: transacaoAlvo.valor, data: transacaoAlvo.data, tipo: transacaoAlvo.tipo, categoria_id: transacaoAlvo.categoria_id, conta_id: transacaoAlvo.conta_id, conta_destino_id: transacaoAlvo.conta_destino_id, user_id: transacaoAlvo.user_id, autor_nome: transacaoAlvo.autor_nome, atualizado_por_nome: username || "Usuário", motivo: motivoAuditoria }]);
       const { error } = await supabase.from("transacoes").update({ ...payloadBase, descricao, valor: valorNumerico, data }).eq("id", editandoId);
       if (error) { showIsland("Erro ao atualizar: " + error.message, "error", "🛑"); setIsProcessingAudit(false); return; }
-      showIsland("Atualizado com sucesso!", "success", "✏️");
+      showIsland("Atualizado com sucesso.", "success", "✏️");
       novoTransacaoId = editandoId;
     } else {
       if (podeParcelar && parcelas > 1) {
@@ -773,12 +773,12 @@ export default function DashboardPage() {
           payloadsMultiplos.push({ ...payloadBase, descricao: `${descricao} (${i + 1}/${parcelas})`, valor: valoresParcelas[i], data: `${dP.getFullYear()}-${String(dP.getMonth() + 1).padStart(2, "0")}-${String(dP.getDate()).padStart(2, "0")}` });
         }
         await supabase.from("transacoes").insert(payloadsMultiplos);
-        showIsland(`${parcelas} parcelas salvas!`, "success", "📅");
+        showIsland(`${parcelas} parcelas salvas.`, "success", "📅");
       } else {
         const { data: inserida, error } = await supabase.from("transacoes").insert([{ ...payloadBase, descricao, valor: valorNumerico, data }]).select("id").single();
         if (error) { showIsland("Erro ao salvar: " + error.message, "error", "🛑"); setIsProcessingAudit(false); return; }
         novoTransacaoId = inserida?.id || null;
-        showIsland("Lançamento salvo com sucesso!", "success", "🎉");
+        showIsland("Lançamento salvo com sucesso.", "success", "🎉");
       }
     }
 
@@ -823,7 +823,7 @@ export default function DashboardPage() {
     await supabase.from("transacoes_excluidas").insert([{ transacao_id: transacaoAlvo.id, descricao: transacaoAlvo.descricao, valor: transacaoAlvo.valor, data: transacaoAlvo.data, tipo: transacaoAlvo.tipo, categoria_id: transacaoAlvo.categoria_id, conta_id: transacaoAlvo.conta_id, conta_destino_id: transacaoAlvo.conta_destino_id, user_id: transacaoAlvo.user_id, autor_nome: transacaoAlvo.autor_nome, excluido_por_nome: username || "Usuário", motivo: motivoAuditoria }]);
     await supabase.from("contas_fixas_ocorrencias").update({ status: "pendente", transacao_id: null }).eq("transacao_id", transacaoAlvo.id);
     await supabase.from("transacoes").delete().eq("id", transacaoAlvo.id);
-    setIsProcessingAudit(false); showIsland("Excluído com sucesso!", "success", "🗑️"); setIsDeleteModalOpen(false); carregarDados(false);
+    setIsProcessingAudit(false); showIsland("Excluído com sucesso.", "success", "🗑️"); setIsDeleteModalOpen(false); carregarDados(false);
   };
 
   const initialLetterMenu = username ? username.charAt(0).toUpperCase() : email ? email.charAt(0).toUpperCase() : "?";
@@ -862,19 +862,18 @@ export default function DashboardPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? 'animate-balloon-pop' : 'animate-balloon-inflate'} ${
-              island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300' :
-              island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300' :
-              'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300'
-            }`}>
-              <span className="text-xl shrink-0 drop-shadow-md">{island.icon}</span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300' :
+ island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300' :
+ 'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300'
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         {/* NAVBAR UNIFICADA */}
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight">Controle Financeiro</h1>
+          <h1 className="text-xl font-semibold text-blue-600 dark:text-blue-400 tracking-tight">Controle financeiro</h1>
           <div className="flex items-center">
             
             <button onClick={toggleVisibilidadeGlobal} className="mr-3 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors focus:outline-none" title="Ocultar valores">
@@ -885,7 +884,7 @@ export default function DashboardPage() {
               )}
             </button>
 
-            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo Escuro">
+            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo escuro">
               <span className="absolute left-2 text-[10px]">🌙</span><span className="absolute right-2 text-[10px]">☀️</span>
               <span className={`inline-block w-5 h-5 transform rounded-full bg-white shadow-sm transition-transform z-10 ${isDarkMode ? "translate-x-8" : "translate-x-1"}`} />
             </button>
@@ -895,7 +894,7 @@ export default function DashboardPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -903,18 +902,18 @@ export default function DashboardPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -925,22 +924,22 @@ export default function DashboardPage() {
 
         <main className="p-6 max-w-6xl mx-auto space-y-6 mt-4 relative z-0">
           <div className="flex justify-between items-end">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Visão Geral</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">Visão geral</h2>
             <div className="hidden md:block relative">
               <button
                 onClick={cliqueLancamento}
                 onMouseDown={iniciarLongPress} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}
                 onContextMenu={(e) => { e.preventDefault(); setIsSpeedDialOpen(true); }}
                 title="Clique para lançar · segure (ou botão direito) para atalhos"
-                className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 select-none"
+                className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm active:scale-[0.97] select-none"
               >
-                <span className="text-xl leading-none">+</span> Novo Lançamento
+                <span className="text-xl leading-none">+</span> Novo lançamento
               </button>
               {isSpeedDialOpen && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setIsSpeedDialOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <p className="px-2 py-1 text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Acesso rápido</p>
+                    <p className="px-2 py-1 text-[10px] font-semibold text-gray-400 dark:text-gray-500">Acesso rápido</p>
                     {acoesRapidas.map((a) => (
                       <button key={a.label} onClick={a.onClick} className="w-full flex items-center gap-3 px-2 py-2 rounded-xl text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                         <span className={`h-9 w-9 rounded-full ${a.cor} text-white flex items-center justify-center text-base shrink-0`}>{a.icon}</span>
@@ -957,26 +956,26 @@ export default function DashboardPage() {
           <div className={`relative z-30 bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col space-y-4 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
             <div className="flex flex-col lg:flex-row gap-5 items-start lg:items-center">
               <div className="relative w-full lg:w-1/3 shrink-0">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1.5 ml-1">Período (Digite o Atalho)</label>
-                <input type="text" value={getDisplayPeriodo()} onFocus={() => { if (atalhoDebounceRef.current) clearTimeout(atalhoDebounceRef.current); setIsDatePickerOpen(true); setTextoInputData(atalhoAtivo); }} onChange={handleInputDataChange} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fecharAtalho(); } }} placeholder="Ex: m, h, sa..." className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all cursor-pointer" />
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-1.5 ml-1">Período (digite o atalho)</label>
+                <input type="text" value={getDisplayPeriodo()} onFocus={() => { if (atalhoDebounceRef.current) clearTimeout(atalhoDebounceRef.current); setIsDatePickerOpen(true); setTextoInputData(atalhoAtivo); }} onChange={handleInputDataChange} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fecharAtalho(); } }} placeholder="Ex: m, h, sa..." className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm font-bold text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition cursor-pointer" />
                 {isDatePickerOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={fecharAtalho}></div>
                     <div className="absolute top-[100%] mt-2 left-0 w-full sm:w-[450px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 p-5 z-50">
-                      <p className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Atalhos Rápidos</p>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Atalhos rápidos</p>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
                         {Object.entries(nomesAtalhos).map(([key, name]) => (
-                          <button key={key} type="button" onClick={() => { aplicarAtalho(key); fecharAtalho(); }} className={`text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex flex-col items-center justify-center gap-1 ${atalhoAtivo === key ? "bg-blue-600 text-white shadow-md scale-105" : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
+                          <button key={key} type="button" onClick={() => { aplicarAtalho(key); fecharAtalho(); }} className={`text-left px-3 py-2.5 rounded-xl text-xs font-bold transition flex flex-col items-center justify-center gap-1 ${atalhoAtivo === key ? "bg-blue-600 text-white shadow-md " : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"}`}>
                             <span className={`px-2 py-0.5 rounded-md font-mono text-[10px] ${atalhoAtivo === key ? "bg-blue-500 text-white" : "bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-400"}`}>{key}</span>
                             <span className="text-center">{name}</span>
                           </button>
                         ))}
                       </div>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 mb-4"></div>
-                      <p className="text-xs font-black text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Ou Selecione no Calendário</p>
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-3">Ou selecione no calendário</p>
                       <div className="flex gap-3">
-                        <div className="flex-1"><label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Data Inicial</label><input type="date" value={dataInicio} onChange={(e) => { setDataInicio(e.target.value); setAtalhoAtivo(""); }} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-blue-500" /></div>
-                        <div className="flex-1"><label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Data Final</label><input type="date" value={dataFim} onChange={(e) => { setDataFim(e.target.value); setAtalhoAtivo(""); }} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-blue-500" /></div>
+                        <div className="flex-1"><label className="block text-[10px] font-bold text-gray-400 mb-1">Data inicial</label><input type="date" value={dataInicio} onChange={(e) => { setDataInicio(e.target.value); setAtalhoAtivo(""); }} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-blue-500" /></div>
+                        <div className="flex-1"><label className="block text-[10px] font-bold text-gray-400 mb-1">Data final</label><input type="date" value={dataFim} onChange={(e) => { setDataFim(e.target.value); setAtalhoAtivo(""); }} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:border-blue-500" /></div>
                       </div>
                     </div>
                   </>
@@ -985,24 +984,24 @@ export default function DashboardPage() {
               <div className="hidden lg:block w-px h-12 bg-gray-200 dark:bg-gray-700 shrink-0"></div>
               <div className="block lg:hidden w-full h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
               <div className="w-full lg:w-1/4 shrink-0">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Tipo</label>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1">Tipo</label>
                 <div className="flex gap-2">
-                  <button onClick={() => toggleTipo("receita")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all active:scale-95 border ${filtroTipo.includes("receita") ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Receitas</button>
-                  <button onClick={() => toggleTipo("despesa")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all active:scale-95 border ${filtroTipo.includes("despesa") ? "bg-red-600 text-white border-red-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Despesas</button>
-                  <button onClick={() => toggleTipo("transferencia")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition-all active:scale-95 border ${filtroTipo.includes("transferencia") ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Transf.</button>
+                  <button onClick={() => toggleTipo("receita")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition active:scale-[0.97] border ${filtroTipo.includes("receita") ? "bg-green-600 text-white border-green-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Receitas</button>
+                  <button onClick={() => toggleTipo("despesa")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition active:scale-[0.97] border ${filtroTipo.includes("despesa") ? "bg-red-600 text-white border-red-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Despesas</button>
+                  <button onClick={() => toggleTipo("transferencia")} className={`flex-1 py-2.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold transition active:scale-[0.97] border ${filtroTipo.includes("transferencia") ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>Transf.</button>
                 </div>
               </div>
               <div className="hidden lg:block w-px h-12 bg-gray-200 dark:bg-gray-700 shrink-0"></div>
               <div className="block lg:hidden w-full h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
               <div className="w-full lg:flex-1">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Usuários</label>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1">Usuários</label>
                 <div className="flex flex-wrap gap-2">
                   {isLoadingData ? <span className="text-sm text-gray-400 font-medium py-2">Carregando...</span> : usuariosDisponiveis.length === 0 ? <span className="text-sm text-gray-400 font-medium py-2">Nenhum usuário</span> : (
                     usuariosDisponiveis.map((user) => {
                       const isSelected = usuariosSelecionados.includes(user);
                       const fotoUser = mapPerfis[user];
                       return (
-                        <button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2 rounded-xl border text-sm font-bold transition-all active:scale-95 flex items-center gap-2 ${isSelected ? "bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
+                        <button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2 rounded-xl border text-sm font-bold transition active:scale-[0.97] flex items-center gap-2 ${isSelected ? "bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-md" : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"}`}>
                           <div className="w-5 h-5 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 flex items-center justify-center text-[10px]">
                             {fotoUser ? <img src={fotoUser} className="w-full h-full object-cover" alt="" /> : user.charAt(0).toUpperCase()}
                           </div>{user}
@@ -1017,9 +1016,9 @@ export default function DashboardPage() {
             
             <div className="flex flex-col sm:flex-row gap-5 items-end">
               <div className="w-full sm:flex-1">
-                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Filtrar por Categoria</label>
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1">Filtrar por categoria</label>
                 <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">Todas as Categorias</option>
+                  <option value="">Todas as categorias</option>
                   {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
                 </select>
               </div>
@@ -1028,7 +1027,7 @@ export default function DashboardPage() {
               <div className="w-full sm:w-auto shrink-0">
                 <button 
                   onClick={limparFiltros}
-                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-gray-500 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 border border-gray-200 dark:border-gray-700 rounded-xl transition-all flex items-center justify-center gap-2 h-[42px] active:scale-95"
+                  className="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-gray-500 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 dark:bg-gray-800/80 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 border border-gray-200 dark:border-gray-700 rounded-xl transition flex items-center justify-center gap-2 h-[42px] active:scale-[0.97]"
                   title="Restaurar visualização padrão"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
@@ -1043,7 +1042,7 @@ export default function DashboardPage() {
             <div className={`pt-2 animate-in fade-in duration-300 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 ml-1 gap-4">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider">Meus Bancos & Cofres</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Meus bancos & cofres</h3>
                   <button onClick={() => toggleVisibilidadeBloco('saldos')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none">
                     {visibilidade.saldos ? (
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1053,18 +1052,17 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 px-4 py-2 rounded-xl flex items-center gap-3">
-                   <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Saldo Total Real:</span>
-                   <span className="text-lg font-black text-blue-700 dark:text-blue-300">{formatarMoeda(saldoTotalReal, visibilidade.saldos)}</span>
+                   <span className="text-xs font-bold text-blue-600 dark:text-blue-400">Saldo total real:</span>
+                   <span className="text-lg font-semibold text-blue-700 dark:text-blue-300">{formatarMoeda(saldoTotalReal, visibilidade.saldos)}</span>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <button type="button" onClick={() => setBancoDetalhe({nome: "Carteira / Casa", ids: contas.filter(c => c.tipo === "dinheiro").map(c => c.id)})} className="text-left cursor-pointer bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/20 dark:to-gray-800 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800 shadow-sm flex flex-col justify-between hover:scale-[1.02] transition-transform">
+                <button type="button" onClick={() => setBancoDetalhe({nome: "Carteira / Casa", ids: contas.filter(c => c.tipo === "dinheiro").map(c => c.id)})} className="text-left cursor-pointer bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800 shadow-sm flex flex-col justify-between transition-transform">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-xs">💵</div>
-                    <span className="text-[11px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-wider truncate">Carteira / Casa</span>
+                    <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-400 truncate">Carteira / casa</span>
                   </div>
-                  <p className="text-lg font-black text-emerald-700 dark:text-emerald-300 truncate">{formatarMoeda(saldoDinheiroFisico, visibilidade.saldos)}</p>
+                  <p className="text-lg font-semibold text-emerald-700 dark:text-emerald-300 truncate">{formatarMoeda(saldoDinheiroFisico, visibilidade.saldos)}</p>
                 </button>
                 
                 {saldosBancariosOrdenados.map((banco) => {
@@ -1074,14 +1072,14 @@ export default function DashboardPage() {
                     <button type="button" key={banco.id} onClick={() => setBancoDetalhe({nome: `${banco.banco} · @${banco.autor_nome}`, ids: contas.filter(c => c.conta_bancaria_id === banco.id && c.tipo === "corrente").map(c => c.id)})} className={`classic-bank-card nova-bank-${identidadeBanco(banco.banco).chave} text-left p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col justify-between hover:brightness-105 active:brightness-95 cursor-pointer`}>
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 overflow-hidden">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-black shrink-0 overflow-hidden">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 flex items-center justify-center text-[10px] font-semibold shrink-0 overflow-hidden">
                             {fotoBanco ? <img src={fotoBanco} alt="" className="w-full h-full object-cover" /> : banco.autor_nome?.charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-[11px] font-black text-blue-900 dark:text-blue-300 uppercase tracking-wider truncate block">{banco.banco}</span>
+                          <span className="text-[11px] font-semibold text-blue-900 dark:text-blue-300 truncate block">{banco.banco}</span>
                         </div>
                       </div>
-                      <span className="text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 uppercase tracking-wider mb-2 truncate block w-full">{banco.nome}</span>
-                      <p className={`text-lg font-black truncate ${banco.saldo < 0 ? "text-red-600 dark:text-red-400" : "text-blue-700 dark:text-blue-400"}`}>
+                      <span className="text-[9px] font-bold text-blue-600/70 dark:text-blue-400/70 mb-2 truncate block w-full">{banco.nome}</span>
+                      <p className={`text-lg font-semibold truncate ${banco.saldo < 0 ? "text-red-600 dark:text-red-400" : "text-blue-700 dark:text-blue-400"}`}>
                         {formatarMoeda(banco.saldo, visibilidade.saldos)}
                       </p>
                     </button>
@@ -1094,7 +1092,7 @@ export default function DashboardPage() {
           {/* 3. SEÇÃO DE RESUMO DO PERÍODO - COM A ONDA (DELAY 0.15s) */}
           <div className={`pt-2 animate-in fade-in duration-300 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.15s' }}>
             <div className="flex items-center gap-3 mb-4 ml-1">
-              <h3 className="text-sm font-black text-gray-700 dark:text-gray-300 uppercase tracking-wider">Resumo do Período</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Resumo do período</h3>
               <button onClick={() => toggleVisibilidadeBloco('resumo')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none">
                 {visibilidade.resumo ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1105,16 +1103,16 @@ export default function DashboardPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center transition-colors">
-                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Saldo Líquido <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
-                <p className={`text-3xl font-black mt-2 truncate ${resumoFiltrado.saldo >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>{formatarMoeda(resumoFiltrado.saldo, visibilidade.resumo)}</p>
+                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold">Saldo líquido <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
+                <p className={`text-3xl font-semibold mt-2 truncate ${resumoFiltrado.saldo >= 0 ? "text-blue-600 dark:text-blue-400" : "text-red-600 dark:text-red-400"}`}>{formatarMoeda(resumoFiltrado.saldo, visibilidade.resumo)}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center transition-colors">
-                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Receitas <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
-                <p className="text-3xl font-black text-green-500 dark:text-green-400 mt-2 truncate">{formatarMoeda(resumoFiltrado.receitas, visibilidade.resumo)}</p>
+                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold">Receitas <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
+                <p className="text-3xl font-semibold text-green-500 dark:text-green-400 mt-2 truncate">{formatarMoeda(resumoFiltrado.receitas, visibilidade.resumo)}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center transition-colors">
-                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold uppercase tracking-wider">Despesas Pagas <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
-                <p className="text-3xl font-black text-red-500 dark:text-red-400 mt-2 truncate">{formatarMoeda(resumoFiltrado.despesasPagas, visibilidade.resumo)}</p>
+                <h3 className="text-xs text-gray-500 dark:text-gray-400 font-bold">Despesas pagas <span className="lowercase text-gray-400 dark:text-gray-500 font-medium">(do período)</span></h3>
+                <p className="text-3xl font-semibold text-red-500 dark:text-red-400 mt-2 truncate">{formatarMoeda(resumoFiltrado.despesasPagas, visibilidade.resumo)}</p>
               </div>
             </div>
           </div>
@@ -1148,7 +1146,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-6 gap-5 border-b border-purple-100/50 dark:border-purple-800/30 pb-6">
                   <div className="flex items-center gap-3">
                     <div>
-                      <h3 className="text-sm text-purple-800 dark:text-purple-400 font-black uppercase tracking-wider flex items-center gap-2">
+                      <h3 className="text-sm text-purple-800 dark:text-purple-400 font-semibold flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg> 
                         Faturas (Cartão de Crédito)
                       </h3>
@@ -1165,20 +1163,20 @@ export default function DashboardPage() {
                   
                   <div className="flex flex-wrap gap-3 w-full xl:w-auto">
                     <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-red-100 dark:border-red-900/30 text-center xl:text-right">
-                      <span className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider block mb-0.5">Em Atraso</span>
-                      <span className="text-lg font-black text-red-600 dark:text-red-400">{formatarMoeda(globalAtrasado, visibilidade.cartoes)}</span>
+                      <span className="text-[10px] font-bold text-red-500 dark:text-red-400 block mb-0.5">Em atraso</span>
+                      <span className="text-lg font-semibold text-red-600 dark:text-red-400">{formatarMoeda(globalAtrasado, visibilidade.cartoes)}</span>
                     </div>
                     <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-blue-100 dark:border-blue-900/30 text-center xl:text-right">
-                      <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider block mb-0.5">Fatura Fechada</span>
-                      <span className="text-lg font-black text-blue-600 dark:text-blue-400">{formatarMoeda(globalFechado, visibilidade.cartoes)}</span>
+                      <span className="text-[10px] font-bold text-blue-500 dark:text-blue-400 block mb-0.5">Fatura fechada</span>
+                      <span className="text-lg font-semibold text-blue-600 dark:text-blue-400">{formatarMoeda(globalFechado, visibilidade.cartoes)}</span>
                     </div>
                     <div className="flex-1 xl:flex-none bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl shadow-sm border border-emerald-100 dark:border-emerald-900/30 text-center xl:text-right">
-                      <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 uppercase tracking-wider block mb-0.5">Total do Mês (Aberta)</span>
-                      <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{formatarMoeda(globalMesAtual, visibilidade.cartoes)}</span>
+                      <span className="text-[10px] font-bold text-emerald-500 dark:text-emerald-400 block mb-0.5">Total do mês (aberta)</span>
+                      <span className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">{formatarMoeda(globalMesAtual, visibilidade.cartoes)}</span>
                     </div>
                     <div className="flex-1 xl:flex-none bg-purple-600 dark:bg-purple-500 px-4 py-2.5 rounded-xl shadow-sm border border-purple-500 dark:border-purple-400 text-center xl:text-right min-w-[170px]">
-                      <span className="text-[10px] font-bold text-purple-100 uppercase tracking-wider block mb-0.5">Total Gasto em Crédito</span>
-                      <span className="text-xl font-black text-white">{formatarMoeda(globalGastoCredito, visibilidade.cartoes)}</span>
+                      <span className="text-[10px] font-bold text-purple-100 block mb-0.5">Total gasto em crédito</span>
+                      <span className="text-xl font-semibold text-white">{formatarMoeda(globalGastoCredito, visibilidade.cartoes)}</span>
                     </div>
                   </div>
                 </div>
@@ -1204,12 +1202,12 @@ export default function DashboardPage() {
                     <div key={cartao.id} className={`classic-bank-card nova-bank-${identidadeBanco(bancos.find(b => b.id === cartao.conta_bancaria_id)?.banco || cartao.nome).chave} p-5 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm flex flex-col transition-colors group`}>
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center text-xs font-black shrink-0 overflow-hidden">
+                          <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 flex items-center justify-center text-xs font-semibold shrink-0 overflow-hidden">
                             {fotoCartao ? <img src={fotoCartao} alt="" className="w-full h-full object-cover" /> : cartao.autor_nome?.charAt(0).toUpperCase()}
                           </div>
                           <div className="flex flex-col truncate">
                             <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{cartao.nome}</span>
-                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-0.5">
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 mt-0.5">
                               Fecha dia {cartao.dia_fechamento || "1"} • Vence dia {cartao.dia_vencimento || "10"}
                             </span>
                           </div>
@@ -1217,20 +1215,20 @@ export default function DashboardPage() {
                       </div>
                       
                       <div className="mb-4">
-                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Total do Cartão</p>
-                        <p className="text-3xl font-black text-purple-700 dark:text-purple-400">{formatarMoeda(totalGeral, visibilidade.cartoes)}</p>
+                        <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 mb-1">Total do cartão</p>
+                        <p className="text-3xl font-semibold text-purple-700 dark:text-purple-400">{formatarMoeda(totalGeral, visibilidade.cartoes)}</p>
                       </div>
 
-                      <button type="button" onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: null })} className="mb-4 self-start text-[11px] font-black text-purple-600 dark:text-purple-400 hover:underline">
-                        📜 Histórico de faturas
+                      <button type="button" onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: null })} className="mb-4 self-start text-[11px] font-semibold text-purple-600 dark:text-purple-400 hover:underline">
+                        Histórico de faturas
                       </button>
 
                       {faturasAbertas.length > 0 && (
                         <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 space-y-3">
                           <div className="flex items-center justify-between mb-1">
-                            <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Faturas por Mês:</p>
+                            <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">Faturas por mês:</p>
                             {faturasAbertas.length > qtdFaturasVisiveis && (
-                              <button type="button" onClick={() => setCartoesExpandidos((prev) => ({ ...prev, [cartao.id]: !prev[cartao.id] }))} className="text-[10px] font-black text-purple-600 dark:text-purple-400 hover:underline">
+                              <button type="button" onClick={() => setCartoesExpandidos((prev) => ({ ...prev, [cartao.id]: !prev[cartao.id] }))} className="text-[10px] font-semibold text-purple-600 dark:text-purple-400 hover:underline">
                                 {cartoesExpandidos[cartao.id] ? "Ver menos" : `Ver mais ${faturasAbertas.length - qtdFaturasVisiveis}`}
                               </button>
                             )}
@@ -1248,28 +1246,28 @@ export default function DashboardPage() {
                             const mesNome = mesesAbrev[parseInt(mesFatura) - 1];
 
                             return (
-                              <button type="button" key={f.chave} onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: f.chave })} title="Ver resumo da fatura" className={`w-full text-left cursor-pointer hover:brightness-95 dark:hover:brightness-125 flex justify-between items-center p-2.5 rounded-xl border transition-all ${isAtual ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50 shadow-sm' : isAtrasada ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700/50'}`}>
+                              <button type="button" key={f.chave} onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: f.chave })} title="Ver resumo da fatura" className={`w-full text-left cursor-pointer hover:brightness-95 dark:hover:brightness-125 flex justify-between items-center p-2.5 rounded-xl border transition ${isAtual ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50 shadow-sm' : isAtrasada ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700/50'}`}>
                                 
                                 <div className="flex items-center gap-3">
                                   {/* NOVO: ÍCONE DE CALENDÁRIO DINÂMICO */}
                                   <div className={`flex flex-col items-center justify-center w-9 h-9 rounded-lg border shadow-sm relative overflow-hidden shrink-0 ${isAtrasada ? 'bg-white dark:bg-gray-800 border-red-200 dark:border-red-800' : isFechada ? 'bg-white dark:bg-gray-800 border-blue-200 dark:border-blue-800' : isAtual ? 'bg-white dark:bg-gray-800 border-emerald-300 dark:border-emerald-600' : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'}`}>
-                                    <div className={`w-full h-3.5 flex items-center justify-center text-[7px] font-black uppercase text-white tracking-widest ${isAtrasada ? 'bg-red-500' : isFechada ? 'bg-blue-500' : isAtual ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
+                                    <div className={`w-full h-3.5 flex items-center justify-center text-[7px] font-semibold text-white ${isAtrasada ? 'bg-red-500' : isFechada ? 'bg-blue-500' : isAtual ? 'bg-emerald-500' : 'bg-gray-400 dark:bg-gray-600'}`}>
                                       {mesNome}
                                     </div>
-                                    <div className={`flex-1 flex items-center justify-center text-xs font-black ${isAtrasada ? 'text-red-700 dark:text-red-400' : isFechada ? 'text-blue-700 dark:text-blue-400' : isAtual ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                    <div className={`flex-1 flex items-center justify-center text-xs font-semibold ${isAtrasada ? 'text-red-700 dark:text-red-400' : isFechada ? 'text-blue-700 dark:text-blue-400' : isAtual ? 'text-emerald-700 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                       {mesFatura}
                                     </div>
                                   </div>
                                   
                                   <div className="flex flex-col">
                                     <span className={`text-[11px] font-bold ${isAtual ? 'text-emerald-900 dark:text-emerald-300' : isAtrasada ? 'text-red-900 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'}`}>Venc. {f.labelVencimento}</span>
-                                    <span className={`text-[9px] font-black uppercase tracking-wider ${isAtrasada ? 'text-red-600 dark:text-red-400' : isFechada ? 'text-blue-600 dark:text-blue-400' : isAtual ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                                      {isAtual ? 'Fatura Atual (Aberta)' : isFutura ? 'Fatura Futura' : f.status}
+                                    <span className={`text-[9px] font-semibold ${isAtrasada ? 'text-red-600 dark:text-red-400' : isFechada ? 'text-blue-600 dark:text-blue-400' : isAtual ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                                      {isAtual ? 'Fatura atual (aberta)' : isFutura ? 'Fatura futura' : f.status}
                                     </span>
                                   </div>
                                 </div>
 
-                                <span className={`text-sm font-black ${isAtual ? 'text-emerald-700 dark:text-emerald-400' : isAtrasada ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                                <span className={`text-sm font-semibold ${isAtual ? 'text-emerald-700 dark:text-emerald-400' : isAtrasada ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {formatarMoeda(f.valorAberto, visibilidade.cartoes)}
                                 </span>
                               </button>
@@ -1283,7 +1281,7 @@ export default function DashboardPage() {
               </div>
             ) : (
               <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-purple-100 dark:border-purple-900/30 border-dashed flex flex-col items-center justify-center text-center py-10">
-                <span className="text-3xl mb-2 opacity-50">💳</span>
+                
                 <p className="text-sm font-bold text-purple-500 dark:text-purple-400">{cartoesCredito.length > 0 ? "Nenhum cartão com fatura em aberto." : "Nenhum cartão de crédito ativo."}</p>
               </div>
             )}
@@ -1294,8 +1292,8 @@ export default function DashboardPage() {
             <div className="p-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
-                  <button onClick={() => setAbaExtrato("extrato")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${abaExtrato === "extrato" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Extrato</button>
-                  <button onClick={() => setAbaExtrato("parcelamentos")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition-all ${abaExtrato === "parcelamentos" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>📅 Parcelamentos</button>
+                  <button onClick={() => setAbaExtrato("extrato")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition ${abaExtrato === "extrato" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Extrato</button>
+                  <button onClick={() => setAbaExtrato("parcelamentos")} className={`px-4 py-1.5 text-sm font-bold rounded-lg transition ${abaExtrato === "parcelamentos" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Parcelamentos</button>
                 </div>
                 <button onClick={() => toggleVisibilidadeBloco('extrato')} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors focus:outline-none">
                   {visibilidade.extrato ? (
@@ -1306,7 +1304,7 @@ export default function DashboardPage() {
                 </button>
               </div>
               {abaExtrato === "parcelamentos" && (
-                <input type="text" value={buscaParcelamento} onChange={(e) => setBuscaParcelamento(e.target.value)} placeholder="Buscar por descrição..." className="w-full sm:w-64 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all" />
+                <input type="text" value={buscaParcelamento} onChange={(e) => setBuscaParcelamento(e.target.value)} placeholder="Buscar por descrição..." className="w-full sm:w-64 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
               )}
             </div>
 
@@ -1336,7 +1334,7 @@ export default function DashboardPage() {
                               </div>
                             </div>
                           </div>
-                          <span className="text-base sm:text-lg font-black text-gray-900 dark:text-gray-100 shrink-0">{formatarMoeda(g.valorTotal, visibilidade.extrato)}</span>
+                          <span className="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 shrink-0">{formatarMoeda(g.valorTotal, visibilidade.extrato)}</span>
                         </button>
                         {expandido && (
                           <div className="px-4 sm:px-6 pb-4 space-y-1.5">
@@ -1347,7 +1345,7 @@ export default function DashboardPage() {
                                   <span>{formatarDataNormal(t.data)}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-black text-gray-900 dark:text-gray-100">{formatarMoeda(t.valor, visibilidade.extrato)}</span>
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatarMoeda(t.valor, visibilidade.extrato)}</span>
                                   <button onClick={() => abrirModalEditar(t)} className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors" title="Editar parcela">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                                   </button>
@@ -1372,14 +1370,14 @@ export default function DashboardPage() {
               <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                 {transacoesFiltradas.map((t) => {
                   const isDinOrigem = t.conta_origem?.tipo === "dinheiro";
-                  const nomeBancoOrigem = isDinOrigem ? "Dinheiro Físico" : t.conta_origem?.banco_vinculado?.banco || "Banco Origem";
+                  const nomeBancoOrigem = isDinOrigem ? "Dinheiro físico" : t.conta_origem?.banco_vinculado?.banco || "Banco origem";
                   const userOrigem = t.conta_origem?.autor_nome || t.autor_nome;
-                  const veiculoOrigem = t.conta_origem?.nome || "Forma Pagto";
+                  const veiculoOrigem = t.conta_origem?.nome || "Forma pagto";
                   const fotoOrigem = mapPerfis[userOrigem];
 
                   const isDinDestino = t.conta_destino?.tipo === "dinheiro";
                   const isCreditoDestino = t.conta_destino?.tipo === "credito";
-                  const nomeBancoDestino = isDinDestino ? "Dinheiro Físico" : isCreditoDestino ? "Fatura Cartão" : t.conta_destino?.banco_vinculado?.banco || "Banco Destino";
+                  const nomeBancoDestino = isDinDestino ? "Dinheiro físico" : isCreditoDestino ? "Fatura cartão" : t.conta_destino?.banco_vinculado?.banco || "Banco destino";
                   const userDestino = t.conta_destino?.autor_nome || t.autor_nome;
                   const fotoDestino = mapPerfis[userDestino];
 
@@ -1387,7 +1385,7 @@ export default function DashboardPage() {
                     <li key={t.id} className="p-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-800/80 transition-colors flex items-center justify-between gap-4 group">
                       <div className="flex items-center gap-4 overflow-hidden">
                         <div className={`hidden sm:flex h-10 w-10 shrink-0 rounded-full items-center justify-center ${t.tipo === "receita" ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400" : t.tipo === "despesa" ? "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400" : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"}`}>
-                          {t.tipo === "receita" ? "↓" : t.tipo === "despesa" ? "↑" : "🔄"}
+                          {t.tipo === "receita" ? "↓" : t.tipo === "despesa" ? "↑" : "↔"}
                         </div>
                         
                         <div className="truncate">
@@ -1395,7 +1393,7 @@ export default function DashboardPage() {
 
                           {t.tipo === "transferencia" ? (
                             <div className="flex items-center gap-2 mt-1 text-[11px] sm:text-[12px] font-bold flex-wrap">
-                              <span className="text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 px-2 py-0.5 rounded-md flex items-center gap-1">🔄 Transf.</span>
+                              <span className="text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 px-2 py-0.5 rounded-md flex items-center gap-1">Transf.</span>
                               <span className="text-gray-800 dark:text-gray-200 flex items-center gap-1">
                                 {nomeBancoOrigem}
                                 <div className="w-4 h-4 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[8px]">
@@ -1430,10 +1428,10 @@ export default function DashboardPage() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className={`text-base sm:text-lg font-black ${t.tipo === "receita" ? "text-green-600 dark:text-green-400" : t.tipo === "despesa" ? "text-gray-900 dark:text-gray-100" : "text-blue-600 dark:text-blue-400"}`}>
+                        <span className={`text-base sm:text-lg font-semibold ${t.tipo === "receita" ? "text-green-600 dark:text-green-400" : t.tipo === "despesa" ? "text-gray-900 dark:text-gray-100" : "text-blue-600 dark:text-blue-400"}`}>
                           {t.tipo === "receita" ? "+" : t.tipo === "despesa" ? "-" : ""} {formatarMoeda(t.valor, visibilidade.extrato)}
                         </span>
-                        <button onClick={() => abrirModalEditar(t)} className={`p-2 rounded-lg transition-all sm:opacity-0 sm:group-hover:opacity-100 ${t.user_id === userId ? "text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" : "text-gray-200 dark:text-gray-700 cursor-not-allowed"}`} title="Editar Lançamento">
+                        <button onClick={() => abrirModalEditar(t)} className={`p-2 rounded-lg transition sm:opacity-0 sm:group-hover:opacity-100 ${t.user_id === userId ? "text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30" : "text-gray-200 dark:text-gray-700 cursor-not-allowed"}`} title="Editar lançamento">
                           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
                         </button>
                       </div>
@@ -1454,8 +1452,8 @@ export default function DashboardPage() {
             <div className="flex flex-col items-end gap-2.5 mb-1">
               {acoesRapidas.map((a, i) => (
                 <button key={a.label} onClick={a.onClick} className="flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: `${i * 45}ms`, animationFillMode: "backwards" }}>
-                  <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-xs font-black shadow-lg whitespace-nowrap border border-gray-100 dark:border-gray-700">{a.label}</span>
-                  <span className={`h-12 w-12 rounded-full ${a.cor} text-white shadow-lg flex items-center justify-center text-xl active:scale-90 transition-transform`}>{a.icon}</span>
+                  <span className="px-3 py-1.5 rounded-lg bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 text-xs font-semibold shadow-lg whitespace-nowrap border border-gray-100 dark:border-gray-700">{a.label}</span>
+                  <span className={`h-12 w-12 rounded-full ${a.cor} text-white shadow-lg flex items-center justify-center text-xl active:scale-[0.97] transition-transform`}>{a.icon}</span>
                 </button>
               ))}
             </div>
@@ -1466,7 +1464,7 @@ export default function DashboardPage() {
             onMouseDown={iniciarLongPress} onMouseUp={cancelarLongPress} onMouseLeave={cancelarLongPress}
             onContextMenu={(e) => { e.preventDefault(); setIsSpeedDialOpen(true); }}
             title="Toque para lançar · segure para atalhos"
-            className={`h-14 w-14 bg-blue-600 dark:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center text-3xl font-light hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-95 transition-transform select-none ${isSpeedDialOpen ? "rotate-45" : ""}`}
+            className={`h-14 w-14 bg-blue-600 dark:bg-blue-500 text-white rounded-full shadow-lg flex items-center justify-center text-3xl font-light hover:bg-blue-700 dark:hover:bg-blue-600 active:scale-[0.97] transition-transform select-none ${isSpeedDialOpen ? "rotate-45" : ""}`}
             style={{ WebkitTouchCallout: "none", transitionDuration: "200ms" }}
           >+</button>
         </div>
@@ -1480,8 +1478,7 @@ export default function DashboardPage() {
             <div className="relative bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[85vh] flex flex-col overflow-hidden border border-gray-100 dark:border-gray-700 animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
               <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-900/80 flex justify-between items-center">
                 <div>
-                  <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">🔑 Chaves PIX</h3>
-                  <p className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mt-0.5">Toque na chave para copiar</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">Chaves PIX</h3>
                 </div>
                 <button onClick={() => setIsPixModalOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
@@ -1489,9 +1486,9 @@ export default function DashboardPage() {
               <div className="p-4 overflow-y-auto space-y-2.5">
                 {chavesPix.length === 0 ? (
                   <div className="text-center py-10">
-                    <span className="text-4xl opacity-40 block mb-2">🔑</span>
+                    
                     <p className="text-sm font-bold text-gray-500 dark:text-gray-400">Nenhuma chave PIX cadastrada.</p>
-                    <button onClick={() => router.push("/contas")} className="mt-3 text-xs font-black text-blue-600 dark:text-blue-400 hover:underline">Cadastrar em Gestão Bancária →</button>
+                    <button onClick={() => router.push("/contas")} className="mt-3 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">Cadastrar em Gestão bancária</button>
                   </div>
                 ) : chavesPix.map((c, idx) => {
                   const foto = mapPerfis[c.autor_nome];
@@ -1501,22 +1498,22 @@ export default function DashboardPage() {
                     <div key={c.id}>
                       {novoDono && (
                         <div className={`flex items-center gap-2 px-1 ${idx === 0 ? "mb-2" : "mt-4 mb-2"}`}>
-                          <div className="w-6 h-6 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[9px] font-black shrink-0">
+                          <div className="w-6 h-6 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 flex items-center justify-center text-[9px] font-semibold shrink-0">
                             {foto ? <img src={foto} alt="" className="w-full h-full object-cover" /> : c.autor_nome?.charAt(0).toUpperCase()}
                           </div>
-                          <span className="text-[11px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest">@{c.autor_nome}</span>
+                          <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400">@{c.autor_nome}</span>
                           <div className="flex-1 h-px bg-gray-100 dark:bg-gray-700"></div>
                         </div>
                       )}
-                      <button onClick={() => copiarPix(c)} className={`w-full text-left p-4 rounded-2xl border transition-all active:scale-[0.98] ${copiado ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20" : "border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}>
+                      <button onClick={() => copiarPix(c)} className={`w-full text-left p-4 rounded-2xl border transition active:scale-[0.98] ${copiado ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20" : "border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"}`}>
                         <div className="flex items-center justify-between gap-3 mb-2">
-                          <span className="text-xs font-black text-gray-700 dark:text-gray-200 truncate">🏦 {c.banco_vinculado?.banco || c.nome}</span>
-                          <span className="text-[9px] font-black uppercase tracking-wider bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2 py-1 rounded shrink-0">{LABEL_TIPO_PIX[c.tipo_chave_pix] || "PIX"}</span>
+                          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 truncate">{c.banco_vinculado?.banco || c.nome}</span>
+                          <span className="text-[9px] font-semibold bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-400 px-2 py-1 rounded shrink-0">{LABEL_TIPO_PIX[c.tipo_chave_pix] || "PIX"}</span>
                         </div>
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-black text-gray-900 dark:text-gray-100 break-all select-all">{c.chave_pix}</span>
-                          <span className={`shrink-0 text-[10px] font-black uppercase tracking-wider flex items-center gap-1 ${copiado ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
-                            {copiado ? "✓ copiado" : "📋 copiar"}
+                          <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 break-all select-all">{c.chave_pix}</span>
+                          <span className={`shrink-0 text-[10px] font-semibold flex items-center gap-1 ${copiado ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-gray-500"}`}>
+                            {copiado ? "Copiado" : "Copiar"}
                           </span>
                         </div>
                       </button>
@@ -1547,41 +1544,41 @@ export default function DashboardPage() {
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700 my-auto">
               
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80 sticky top-0 z-[60] backdrop-blur-md rounded-t-2xl">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{editandoId ? "Editar Lançamento" : "Novo Lançamento"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editandoId ? "Editar lançamento" : "Novo lançamento"}</h3>
                 <button type="button" onClick={() => setIsModalOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
 
               <form onSubmit={dispararAuditoriaAtualizacao} className="p-6 space-y-4">
                 <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl relative z-0">
-                  <button type="button" onClick={() => { setTipo("despesa"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
-                  <button type="button" onClick={() => { setTipo("receita"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
-                  <button type="button" onClick={() => { setTipo("transferencia"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-1 ${tipo === "transferencia" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🔄 Transf.</button>
+                  <button type="button" onClick={() => { setTipo("despesa"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
+                  <button type="button" onClick={() => { setTipo("receita"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
+                  <button type="button" onClick={() => { setTipo("transferencia"); }} className={`flex-1 py-2 text-sm font-bold rounded-lg transition flex items-center justify-center gap-1 ${tipo === "transferencia" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Transf.</button>
                 </div>
 
                 {tipo === "transferencia" && (
                   <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-xl border border-purple-100 dark:border-purple-800">
                     <input type="checkbox" id="checkFatura" checked={isPagamentoFatura} onChange={(e) => { setIsPagamentoFatura(e.target.checked); setBancoDestinoId(""); setFaturaDestinoId(""); }} className="w-5 h-5 text-purple-600 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded focus:ring-purple-500 cursor-pointer" />
-                    <label htmlFor="checkFatura" className="text-sm font-bold text-purple-800 dark:text-purple-400 cursor-pointer select-none">💳 É pagamento de Fatura de Cartão?</label>
+                    <label htmlFor="checkFatura" className="text-sm font-bold text-purple-800 dark:text-purple-400 cursor-pointer select-none">É pagamento de fatura de cartão?</label>
                   </div>
                 )}
 
                 <div className="flex gap-3 sm:gap-4 relative z-0">
                   <div className="flex-[2]">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">{parcelas > 1 ? "Valor Total (R$)" : "Valor (R$)"}</label>
-                    <input type="number" step="0.01" required value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0.00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-lg font-black text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">{parcelas > 1 ? "Valor Total (R$)" : "Valor (R$)"}</label>
+                    <input type="number" step="0.01" required value={valor} onChange={(e) => setValor(e.target.value)} placeholder="0.00" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-lg font-semibold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                   </div>
 
                   {!editandoId && podeParcelar && (
                     <div className="flex-1">
-                      <label className="block text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Vezes</label>
-                      <select value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-black text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 appearance-none text-center">
+                      <label className="block text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Vezes</label>
+                      <select value={parcelas} onChange={(e) => setParcelas(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-semibold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 appearance-none text-center">
                         {Array.from({ length: 48 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}x</option>)}
                       </select>
                     </div>
                   )}
 
                   <div className="flex-[2]">
-                    <label className="block text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider truncate">{parcelas > 1 ? "1ª Parcela" : "Data"}</label>
+                    <label className="block text-[10px] sm:text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 truncate">{parcelas > 1 ? "1ª Parcela" : "Data"}</label>
                     <input type="date" required value={data} onChange={(e) => setData(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-[11px] sm:text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                   </div>
                 </div>
@@ -1594,11 +1591,11 @@ export default function DashboardPage() {
                   const diferencaManual = Number((valorTotalPreview - somaManual).toFixed(2));
                   return (
                     <div className="space-y-2 bg-gray-50 dark:bg-gray-900/40 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
-                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Diferença de arredondamento</label>
+                      <label className="block text-[10px] font-bold text-gray-500 dark:text-gray-400">Diferença de arredondamento</label>
                       <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
-                        <button type="button" onClick={() => setModoParcelamento("primeira")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "primeira" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na 1ª parcela</button>
-                        <button type="button" onClick={() => setModoParcelamento("ultima")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "ultima" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na última</button>
-                        <button type="button" onClick={() => setModoParcelamento("manual")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${modoParcelamento === "manual" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Personalizar</button>
+                        <button type="button" onClick={() => setModoParcelamento("primeira")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoParcelamento === "primeira" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na 1ª parcela</button>
+                        <button type="button" onClick={() => setModoParcelamento("ultima")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoParcelamento === "ultima" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Na última</button>
+                        <button type="button" onClick={() => setModoParcelamento("manual")} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${modoParcelamento === "manual" ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Personalizar</button>
                       </div>
 
                       {modoParcelamento === "manual" ? (
@@ -1612,7 +1609,7 @@ export default function DashboardPage() {
                             ))}
                           </div>
                           <p className={`text-[11px] font-bold ${Math.abs(diferencaManual) > 0.01 ? "text-red-500 dark:text-red-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                            Soma: R$ {somaManual.toFixed(2)} {diferencaManual > 0.01 ? `— faltam R$ ${diferencaManual.toFixed(2)} para bater com o total` : diferencaManual < -0.01 ? `— excede o total em R$ ${Math.abs(diferencaManual).toFixed(2)}` : "— confere com o valor total"}
+                            Soma: R$ {somaManual.toFixed(2)} {diferencaManual > 0.01 ? `, faltam R$ ${diferencaManual.toFixed(2)} para bater com o total` : diferencaManual < -0.01 ? `— excede o total em R$ ${Math.abs(diferencaManual).toFixed(2)}` : "— confere com o valor total"}
                           </p>
                         </div>
                       ) : (
@@ -1625,14 +1622,14 @@ export default function DashboardPage() {
                 })()}
 
                 <div className="relative z-0">
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Descrição</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Descrição</label>
                   <input type="text" required value={descricao} onChange={(e) => { setDescricao(e.target.value); setDescricaoTocada(true); }} placeholder={tipo === "transferencia" ? (isPagamentoFatura ? "Ex: Pagamento Fatura Nubank..." : "Ex: Guardar Dinheiro...") : "Ex: Supermercado"} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20" />
                 </div>
 
                 <div className="space-y-4">
                   {tipo !== "transferencia" && (
                     <div className="relative z-0">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Categoria</label>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                       <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20">
                         <option value="" disabled>Selecione...</option>
                         {categoriasFiltradasModal.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
@@ -1642,24 +1639,24 @@ export default function DashboardPage() {
 
                   {tipo === "despesa" && contasFixasSugestoes.length > 0 && (
                     <div className="bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/50 rounded-xl p-3 space-y-2 animate-in fade-in">
-                      <span className="text-[11px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">📌 Vincular a uma conta fixa?</span>
+                      <span className="text-[11px] font-semibold text-amber-800 dark:text-amber-400 flex items-center gap-1">Vincular a uma conta fixa?</span>
                       <div className="flex flex-wrap gap-2">
                         {contasFixasSugestoes.filter((f) => f.ocorrencia?.status !== "pago" || f.ocorrencia?.id === vinculoContaFixa?.ocorrenciaId).map((f) => {
                           const selecionada = vinculoContaFixa?.contaFixaId === f.id;
                           const label = f.ocorrencia
                             ? (f.ocorrencia.status === "pago" ? `${f.nome} · vinculada R$ ${Number(f.ocorrencia.valor ?? 0).toFixed(2)}` : f.ocorrencia.valor != null ? `${f.nome} · pendente R$ ${Number(f.ocorrencia.valor).toFixed(2)}` : `${f.nome} · pendente (sem valor)`)
-                            : `➕ ${f.nome} (nova pendência)`;
+                            : `${f.nome} (nova pendência)`;
                           return (
                             <button key={f.id} type="button" onClick={() => {
                               setVinculoContaFixa({ contaFixaId: f.id, ocorrenciaId: f.ocorrencia?.id || null });
                               if (f.ocorrencia && !descricaoTocada) setDescricao(`${f.nome} Ref. ${String(f.ocorrencia.competencia_mes).padStart(2, "0")}/${f.ocorrencia.competencia_ano}`);
-                            }} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${selecionada ? "bg-amber-600 border-amber-600 text-white" : "bg-white dark:bg-gray-900 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30"}`}>
+                            }} className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition ${selecionada ? "bg-amber-600 border-amber-600 text-white" : "bg-white dark:bg-gray-900 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30"}`}>
                               {label}
                             </button>
                           );
                         })}
                         {vinculoContaFixa && (
-                          <button type="button" onClick={() => setVinculoContaFixa(null)} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">Nenhum vínculo</button>
+                          <button type="button" onClick={() => setVinculoContaFixa(null)} className="text-xs font-bold px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition">Nenhum vínculo</button>
                         )}
                       </div>
                     </div>
@@ -1709,11 +1706,11 @@ export default function DashboardPage() {
 
                 <div className="flex gap-3 pt-2 relative z-0">
                   {editandoId && (
-                    <button type="button" onClick={abrirModalDeExclusao} className="px-4 py-3.5 rounded-xl font-bold transition-all active:scale-95 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 shrink-0" title="Excluir Lançamento">
+                    <button type="button" onClick={abrirModalDeExclusao} className="px-4 py-3.5 rounded-xl font-bold transition active:scale-[0.97] text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 shrink-0" title="Excluir lançamento">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>
                     </button>
                   )}
-                  <button type="submit" disabled={isProcessingAudit} className={`flex-1 py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 ${tipo === "receita" ? "bg-green-600 hover:bg-green-700" : tipo === "transferencia" ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"}`}>
+                  <button type="submit" disabled={isProcessingAudit} className={`flex-1 py-3.5 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] ${tipo === "receita" ? "bg-green-600 hover:bg-green-700" : tipo === "transferencia" ? "bg-blue-600 hover:bg-blue-700" : "bg-red-600 hover:bg-red-700"}`}>
                     {isProcessingAudit ? "Processando..." : editandoId ? "Atualizar" : `Salvar ${tipo === "receita" ? "Receita" : tipo === "transferencia" ? "Transf." : "Despesa"}`}
                   </button>
                 </div>
@@ -1730,13 +1727,13 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsUpdateModalOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-blue-100 dark:border-blue-900/50">
               <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-blue-50/50 dark:bg-blue-900/20 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Auditoria de Edição</h3>
+                <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Auditoria de edição</h3>
                 <button onClick={() => setIsUpdateModalOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
               </div>
               <form onSubmit={executarSalvarTransacaoBD} className="p-6 space-y-5">
                 <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">Você está alterando o lançamento:</p>
-                  <p className="text-lg font-black text-gray-900 dark:text-gray-100 mt-1 truncate">{transacaoAlvo.descricao}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1 truncate">{transacaoAlvo.descricao}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Por que você está alterando os dados?</label>
@@ -1751,11 +1748,11 @@ export default function DashboardPage() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Digite <span className="text-blue-600 dark:text-blue-400 font-black uppercase">ATUALIZAR</span> para confirmar</label>
-                  <input type="text" required value={palavraConfirmacao} onChange={(e) => setPalavraConfirmacao(e.target.value)} placeholder="atualizar" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-black text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-center tracking-widest uppercase" />
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Digite <span className="text-blue-600 dark:text-blue-400 font-semibold">ATUALIZAR</span> para confirmar</label>
+                  <input type="text" required value={palavraConfirmacao} onChange={(e) => setPalavraConfirmacao(e.target.value)} placeholder="atualizar" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-semibold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-center" />
                 </div>
-                <button type="submit" disabled={isProcessingAudit || palavraConfirmacao.toLowerCase() !== "atualizar" || motivoAuditoria.trim() === ""} className="w-full py-3.5 rounded-xl text-white font-black transition-all active:scale-95 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isProcessingAudit ? "Gravando Log..." : "Confirmar Atualização"}
+                <button type="submit" disabled={isProcessingAudit || palavraConfirmacao.toLowerCase() !== "atualizar" || motivoAuditoria.trim() === ""} className="w-full py-3.5 rounded-xl text-white font-semibold transition active:scale-[0.97] bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isProcessingAudit ? "Gravando Log..." : "Confirmar atualização"}
                 </button>
               </form>
             </div>
@@ -1770,16 +1767,16 @@ export default function DashboardPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-red-100 dark:border-red-900/50">
               <div className="px-6 py-5 border-b border-gray-100 dark:border-gray-700 bg-red-50/50 dark:bg-red-900/20 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">Apagar Lançamento</h3>
+                <h3 className="text-lg font-bold text-red-600 dark:text-red-400 flex items-center gap-2">Apagar lançamento</h3>
                 <button onClick={() => setIsDeleteModalOpen(false)} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 text-2xl">&times;</button>
               </div>
               <form onSubmit={confirmarExclusaoComAuditoria} className="p-6 space-y-5">
                 <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-500 dark:text-gray-400 font-bold">Você está prestes a excluir:</p>
-                  <p className="text-lg font-black text-gray-900 dark:text-gray-100 mt-1 truncate">{transacaoAlvo.descricao}</p>
+                  <p className="text-lg font-semibold text-gray-900 dark:text-gray-100 mt-1 truncate">{transacaoAlvo.descricao}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Motivo da Exclusão</label>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Motivo da exclusão</label>
                   <textarea required rows={2} value={motivoAuditoria} onChange={(e) => setMotivoAuditoria(e.target.value)} placeholder="Por que está apagando isso?" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 resize-none" />
                 </div>
                 {motivosFrequentes.length > 0 && (
@@ -1791,11 +1788,11 @@ export default function DashboardPage() {
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Digite <span className="text-red-600 dark:text-red-400 font-black uppercase">EXCLUIR</span> para confirmar</label>
-                  <input type="text" required value={palavraConfirmacao} onChange={(e) => setPalavraConfirmacao(e.target.value)} placeholder="excluir" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-black text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 text-center tracking-widest uppercase" />
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Digite <span className="text-red-600 dark:text-red-400 font-semibold">EXCLUIR</span> para confirmar</label>
+                  <input type="text" required value={palavraConfirmacao} onChange={(e) => setPalavraConfirmacao(e.target.value)} placeholder="excluir" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-semibold text-gray-900 dark:text-gray-100 focus:border-red-500 focus:ring-4 focus:ring-red-500/20 text-center" />
                 </div>
-                <button type="submit" disabled={isProcessingAudit || palavraConfirmacao.toLowerCase() !== "excluir" || motivoAuditoria.trim() === ""} className="w-full py-3.5 rounded-xl text-white font-black transition-all active:scale-95 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                  {isProcessingAudit ? "Apagando..." : "Confirmar Exclusão"}
+                <button type="submit" disabled={isProcessingAudit || palavraConfirmacao.toLowerCase() !== "excluir" || motivoAuditoria.trim() === ""} className="w-full py-3.5 rounded-xl text-white font-semibold transition active:scale-[0.97] bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                  {isProcessingAudit ? "Apagando..." : "Confirmar exclusão"}
                 </button>
               </form>
             </div>
