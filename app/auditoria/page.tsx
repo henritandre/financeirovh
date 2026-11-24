@@ -116,12 +116,12 @@ export default function AuditoriaPage() {
         
         {/* NAVBAR UNIFICADA */}
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-blue-600 dark:text-blue-400 tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-blue-600 dark:text-blue-400 tracking-tight flex items-center gap-2">
             <svg className="text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             Auditoria de Registros
           </h1>
           <div className="flex items-center">
-            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo Escuro">
+            <button onClick={toggleTheme} className="relative inline-flex items-center h-7 w-14 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors mr-4 focus:outline-none" title="Modo escuro">
               <span className="absolute left-2 text-[10px]">🌙</span><span className="absolute right-2 text-[10px]">☀️</span>
               <span className={`inline-block w-5 h-5 transform rounded-full bg-white shadow-sm transition-transform z-10 ${isDarkMode ? "translate-x-8" : "translate-x-1"}`} />
             </button>
@@ -130,7 +130,7 @@ export default function AuditoriaPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -138,17 +138,17 @@ export default function AuditoriaPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -159,16 +159,15 @@ export default function AuditoriaPage() {
 
         <main className="max-w-4xl mx-auto mt-10 p-6">
           <div className={`mb-8 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
-            <h2 className="text-2xl font-black text-gray-900 dark:text-white">Histórico de Exclusões e Edições</h2>
-            <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">Veja quem apagou ou alterou os lançamentos, e o motivo.</p>
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">Histórico de exclusões e edições</h2>
           </div>
 
           <div className={`bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6 transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
-            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2 ml-1">Filtrar por Autor da Despesa</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 ml-1">Filtrar por autor da despesa</label>
             <div className="flex flex-wrap gap-2">
               {loading ? (<span className="text-sm text-gray-400 font-medium py-2">Buscando...</span>) : 
                usuariosDisponiveis.length === 0 ? (<span className="text-sm text-gray-400 font-medium py-2">Nenhum usuário</span>) : 
-               (usuariosDisponiveis.map(user => { const isSelected = usuariosSelecionados.includes(user); return (<button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2.5 rounded-xl border text-sm font-bold transition-all active:scale-95 ${isSelected ? 'bg-gray-800 dark:bg-gray-600 text-white shadow-md border-transparent' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>@{user}</button>); }))}
+               (usuariosDisponiveis.map(user => { const isSelected = usuariosSelecionados.includes(user); return (<button key={user} onClick={() => toggleUsuario(user)} className={`px-4 py-2.5 rounded-xl border text-sm font-bold transition active:scale-[0.97] ${isSelected ? 'bg-gray-800 dark:bg-gray-600 text-white shadow-md border-transparent' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'}`}>@{user}</button>); }))}
             </div>
           </div>
 
@@ -180,11 +179,11 @@ export default function AuditoriaPage() {
                   <li key={t.id} className={`p-5 transition-colors group flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${t.auditoria_tipo === 'exclusao' ? 'hover:bg-red-50/30 dark:hover:bg-red-900/10' : 'hover:bg-blue-50/30 dark:hover:bg-blue-900/10'}`}>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md text-white uppercase tracking-wider shadow-sm ${t.auditoria_tipo === 'exclusao' ? 'bg-red-600' : 'bg-blue-600'}`}>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md text-white shadow-sm ${t.auditoria_tipo === 'exclusao' ? 'bg-red-600' : 'bg-blue-600'}`}>
                           {t.auditoria_tipo === 'exclusao' ? 'APAGADO' : 'EDITADO'}
                         </span>
-                        <span className="font-black text-gray-900 dark:text-white">{t.descricao}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${t.tipo === 'receita' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : t.tipo === 'despesa' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'}`}>
+                        <span className="font-semibold text-gray-900 dark:text-white">{t.descricao}</span>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${t.tipo === 'receita' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800' : t.tipo === 'despesa' ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800'}`}>
                           {t.tipo === 'receita' ? 'RECEITA' : t.tipo === 'despesa' ? 'DESPESA' : 'TRANSFERÊNCIA'}
                         </span>
                       </div>
@@ -194,8 +193,8 @@ export default function AuditoriaPage() {
                       </p>
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-[11px] font-bold text-gray-400 dark:text-gray-500">
-                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">💰 {formatarMoeda(t.valor)}</span>
-                        <span>📅 Lançamento orig.: {new Date(t.data).toLocaleDateString('pt-BR')}</span>
+                        <span className="flex items-center gap-1 text-gray-600 dark:text-gray-300">{formatarMoeda(t.valor)}</span>
+                        <span>Lançamento orig.: {new Date(t.data).toLocaleDateString('pt-BR')}</span>
                         <span>⏱️ Ação em: {formatarDataHora(t.data_evento)}</span>
                         <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded border border-gray-200 dark:border-gray-600 shadow-sm">Criador: @{t.autor_nome || 'Usuário'}</span>
                         <span className={`px-2 py-0.5 rounded border shadow-sm ${t.auditoria_tipo === 'exclusao' ? 'text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' : 'text-blue-700 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800'}`}>

@@ -96,11 +96,11 @@ export default function CategoriasPage() {
     if (editandoId) {
       const { error } = await supabase.from("categorias").update({ nome, tipo }).eq("id", editandoId);
       if (error) showIsland("Erro ao editar: " + error.message, "error", "🛑");
-      else { showIsland("Categoria atualizada com sucesso!", "success", "✏️"); setIsModalOpen(false); carregarCategorias(); }
+      else { showIsland("Categoria atualizada com sucesso.", "success", "✏️"); setIsModalOpen(false); carregarCategorias(); }
     } else {
       const { error } = await supabase.from("categorias").insert([{ nome, tipo }]);
       if (error) showIsland("Erro ao criar: " + error.message, "error", "🛑");
-      else { showIsland("Nova categoria criada!", "success", "🎉"); setIsModalOpen(false); carregarCategorias(); }
+      else { showIsland("Nova categoria criada.", "success", "🎉"); setIsModalOpen(false); carregarCategorias(); }
     }
     setIsSubmitting(false);
   };
@@ -155,20 +155,17 @@ export default function CategoriasPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? 'animate-balloon-pop' : 'animate-balloon-inflate'} ${
-              island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300' :
-              island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300' :
-              'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300'
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === 'error' ? 'animate-[islandShake_0.5s_ease-in-out]' : island.type === 'success' ? 'animate-[islandExplode_0.6s_ease-out_forwards]' : ''}`}>
-                {island.icon}
-              </span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300' :
+ island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300' :
+ 'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300'
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-gray-800 dark:text-gray-100 flex items-center gap-2 tracking-tight">
+          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 flex items-center gap-2 tracking-tight">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 dark:text-gray-400"><path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/></svg>
             Categorias
           </h1>
@@ -182,7 +179,7 @@ export default function CategoriasPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-gray-700 to-gray-500 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gray-700 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -190,17 +187,17 @@ export default function CategoriasPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -213,11 +210,10 @@ export default function CategoriasPage() {
           
           <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 gap-4 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
             <div>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100">Gerenciar Categorias</h2>
-              <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">Crie ou edite os grupos dos seus lançamentos.</p>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Gerenciar categorias</h2>
             </div>
-            <button onClick={abrirModalNovo} className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap">
-              <span className="text-xl leading-none">+</span> Nova Categoria
+            <button onClick={abrirModalNovo} className="flex items-center gap-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm active:scale-[0.97] whitespace-nowrap">
+              <span className="text-xl leading-none">+</span> Nova categoria
             </button>
           </div>
 
@@ -229,13 +225,13 @@ export default function CategoriasPage() {
               <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-red-50/50 dark:bg-red-900/20 flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                  <h3 className="text-lg font-black text-red-900 dark:text-red-400">Despesas</h3>
+                  <h3 className="text-lg font-semibold text-red-900 dark:text-red-400">Despesas</h3>
                 </div>
                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                   {despesas.map((cat) => (
                     <li key={cat.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex justify-between items-center group">
                       <span className="font-bold text-gray-800 dark:text-gray-200">{cat.nome}</span>
-                      <button onClick={() => abrirModalEditar(cat)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100" title="Editar">
+                      <button onClick={() => abrirModalEditar(cat)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100" title="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                       </button>
                     </li>
@@ -247,13 +243,13 @@ export default function CategoriasPage() {
               <div className={`bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden transition-colors mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
                 <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-green-50/50 dark:bg-green-900/20 flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                  <h3 className="text-lg font-black text-green-900 dark:text-green-400">Receitas</h3>
+                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-400">Receitas</h3>
                 </div>
                 <ul className="divide-y divide-gray-100 dark:divide-gray-700">
                   {receitas.map((cat) => (
                     <li key={cat.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex justify-between items-center group">
                       <span className="font-bold text-gray-800 dark:text-gray-200">{cat.nome}</span>
-                      <button onClick={() => abrirModalEditar(cat)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100" title="Editar">
+                      <button onClick={() => abrirModalEditar(cat)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition opacity-100 sm:opacity-0 sm:group-hover:opacity-100" title="Editar">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
                       </button>
                     </li>
@@ -272,23 +268,23 @@ export default function CategoriasPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{editandoId ? "Editar Categoria" : "Nova Categoria"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editandoId ? "Editar categoria" : "Nova categoria"}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
               
               <form onSubmit={handleSalvarCategoria} className="p-6 space-y-5">
                 <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl">
-                  <button type="button" onClick={() => setTipo("despesa")} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
-                  <button type="button" onClick={() => setTipo("receita")} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
+                  <button type="button" onClick={() => setTipo("despesa")} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tipo === "despesa" ? "bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Despesa</button>
+                  <button type="button" onClick={() => setTipo("receita")} className={`flex-1 py-2 text-sm font-bold rounded-lg transition ${tipo === "receita" ? "bg-white dark:bg-gray-800 text-green-600 dark:text-green-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Receita</button>
                 </div>
                 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Nome da Categoria</label>
-                  <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Assinaturas" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all" />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nome da categoria</label>
+                  <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Assinaturas" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition" />
                 </div>
 
-                <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
-                  {isSubmitting ? "Salvando..." : "Salvar Categoria"}
+                <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+                  {isSubmitting ? "Salvando..." : "Salvar categoria"}
                 </button>
               </form>
             </div>

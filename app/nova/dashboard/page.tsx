@@ -181,7 +181,7 @@ export default function NovaDashboardPage() {
           <div>
             <h1>Visão geral</h1>
           </div>
-          <a href="/insights" className="nova-text-link">Explorar insights <span aria-hidden="true">↗</span></a>
+          <a href="/insights" className="nova-text-link">Explorar insights</a>
         </div>
         {carregando ? (
           <div className="space-y-4">
@@ -283,7 +283,7 @@ function BotaoFlutuante({ onClick }: { onClick: () => void }) {
       ref={ref}
       onClick={onClick}
       aria-label="Novo lançamento"
-      className="fixed bottom-6 right-5 z-40 h-14 w-14 rounded-full flex items-center justify-center text-white select-none bg-[var(--nova-accent)] shadow-[0_8px_24px_-6px_rgba(10,132,255,0.6)]"
+      className="fixed bottom-6 right-5 z-40 h-14 w-14 rounded-full flex items-center justify-center text-white select-none bg-[var(--nova-accent)] shadow-[0_4px_12px_rgba(0,0,0,0.18)]"
       style={{ touchAction: "manipulation" }}
     >
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">

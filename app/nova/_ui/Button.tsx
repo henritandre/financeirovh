@@ -6,7 +6,7 @@ import { usarPressao } from "./motion";
 type Variante = "primary" | "secondary" | "ghost" | "destructive";
 
 const ESTILOS: Record<Variante, string> = {
-  primary: "bg-[var(--nova-accent)] text-white shadow-[0_2px_10px_-2px_rgba(10,132,255,0.5)]",
+  primary: "bg-[var(--nova-accent)] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]",
   secondary: "bg-[var(--nova-ink-hairline)] text-[var(--nova-ink)]",
   ghost: "bg-transparent text-[var(--nova-accent)]",
   destructive: "bg-[var(--nova-danger)] text-white",

@@ -71,7 +71,7 @@ export default function ResetPasswordPage() {
     if (error) {
       showIsland("Erro ao atualizar: " + error.message, "error", "🛑");
     } else {
-      showIsland("Senha alterada com sucesso!", "success", "🔑");
+      showIsland("Senha alterada com sucesso.", "success", "🔑");
       setTimeout(() => router.push("/dashboard"), 2000);
     }
     setLoading(false);
@@ -149,21 +149,18 @@ export default function ResetPasswordPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? 'animate-balloon-pop' : 'animate-balloon-inflate'} ${
-              island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300' :
-              island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300' :
-              'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300'
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === 'error' ? 'animate-[islandShake_0.5s_ease-in-out]' : island.type === 'success' ? 'animate-[islandExplode_0.6s_ease-out_forwards]' : ''}`}>
-                {island.icon}
-              </span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === 'error' ? 'bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300' :
+ island.type === 'success' ? 'bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300' :
+ 'bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300'
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         {/* BOTÃO DE TEMA */}
         <div className="absolute top-6 right-6 z-50">
-          <button onClick={toggleTheme} className="relative inline-flex items-center h-8 w-16 rounded-full bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-lg transition-colors focus:outline-none hover:scale-105 active:scale-95">
+          <button onClick={toggleTheme} className="relative inline-flex items-center h-8 w-16 rounded-full bg-white/30 dark:bg-white/10 backdrop-blur-2xl border border-white/50 dark:border-white/20 shadow-lg transition-colors focus:outline-none active:scale-[0.97]">
             <span className="absolute left-2.5 text-[12px]">🌙</span>
             <span className="absolute right-2.5 text-[12px]">☀️</span>
             <span className={`inline-block w-6 h-6 transform rounded-full bg-white shadow-md transition-transform z-10 ${isDarkMode ? "translate-x-9" : "translate-x-1"}`} />
@@ -177,27 +174,24 @@ export default function ResetPasswordPage() {
         </div>
 
         <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center">
-          <h2 className={`text-3xl font-black text-gray-900 dark:text-white tracking-tight mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
-            Nova Senha
+          <h2 className={`text-3xl font-semibold text-gray-900 dark:text-white tracking-tight mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0s' }}>
+            Nova senha
           </h2>
-          <p className={`mt-2 text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.05s' }}>
-            Defina seu novo acesso
-          </p>
         </div>
 
         <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
-          <div className={`bg-white/40 dark:bg-black/30 backdrop-blur-3xl py-10 px-6 sm:px-12 shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-[2.5rem] border border-white/60 dark:border-white/10 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
+          <div className={`bg-white/40 dark:bg-black/30 backdrop-blur-3xl py-10 px-6 sm:px-12 shadow-[0_8px_32px_0_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.6)] rounded-3xl sm:rounded-[2.5rem] border border-white/60 dark:border-white/10 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.1s' }}>
             <form className="space-y-6" onSubmit={handleReset}>
 
               <div className={`mac-dock-item ${isWaving ? 'mac-dock-animate' : ''} ${isTyping ? 'animate-type-pulse' : ''}`} style={{ animationDelay: '0.15s' }}>
-                <label className="block text-xs font-bold text-gray-800 dark:text-gray-300 mb-2 uppercase tracking-wider ml-1">Digite a nova senha</label>
+                <label className="block text-xs font-bold text-gray-800 dark:text-gray-300 mb-2 ml-1">Digite a nova senha</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     required
                     value={password}
                     onChange={handlePasswordChange}
-                    className={`appearance-none block w-full px-5 py-4 pr-14 bg-white/50 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/30 text-gray-900 dark:text-white font-bold transition-all shadow-inner backdrop-blur-md ${isRevealing ? 'animate-reveal text-transparent' : ''}`}
+                    className={`appearance-none block w-full px-5 py-4 pr-14 bg-white/50 dark:bg-white/5 border border-white/50 dark:border-white/10 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/30 text-gray-900 dark:text-white font-bold transition shadow-inner backdrop-blur-md ${isRevealing ? 'animate-reveal text-transparent' : ''}`}
                     placeholder="••••••••"
                   />
                   <button
@@ -217,14 +211,14 @@ export default function ResetPasswordPage() {
               </div>
 
               <div className={`pt-2 mac-dock-item ${isWaving ? 'mac-dock-animate' : ''}`} style={{ animationDelay: '0.2s' }}>
-                <button type="submit" disabled={loading} className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-2xl shadow-[0_8px_20px_-6px_rgba(37,99,235,0.5)] text-sm font-black uppercase tracking-widest text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus:ring-4 focus:ring-blue-500/40 active:scale-95 transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+                <button type="submit" disabled={loading} className="w-full flex justify-center items-center gap-2 py-4 px-4 border border-transparent rounded-2xl shadow-sm text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/40 active:scale-[0.97] transition disabled:opacity-70 disabled:cursor-not-allowed">
                   {loading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
                       Salvando...
                     </>
                   ) : (
-                    "Atualizar Senha"
+                    "Atualizar senha"
                   )}
                 </button>
               </div>

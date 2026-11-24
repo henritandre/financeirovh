@@ -144,7 +144,6 @@
 .nova-page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; padding: 4px 0 20px; }
 .nova-page-intro h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 600; letter-spacing: -0.055em; line-height: 1.15; margin: 8px 0; }
 .nova-page-intro p { font-size: 14px; color: var(--nova-ink-soft); }
-.nova-page-intro .nova-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; }
 .nova-text-link { font-size: 13px; font-weight: 600; white-space: nowrap; padding: 8px 0; text-underline-offset: 5px; }
 .nova-text-link:hover { text-decoration: underline; }
 /* O saldo fica sobre um fundo suave e dispensa captura do backdrop.
@@ -154,17 +153,12 @@
 .nova-balance > p:first-child { font-size: 14px; }
 .nova-balance > p:nth-child(2) { margin-top: 14px; }
 .nova-root button { transition: background-color 160ms ease, box-shadow 160ms ease; }
-@keyframes nova-section-enter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-@media (prefers-reduced-motion: no-preference) {
-  .nova-dashboard-grid > div { animation: nova-section-enter 360ms ease-out backwards; }
-  .nova-dashboard-grid > div:nth-child(2) { animation-delay: 65ms; }
-}
 @media (max-width: 480px) {
   .nova-page-intro { align-items: flex-start; flex-direction: column; gap: 6px; padding-bottom: 24px; }
 }
 
 
-/* Vidro com borda iluminada; o fundo estático dá contexto à translucidez. */
+/* Vidro com borda iluminada sobre um fundo neutro. */
 .nova-root {
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   --nova-ink-soft: #526079;
@@ -173,7 +167,7 @@
   --nova-glass-2: rgba(255, 255, 255, .72);
   --nova-glass-border: rgba(255, 255, 255, .78);
   --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.72), 0 6px 22px -12px rgba(45,65,100,.23);
-  background-image: radial-gradient(ellipse at 8% 8%, rgba(127,185,239,.24), transparent 48%), radial-gradient(ellipse at 94% 35%, rgba(181,172,235,.20), transparent 45%), radial-gradient(ellipse at 45% 90%, rgba(131,209,205,.14), transparent 50%);
+  background-image: linear-gradient(180deg, #f4f6fa, #eceff5);
 }
 .dark .nova-root {
   --nova-ink-soft: #b9c4d6;
@@ -183,7 +177,7 @@
   --nova-glass-3: rgba(34, 43, 62, .94);
   --nova-glass-border: rgba(208, 224, 255, .15);
   --nova-shadow-1: inset 0 1px 0 rgba(255,255,255,.09), 0 8px 28px -12px rgba(0,0,0,.36);
-  background-image: radial-gradient(ellipse at 8% 8%, rgba(49,110,185,.17), transparent 48%), radial-gradient(ellipse at 94% 35%, rgba(113,83,175,.15), transparent 45%);
+  background-image: linear-gradient(180deg, #151a24, #10141c);
 }
 .nova-bank-pills { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .nova-bank-pill { display: flex; align-items: center; gap: 9px; min-width: 0; max-width: 100%; padding: 9px 15px 9px 9px; border-radius: 999px; border: 1px solid var(--nova-glass-border); background: var(--nova-glass-1); box-shadow: var(--nova-shadow-1); text-align: left; cursor: pointer; touch-action: manipulation; }
@@ -281,7 +275,7 @@
 .nova-account-filter input:checked + .nova-account-switch { background: var(--nova-accent); }
 .nova-account-filter input:checked + .nova-account-switch::after { transform: translateX(14px); }
 .nova-account-filter input:focus-visible + .nova-account-switch { outline: 2px solid var(--nova-accent); outline-offset: 3px; }
-.nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; border-left: 3px solid rgba(var(--card-tint), .65); background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
+.nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
 .dark .nova-picker-bank { color: color-mix(in srgb, rgb(var(--card-tint)) 60%, white); }
 @media (prefers-reduced-motion: reduce) { .nova-account-switch, .nova-account-switch::after { transition: none; } }
 

@@ -160,7 +160,7 @@ export default function AssinaturasPage() {
   const processarPendentes = async () => {
     const { data: gerados } = await supabase.rpc("processar_assinaturas");
     if (gerados && gerados > 0) {
-      showIsland(`${gerados} lançamento(s) de assinatura gerado(s)!`, "success", "🔁");
+      showIsland(`${gerados} lançamento(s) de assinatura gerado(s).`, "success", "🔁");
       return true;
     }
     return false;
@@ -261,7 +261,7 @@ export default function AssinaturasPage() {
     }
     if (error) { setIsSubmitting(false); showIsland("Erro ao salvar: " + error.message, "error", "🛑"); return; }
     setIsModalOpen(false);
-    showIsland(editandoId ? "Assinatura atualizada!" : "Assinatura cadastrada!", "success", editandoId ? "✏️" : "🎉");
+    showIsland(editandoId ? "Assinatura atualizada." : "Assinatura cadastrada.", "success", editandoId ? "✏️" : "🎉");
     if (!editandoId && lancarAgora && novoId) {
       await lancarCobrancaManual({ id: novoId, nome, valor: valorNumerico, conta_id: formaPagtoId, user_id: userId, autor_nome: username || "Usuário", recorrencia });
     }
@@ -312,7 +312,7 @@ export default function AssinaturasPage() {
     }
     setIsSubmitting(false);
     setReativacaoAlvo(null);
-    showIsland("Assinatura reativada!", "success", "♻️");
+    showIsland("Assinatura reativada.", "success", "♻️");
     carregarDados();
   };
 
@@ -409,18 +409,17 @@ export default function AssinaturasPage() {
         {island.show && (
           <div className="fixed top-6 left-0 w-full z-[100] flex justify-center pointer-events-none">
             <div className={`pointer-events-auto px-5 py-3 rounded-full backdrop-blur-3xl border flex items-center justify-center gap-3 w-auto min-w-[250px] max-w-[90%] transition-colors duration-300 ${island.isClosing ? "animate-balloon-pop" : "animate-balloon-inflate"} ${
-              island.type === "error" ? "bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-[0_8px_32px_rgba(239,68,68,0.25)] text-red-800 dark:text-red-300" :
-              island.type === "success" ? "bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-[0_8px_32px_rgba(16,185,129,0.25)] text-emerald-800 dark:text-emerald-300" :
-              "bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-[0_8px_32px_rgba(59,130,246,0.25)] text-blue-800 dark:text-blue-300"
-            }`}>
-              <span className={`text-xl shrink-0 drop-shadow-md ${island.type === "error" ? "animate-[islandShake_0.5s_ease-in-out]" : island.type === "success" ? "animate-[islandExplode_0.6s_ease-out_forwards]" : ""}`}>{island.icon}</span>
-              <span className="text-sm font-black tracking-tight whitespace-nowrap">{island.message}</span>
+ island.type === "error" ? "bg-white/70 dark:bg-black/60 border-red-200 dark:border-red-900/50 shadow-md text-red-800 dark:text-red-300" :
+ island.type === "success" ? "bg-white/70 dark:bg-black/60 border-emerald-200 dark:border-emerald-900/50 shadow-md text-emerald-800 dark:text-emerald-300" :
+ "bg-white/70 dark:bg-black/60 border-blue-200 dark:border-blue-900/50 shadow-md text-blue-800 dark:text-blue-300"
+ }`}>
+              <span className="text-sm font-semibold tracking-tight whitespace-nowrap">{island.message}</span>
             </div>
           </div>
         )}
 
         <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-between items-center relative z-10 transition-colors">
-          <h1 className="text-xl font-black text-teal-600 dark:text-teal-400 tracking-tight flex items-center gap-2">
+          <h1 className="text-xl font-semibold text-teal-600 dark:text-teal-400 tracking-tight flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
             Assinaturas
           </h1>
@@ -434,7 +433,7 @@ export default function AssinaturasPage() {
               {fullName && <span className="text-sm font-medium text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{fullName}</span>}
             </div>
             <div className="relative">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-blue-400 flex items-center justify-center text-lg font-bold text-white shadow-sm transition-all hover:scale-105 active:scale-95 overflow-hidden border-2 border-white dark:border-gray-800">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="h-11 w-11 rounded-full bg-blue-600 flex items-center justify-center text-lg font-bold text-white shadow-sm transition active:scale-[0.97] overflow-hidden border-2 border-white dark:border-gray-800">
                 {avatarUrl ? <img src={avatarUrl} alt="Perfil" className="w-full h-full object-cover" /> : initialLetterMenu}
               </button>
               {isMenuOpen && (
@@ -442,18 +441,18 @@ export default function AssinaturasPage() {
                   <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
                   <div className="absolute right-0 top-full mt-3 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50">
                     <div className="p-2 space-y-1">
-                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📊 Dashboard</button>
-                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💡 Insights</button>
-                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">💰 Gestão de Patrimônio</button>
-                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏦 Gestão Bancária</button>
-                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">📌 Contas Fixas</button>
-                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-black text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 rounded-lg transition-colors">🔁 Assinaturas</button>
-                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🏷️ Categorias</button>
-                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">🗑️ Auditoria de Lançamentos</button>
+                      <button onClick={() => router.push("/dashboard")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Dashboard</button>
+                      <button onClick={() => router.push("/insights")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Insights</button>
+                      <button onClick={() => router.push("/investimentos")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão de patrimônio</button>
+                      <button onClick={() => router.push("/contas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Gestão bancária</button>
+                      <button onClick={() => router.push("/contas-fixas")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Contas fixas</button>
+                      <button onClick={() => router.push("/assinaturas")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-900/30 rounded-lg transition-colors">Assinaturas</button>
+                      <button onClick={() => router.push("/categorias")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Categorias</button>
+                      <button onClick={() => router.push("/auditoria")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Auditoria de lançamentos</button>
                       <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
-                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">⚙️ Meu Perfil</button>
-                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">⚙️ Parâmetros do Sistema</button>
-                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair do Sistema</button>
+                      <button onClick={() => router.push("/perfil")} className="w-full text-left px-4 py-2.5 text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition-colors">Meu perfil</button>
+                      <button onClick={() => router.push("/parametros")} className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 rounded-lg transition-colors">Parâmetros do sistema</button>
+                      <button onClick={async () => { await supabase.auth.signOut(); router.push("/login"); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors">Sair</button>
                     </div>
                   </div>
                 </>
@@ -466,20 +465,20 @@ export default function AssinaturasPage() {
 
           <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-end mb-6 gap-4 mac-dock-item ${isWaving ? "mac-dock-animate" : ""}`} style={{ animationDelay: "0s" }}>
             <div>
-              <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100">Assinaturas</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Assinaturas</h2>
               <p className="text-gray-500 dark:text-gray-400 font-bold mt-1">
                 Lançadas automaticamente no Dashboard na data da cobrança.
                 {totalMensalAtivas > 0 && <span className="text-teal-600 dark:text-teal-400"> Custo médio: R$ {totalMensalAtivas.toFixed(2)}/mês.</span>}
               </p>
             </div>
-            <button onClick={abrirModalNova} className="flex items-center gap-2 bg-teal-600 dark:bg-teal-500 hover:bg-teal-700 dark:hover:bg-teal-600 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 whitespace-nowrap">
+            <button onClick={abrirModalNova} className="flex items-center gap-2 bg-teal-600 dark:bg-teal-500 hover:bg-teal-700 dark:hover:bg-teal-600 text-white px-5 py-2.5 rounded-xl font-bold transition shadow-sm active:scale-[0.97] whitespace-nowrap">
               <span className="text-xl leading-none">+</span> Nova assinatura
             </button>
           </div>
 
           <div className="flex bg-gray-200 dark:bg-gray-800 p-1.5 rounded-xl w-full sm:w-fit mb-6">
-            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
-            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-black rounded-lg transition-all ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>🗄️ Pausadas</button>
+            <button onClick={() => setAba("ativas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition ${aba === "ativas" ? "bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Ativas</button>
+            <button onClick={() => setAba("arquivadas")} className={`flex-1 sm:flex-none px-6 py-2 text-sm font-semibold rounded-lg transition ${aba === "arquivadas" ? "bg-white dark:bg-gray-700 text-teal-700 dark:text-teal-400 shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Pausadas</button>
           </div>
 
           {loading ? (
@@ -498,11 +497,11 @@ export default function AssinaturasPage() {
                     <button onClick={() => setCardExpandidoId(expandido ? null : a.id)} className="w-full p-4 sm:p-5 flex items-center justify-between gap-2 sm:gap-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">
                       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                         <span className={`text-lg text-gray-400 dark:text-gray-500 transition-transform shrink-0 ${expandido ? "rotate-90" : ""}`}>›</span>
-                        <div className="w-7 h-7 rounded-full overflow-hidden bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-400 flex items-center justify-center text-xs font-black shrink-0" title={`@${a.autor_nome}`}>
+                        <div className="w-7 h-7 rounded-full overflow-hidden bg-teal-100 dark:bg-teal-900/50 text-teal-700 dark:text-teal-400 flex items-center justify-center text-xs font-semibold shrink-0" title={`@${a.autor_nome}`}>
                           {fotoAutor ? <img src={fotoAutor} className="w-full h-full object-cover" alt="" /> : a.autor_nome?.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <h3 className="text-base font-black text-gray-900 dark:text-gray-100 leading-tight line-clamp-2">{a.nome}</h3>
+                          <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 leading-tight line-clamp-2">{a.nome}</h3>
                           <span className="text-xs font-bold text-gray-400 dark:text-gray-500 truncate block mt-0.5">
                             {a.categorias?.nome || "Sem categoria"} • {labelRecorrencia(a)} • {a.contas?.nome || "—"}
                           </span>
@@ -510,9 +509,9 @@ export default function AssinaturasPage() {
                       </div>
                       <div className="flex items-center gap-0.5 sm:gap-2 shrink-0">
                         <div className="text-right mr-0.5 sm:mr-1">
-                          <span className="block text-sm font-black text-gray-900 dark:text-gray-100">R$ {Number(a.valor).toFixed(2)}</span>
+                          <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {Number(a.valor).toFixed(2)}</span>
                           {!a.arquivada && <span className="block text-[10px] font-bold text-teal-600 dark:text-teal-400">Próx: {formatarDataBR(a.proxima_cobranca)}</span>}
-                          {a.arquivada && <span className="block text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase">Pausada</span>}
+                          {a.arquivada && <span className="block text-[10px] font-semibold text-gray-400 dark:text-gray-500">Pausada</span>}
                         </div>
                         <span onClick={(e) => { e.stopPropagation(); abrirModalEditar(a); }} className="p-1.5 sm:p-2 text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors cursor-pointer" title="Editar assinatura">
                           ✏️
@@ -535,26 +534,26 @@ export default function AssinaturasPage() {
 
                         <div className="grid grid-cols-3 gap-3">
                           <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Total pago</span>
-                            <span className="block text-sm font-black text-gray-900 dark:text-gray-100 mt-0.5">R$ {totalPago.toFixed(2)}</span>
+                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Total pago</span>
+                            <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">R$ {totalPago.toFixed(2)}</span>
                           </div>
                           <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Cobranças</span>
-                            <span className="block text-sm font-black text-gray-900 dark:text-gray-100 mt-0.5">{itens.length}</span>
+                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Cobranças</span>
+                            <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mt-0.5">{itens.length}</span>
                           </div>
                           <div className="bg-gray-50 dark:bg-gray-900/40 rounded-xl p-3 text-center">
-                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Custo por ano</span>
-                            <span className="block text-sm font-black text-teal-600 dark:text-teal-400 mt-0.5">R$ {custoAnualEstimado(a).toFixed(2)}</span>
+                            <span className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wide">Custo por ano</span>
+                            <span className="block text-sm font-semibold text-teal-600 dark:text-teal-400 mt-0.5">R$ {custoAnualEstimado(a).toFixed(2)}</span>
                           </div>
                         </div>
 
                         {itens.length > 0 && (
                           <div className="space-y-1.5">
-                            <span className="text-[11px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider">Últimas cobranças</span>
+                            <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500">Últimas cobranças</span>
                             {[...itens].reverse().slice(0, 6).map((t) => (
                               <div key={t.id} className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-gray-900/40 rounded-lg px-3 py-2">
                                 <span className="text-xs font-bold text-gray-600 dark:text-gray-300">{formatarDataBR(t.data)}</span>
-                                <span className="text-sm font-black text-gray-900 dark:text-gray-100">R$ {Number(t.valor).toFixed(2)}</span>
+                                <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">R$ {Number(t.valor).toFixed(2)}</span>
                               </div>
                             ))}
                           </div>
@@ -567,7 +566,7 @@ export default function AssinaturasPage() {
 
               {assinaturasFiltradas.length === 0 && (
                 <div className="text-center py-14 bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
-                  <span className="text-4xl opacity-50 mb-2 block">🔁</span>
+                  
                   <p className="font-bold text-gray-500 dark:text-gray-400">{aba === "ativas" ? "Nenhuma assinatura cadastrada ainda." : "Nenhuma assinatura pausada."}</p>
                 </div>
               )}
@@ -580,22 +579,22 @@ export default function AssinaturasPage() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm overflow-visible animate-in zoom-in-95 duration-200 border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto custom-scrollbar">
               <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-900/80 sticky top-0 z-10">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">{editandoId ? "Editar Assinatura" : "Nova Assinatura"}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{editandoId ? "Editar assinatura" : "Nova assinatura"}</h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 text-2xl font-bold">&times;</button>
               </div>
               <form onSubmit={handleSalvar} className="p-6 space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Nome</label>
-                  <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Netflix, Plano Celular, Spotify" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nome</label>
+                  <input type="text" required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: Netflix, Plano Celular, Spotify" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition" />
                 </div>
 
                 <div className="flex gap-3">
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Valor (R$)</label>
-                    <input type="text" inputMode="decimal" required value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Ex: 39,90" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Valor (R$)</label>
+                    <input type="text" inputMode="decimal" required value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Ex: 39,90" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition" />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Categoria</label>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Categoria</label>
                     <select required value={categoriaId} onChange={(e) => setCategoriaId(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
                       <option value="" disabled>Selecione...</option>
                       {categoriasOrdenadas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
@@ -604,17 +603,17 @@ export default function AssinaturasPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Recorrência</label>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Recorrência</label>
                   <div className="flex p-1 bg-gray-200 dark:bg-gray-700 rounded-xl gap-1">
-                    <button type="button" onClick={() => { setRecorrencia("semanal"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${recorrencia === "semanal" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Semanal</button>
-                    <button type="button" onClick={() => { setRecorrencia("mensal"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${recorrencia === "mensal" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Mensal</button>
-                    <button type="button" onClick={() => { setRecorrencia("anual"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition-all ${recorrencia === "anual" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Anual</button>
+                    <button type="button" onClick={() => { setRecorrencia("semanal"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${recorrencia === "semanal" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Semanal</button>
+                    <button type="button" onClick={() => { setRecorrencia("mensal"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${recorrencia === "mensal" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Mensal</button>
+                    <button type="button" onClick={() => { setRecorrencia("anual"); setDiaCobranca(""); }} className={`flex-1 py-2 text-[11px] font-bold rounded-lg transition ${recorrencia === "anual" ? "bg-white dark:bg-gray-800 text-teal-600 dark:text-teal-400 shadow-sm" : "text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"}`}>Anual</button>
                   </div>
                 </div>
 
                 {recorrencia === "semanal" && (
                   <div>
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia da semana</label>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Dia da semana</label>
                     <select required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
                       <option value="" disabled>Selecione...</option>
                       {DIAS_SEMANA.map((d, i) => <option key={i} value={i}>{d}</option>)}
@@ -625,11 +624,11 @@ export default function AssinaturasPage() {
                 {recorrencia === "mensal" && (
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia do mês</label>
-                      <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Dia do mês</label>
+                      <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition" />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Repete a cada</label>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Repete a cada</label>
                       <select value={intervaloMeses} onChange={(e) => setIntervaloMeses(e.target.value)} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
                         {[1, 2, 3, 4, 6].map((n) => <option key={n} value={n}>{labelIntervaloMeses(n)}</option>)}
                       </select>
@@ -640,11 +639,11 @@ export default function AssinaturasPage() {
                 {recorrencia === "anual" && (
                   <div className="flex gap-3">
                     <div className="flex-1">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Dia</label>
-                      <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all" />
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Dia</label>
+                      <input type="number" min="1" max="31" required value={diaCobranca} onChange={(e) => setDiaCobranca(e.target.value)} placeholder="Ex: 15" className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition" />
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">Mês</label>
+                      <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Mês</label>
                       <select value={mesCobranca} onChange={(e) => setMesCobranca(Number(e.target.value))} className="block w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-3 text-sm font-bold text-gray-900 dark:text-gray-100 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20">
                         {MESES.map((m, i) => <option key={i} value={i + 1}>{m}</option>)}
                       </select>
@@ -654,18 +653,18 @@ export default function AssinaturasPage() {
 
                 {/* FORMA DE PAGAMENTO — mesmo componente/visual do modal de lançamento do Dashboard */}
                 <div className={`relative ${isFormaPagtoOpen ? "z-50" : "z-0"}`}>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1 uppercase tracking-wider">💳 Forma Pagto / Banco</label>
-                  <button type="button" onClick={() => setIsFormaPagtoOpen(!isFormaPagtoOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:ring-4 focus:border-teal-500 focus:ring-teal-500/20 transition-all h-[55px]">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Forma pagto / banco</label>
+                  <button type="button" onClick={() => setIsFormaPagtoOpen(!isFormaPagtoOpen)} className="flex items-center justify-between w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 p-2.5 focus:ring-4 focus:border-teal-500 focus:ring-teal-500/20 transition h-[55px]">
                     {contaSelecionada ? (() => {
                       const avatar = getContaAvatar(contaSelecionada);
                       return (
                         <div className="flex items-center gap-3 overflow-hidden">
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden ${avatar.bg}`}>
                             {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
                           </div>
                           <div className="flex flex-col items-start truncate text-left">
                             <span className="text-sm font-bold text-gray-900 dark:text-gray-100 leading-tight truncate w-full">{contaSelecionada.nome}</span>
-                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate w-full mt-0.5">{getContaSubtitle(contaSelecionada)}</span>
+                            <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate w-full mt-0.5">{getContaSubtitle(contaSelecionada)}</span>
                           </div>
                         </div>
                       );
@@ -682,8 +681,8 @@ export default function AssinaturasPage() {
                         if (chavesDoBanco.length === 0) return null;
                         return (
                           <div key={banco.id}>
-                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 flex items-center justify-between">
-                              <span>🏦 {banco.banco}</span><span>@{banco.autor_nome}</span>
+                            <div className="px-4 py-1.5 text-[10px] font-semibold border-y border-white/50 dark:border-gray-700/50 bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 flex items-center justify-between">
+                              <span>{banco.banco}</span><span>@{banco.autor_nome}</span>
                             </div>
                             <ul className="divide-y divide-gray-50 dark:divide-gray-700">
                               {chavesDoBanco.map((c) => {
@@ -691,12 +690,12 @@ export default function AssinaturasPage() {
                                 return (
                                   <li key={c.id}>
                                     <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden ${avatar.bg}`}>
                                         {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
                                       </div>
                                       <div className="flex flex-col truncate">
                                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate mt-0.5">{getContaSubtitle(c)}</span>
                                       </div>
                                     </button>
                                   </li>
@@ -711,19 +710,19 @@ export default function AssinaturasPage() {
                         if (chavesDin.length === 0) return null;
                         return (
                           <div>
-                            <div className="px-4 py-1.5 text-[10px] font-black uppercase tracking-wider border-y border-white/50 dark:border-gray-700/50 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">💵 Dinheiro Físico</div>
+                            <div className="px-4 py-1.5 text-[10px] font-semibold border-y border-white/50 dark:border-gray-700/50 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">Dinheiro físico</div>
                             <ul className="divide-y divide-gray-50 dark:divide-gray-700">
                               {chavesDin.map((c) => {
                                 const avatar = getContaAvatar(c);
                                 return (
                                   <li key={c.id}>
                                     <button type="button" onClick={() => { setFormaPagtoId(c.id); setIsFormaPagtoOpen(false); }} className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center gap-3 active:bg-gray-100 dark:active:bg-gray-600 bg-white dark:bg-gray-800">
-                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black shrink-0 overflow-hidden ${avatar.bg}`}>
+                                      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 overflow-hidden ${avatar.bg}`}>
                                         {avatar.photo ? <img src={avatar.photo} className="w-full h-full object-cover" alt="" /> : avatar.char}
                                       </div>
                                       <div className="flex flex-col truncate">
                                         <span className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{c.nome}</span>
-                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate mt-0.5">{getContaSubtitle(c)}</span>
+                                        <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 truncate mt-0.5">{getContaSubtitle(c)}</span>
                                       </div>
                                     </button>
                                   </li>
@@ -751,13 +750,13 @@ export default function AssinaturasPage() {
                     <input type="checkbox" checked={lancarAgora} onChange={(e) => setLancarAgora(e.target.checked)} className="mt-0.5 w-4 h-4 text-teal-600 bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-600 rounded focus:ring-teal-500 cursor-pointer shrink-0" />
                     <span className="text-xs font-bold text-teal-800 dark:text-teal-400">
                       Já registrar a cobrança deste mês agora?
-                      <span className="block text-[11px] font-bold text-teal-600/70 dark:text-teal-400/70 mt-0.5">Lança manualmente um pagamento hoje. A cobrança automática seguinte fica marcada para {diaCobranca && formatarDataBR(getDataLocal(calcularProximaCobranca(recorrencia, Number(diaCobranca) || 0, mesCobranca)))} — sem duplicar.</span>
+                      <span className="block text-[11px] font-bold text-teal-600/70 dark:text-teal-400/70 mt-0.5">Lança manualmente um pagamento hoje. A cobrança automática seguinte fica marcada para {diaCobranca && formatarDataBR(getDataLocal(calcularProximaCobranca(recorrencia, Number(diaCobranca) || 0, mesCobranca)))}, sem duplicar.</span>
                     </span>
                   </label>
                 )}
 
-                <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white font-black uppercase tracking-wide transition-all shadow-md active:scale-95 bg-teal-600 hover:bg-teal-700 disabled:opacity-50">
-                  {isSubmitting ? "Salvando..." : editandoId ? "Salvar Alterações" : "Cadastrar Assinatura"}
+                <button type="submit" disabled={isSubmitting} className="w-full py-3.5 rounded-xl text-white font-semibold tracking-wide transition shadow-md active:scale-[0.97] bg-teal-600 hover:bg-teal-700 disabled:opacity-50">
+                  {isSubmitting ? "Salvando..." : editandoId ? "Salvar alterações" : "Cadastrar assinatura"}
                 </button>
               </form>
             </div>
@@ -770,8 +769,8 @@ export default function AssinaturasPage() {
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
               <p className="text-sm font-bold text-gray-900 dark:text-gray-100 mb-5">{confirmacao.mensagem}</p>
               <div className="flex gap-3">
-                <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
-                <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95">Confirmar</button>
+                <button type="button" onClick={() => setConfirmacao(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-[0.97]">Cancelar</button>
+                <button type="button" onClick={confirmacao.onConfirmar} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition active:scale-[0.97]">Confirmar</button>
               </div>
             </div>
           </div>
@@ -781,12 +780,12 @@ export default function AssinaturasPage() {
           <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setReativacaoAlvo(null)}></div>
             <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm p-6 border border-gray-100 dark:border-gray-700 animate-in zoom-in-95 duration-200">
-              <h3 className="text-base font-black text-gray-900 dark:text-gray-100 mb-1">Reativar "{reativacaoAlvo.nome}"?</h3>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">Reativar "{reativacaoAlvo.nome}"?</h3>
               <p className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-4">As cobranças voltam a ser geradas a partir da próxima data, sem retroativos do período pausado.</p>
 
               {jaLancadoEsteMes ? (
                 <div className="bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/50 rounded-xl p-3 mb-5">
-                  <p className="text-xs font-bold text-blue-800 dark:text-blue-400">🔗 Já existe um lançamento de "{reativacaoAlvo.nome}" em {formatarDataBR(jaLancadoEsteMes.data)} (R$ {Number(jaLancadoEsteMes.valor).toFixed(2)}) neste mês.</p>
+                  <p className="text-xs font-bold text-blue-800 dark:text-blue-400">Já existe um lançamento de "{reativacaoAlvo.nome}" em {formatarDataBR(jaLancadoEsteMes.data)} (R$ {Number(jaLancadoEsteMes.valor).toFixed(2)}) neste mês.</p>
                 </div>
               ) : (
                 <label className="flex items-start gap-2.5 bg-teal-50/50 dark:bg-teal-900/10 border border-teal-100 dark:border-teal-900/50 rounded-xl p-3 mb-5 cursor-pointer">
@@ -796,8 +795,8 @@ export default function AssinaturasPage() {
               )}
 
               <div className="flex gap-3">
-                <button type="button" onClick={() => setReativacaoAlvo(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all active:scale-95">Cancelar</button>
-                <button type="button" disabled={isSubmitting} onClick={confirmarReativacao} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition-all active:scale-95 disabled:opacity-50">{isSubmitting ? "Salvando..." : "Confirmar"}</button>
+                <button type="button" onClick={() => setReativacaoAlvo(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition active:scale-[0.97]">Cancelar</button>
+                <button type="button" disabled={isSubmitting} onClick={confirmarReativacao} className="flex-1 py-3 rounded-xl font-bold text-white bg-teal-600 hover:bg-teal-700 transition active:scale-[0.97] disabled:opacity-50">{isSubmitting ? "Salvando..." : "Confirmar"}</button>
               </div>
             </div>
           </div>
