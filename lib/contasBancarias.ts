@@ -86,19 +86,16 @@ export function podeEditarForma(c: { tipo: string; user_id: string }, userId: st
   return c.tipo === "dinheiro" || c.user_id === userId;
 }
 
-export type OrdemBancos = "usuario" | "banco";
-
 /**
- * Ordena bancos por usuário ou por nome do banco. Desempate: quem tem mais formas
- * de pagamento naquele banco vem primeiro; depois o outro critério, para a ordem
- * ser sempre a mesma.
+ * Ordena bancos por usuário e, dentro de cada usuário, pelo nome do banco.
+ * Desempate final: mais formas de pagamento naquele banco primeiro.
  */
-export function ordenarBancos<T extends { banco?: string; autor_nome?: string }>(bancos: T[], ordem: OrdemBancos, qtdFormas: (b: T) => number): T[] {
+export function ordenarBancos<T extends { banco?: string; autor_nome?: string }>(bancos: T[], qtdFormas: (b: T) => number): T[] {
   const texto = (v?: string) => (v || "").toLocaleLowerCase("pt-BR");
   const porUsuario = (a: T, b: T) => texto(a.autor_nome).localeCompare(texto(b.autor_nome), "pt-BR");
   const porBanco = (a: T, b: T) => texto(a.banco).localeCompare(texto(b.banco), "pt-BR");
   const porQtd = (a: T, b: T) => qtdFormas(b) - qtdFormas(a);
-  const criterios = ordem === "usuario" ? [porUsuario, porQtd, porBanco] : [porBanco, porQtd, porUsuario];
+  const criterios = [porUsuario, porBanco, porQtd];
   return [...bancos].sort((a, b) => {
     for (const c of criterios) { const r = c(a, b); if (r !== 0) return r; }
     return 0;

@@ -60,8 +60,8 @@ export function LinhaForma({ forma, aoAbrir, aoCopiarPix }: { forma: any; aoAbri
   const t = tipoDaForma(forma);
   return (
     <div className="flex items-center gap-1 border-t border-[var(--nova-ink-hairline)] first:border-t-0">
-      <button type="button" onClick={aoAbrir} className="flex-1 min-w-0 flex items-center gap-3 py-2.5 px-1 text-left cursor-pointer rounded-lg hover:bg-[var(--nova-ink-hairline)]">
-        <span className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-[var(--nova-ink-hairline)] text-[var(--nova-ink-soft)]">
+      <button type="button" onClick={aoAbrir} className="flex-1 min-w-0 flex items-center gap-2.5 py-2 px-1 text-left cursor-pointer rounded-lg hover:bg-[var(--nova-ink-hairline)]">
+        <span className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center bg-[var(--nova-ink-hairline)] text-[var(--nova-ink-soft)]">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             {t !== "pix" && t !== "dinheiro" && <rect x="2" y="5" width="20" height="14" rx="2" />}
             {t === "dinheiro" && <rect x="2" y="6" width="20" height="12" rx="2" />}
