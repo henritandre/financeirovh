@@ -55,6 +55,7 @@ export function SegmentedControl<T extends string>({
       {opcoes.map((o) => (
         <button
           key={o.valor}
+          type="button"
           role="tab"
           aria-selected={o.valor === valor}
           onClick={() => aoMudar(o.valor)}
