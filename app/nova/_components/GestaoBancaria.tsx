@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useId, useState, type ReactNode } from "react";
-import { EasterEggMaster, tocarSomMaster } from "./EasterEggMaster";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { EasterEggMaster, precarregarSonsMaster, tocarSomMaster } from "./EasterEggMaster";
 
 const ehMaster = (nome: string) => /\bmaster\b/.test(nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase());
 import { Surface } from "../_ui/Surface";
@@ -156,14 +156,21 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
     tipoConta: (banco?.tipo_conta as TipoContaBancaria) || "corrente",
   });
   const [tentou, setTentou] = useState(false);
-  const [cela, setCela] = useState(false);
-  const fecharCela = useCallback(() => setCela(false), []);
-  const reconhecido = d.banco.trim() !== "" && !["neutro", "carteira"].includes(identidadeBanco(d.banco).chave);
   // Easter egg: digitar "Banco Master" fecha a cela (o BC liquidou o banco em novembro de 2025).
+  // `cela` guarda quanto tempo ela fica (null enquanto o áudio ainda não informou a duração).
+  const [cela, setCela] = useState<{ duracaoMs: number | null } | null>(null);
+  const pararSom = useRef<() => void>(() => {});
+  useEffect(() => {
+    precarregarSonsMaster();
+    return () => pararSom.current();
+  }, []);
+  const fecharCela = useCallback(() => { pararSom.current(); setCela(null); }, []);
+  const reconhecido = d.banco.trim() !== "" && !["neutro", "carteira"].includes(identidadeBanco(d.banco).chave);
   const mudarBanco = (valor: string) => {
     if (ehMaster(valor) && !ehMaster(d.banco)) {
-      setCela(true);
-      tocarSomMaster();
+      pararSom.current();
+      setCela({ duracaoMs: null });
+      pararSom.current = tocarSomMaster((ms) => setCela((c) => (c ? { duracaoMs: ms } : c)));
     }
     setD({ ...d, banco: valor });
   };
@@ -186,7 +193,7 @@ export function FormularioBanco({ banco, vinculos, salvando, aoSalvar, aoCancela
           {BANCOS_CONHECIDOS.map((n) => <option key={n} value={n} />)}
         </datalist>
       </Campo>
-      {cela && <EasterEggMaster aoTerminar={fecharCela} />}
+      {cela && <EasterEggMaster duracaoMs={cela.duracaoMs} aoTerminar={fecharCela} />}
       <Campo id={`${uid}-nome`} label="Nome para exibir" ajuda="Como a conta aparece nas listas do app." erro={tentou ? erros.nome : undefined}>
         <input id={`${uid}-nome`} className={`${campo} ${borda(tentou ? erros.nome : undefined)}`} value={d.nome} onChange={(e) => setD({ ...d, nome: e.target.value })} placeholder="Conta principal" autoComplete="off" />
       </Campo>
