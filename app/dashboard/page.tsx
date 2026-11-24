@@ -5,6 +5,8 @@ import { FiltrosContas } from "./FiltrosContas";
 import { SeletorContaPagamento, SeletorBanco } from "../nova/_ui/SeletorConta";
 import { identidadeBanco } from "../nova/_lib/identidadeBanco";
 import { DetalheBancoClassico } from "./DetalheBancoClassico";
+import { FaturasClassico } from "./FaturasClassico";
+import { calcularFaturas } from "../../lib/faturas";
 
 import { calcularSaldo, centavos } from "../../lib/saldo";
 
@@ -77,6 +79,8 @@ export default function DashboardPage() {
   };
 
   const [bancoDetalhe, setBancoDetalhe] = useState<{nome: string; ids: string[]} | null>(null);
+  // Resumo de uma fatura (competencia) ou histórico do cartão (competencia nula).
+  const [faturaDetalhe, setFaturaDetalhe] = useState<{cartaoId: string; competencia: string | null} | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -123,6 +127,8 @@ export default function DashboardPage() {
   const [abaExtrato, setAbaExtrato] = useState<"extrato" | "parcelamentos">("extrato");
 
   const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
+  const [qtdFaturasHistorico, setQtdFaturasHistorico] = useState(5);
+  const [apenasCartoesComFatura, setApenasCartoesComFatura] = useState(true);
   const [cartoesExpandidos, setCartoesExpandidos] = useState<Record<string, boolean>>({});
   const [buscaParcelamento, setBuscaParcelamento] = useState("");
   const [grupoExpandidoId, setGrupoExpandidoId] = useState<string | null>(null);
@@ -262,6 +268,12 @@ export default function DashboardPage() {
 
         const { data: paramFaturas } = await supabase.from("parametros").select("valor").eq("user_id", user.id).eq("chave", "qtd_faturas_visiveis").maybeSingle();
         if (paramFaturas?.valor) setQtdFaturasVisiveis(Number(paramFaturas.valor));
+
+        const { data: paramsFaturasNovos } = await supabase.from("parametros").select("chave, valor").eq("user_id", user.id).in("chave", ["qtd_faturas_historico", "cartoes_apenas_com_fatura"]);
+        paramsFaturasNovos?.forEach((p) => {
+          if (p.chave === "qtd_faturas_historico" && p.valor) setQtdFaturasHistorico(Number(p.valor));
+          if (p.chave === "cartoes_apenas_com_fatura") setApenasCartoesComFatura(p.valor !== false && p.valor !== "false");
+        });
 
         // Catch-up das assinaturas vencidas: o banco gera de uma vez só
         // (mesmo que sejam vários dias/meses acumulados) e retorna quantos
@@ -1173,11 +1185,13 @@ export default function DashboardPage() {
               )
             })()}
             
-            {cartoesCredito.length > 0 ? (
+            {cartoesCredito.length > 0 && !(apenasCartoesComFatura && cartoesCredito.every(c => obterFaturasDoCartao(c.id).faturasAbertas.length === 0)) ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {cartoesCredito.map((cartao) => {
                   const { totalGeral, faturasAbertas } = obterFaturasDoCartao(cartao.id);
                   if ((!usuariosSelecionados.includes(cartao.autor_nome) && totalGeral <= 0) || (cartao.ativo === false && totalGeral <= 0)) return null;
+                  // Parâmetro "Visualizar apenas cartões com fatura": sem nada em aberto, não aparece.
+                  if (apenasCartoesComFatura && faturasAbertas.length === 0) return null;
                   
                   const fotoCartao = mapPerfis[cartao.autor_nome];
 
@@ -1207,6 +1221,10 @@ export default function DashboardPage() {
                         <p className="text-3xl font-black text-purple-700 dark:text-purple-400">{formatarMoeda(totalGeral, visibilidade.cartoes)}</p>
                       </div>
 
+                      <button type="button" onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: null })} className="mb-4 self-start text-[11px] font-black text-purple-600 dark:text-purple-400 hover:underline">
+                        📜 Histórico de faturas
+                      </button>
+
                       {faturasAbertas.length > 0 && (
                         <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-700/50 space-y-3">
                           <div className="flex items-center justify-between mb-1">
@@ -1230,7 +1248,7 @@ export default function DashboardPage() {
                             const mesNome = mesesAbrev[parseInt(mesFatura) - 1];
 
                             return (
-                              <div key={f.chave} className={`flex justify-between items-center p-2.5 rounded-xl border transition-all ${isAtual ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50 shadow-sm' : isAtrasada ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700/50'}`}>
+                              <button type="button" key={f.chave} onClick={() => setFaturaDetalhe({ cartaoId: cartao.id, competencia: f.chave })} title="Ver resumo da fatura" className={`w-full text-left cursor-pointer hover:brightness-95 dark:hover:brightness-125 flex justify-between items-center p-2.5 rounded-xl border transition-all ${isAtual ? 'bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800/50 shadow-sm' : isAtrasada ? 'bg-red-50/50 dark:bg-red-900/10 border-red-200 dark:border-red-800/50' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700/50'}`}>
                                 
                                 <div className="flex items-center gap-3">
                                   {/* NOVO: ÍCONE DE CALENDÁRIO DINÂMICO */}
@@ -1254,7 +1272,7 @@ export default function DashboardPage() {
                                 <span className={`text-sm font-black ${isAtual ? 'text-emerald-700 dark:text-emerald-400' : isAtrasada ? 'text-red-700 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {formatarMoeda(f.valorAberto, visibilidade.cartoes)}
                                 </span>
-                              </div>
+                              </button>
                             );
                           })}
                         </div>
@@ -1266,7 +1284,7 @@ export default function DashboardPage() {
             ) : (
               <div className="bg-white/60 dark:bg-gray-800/60 p-6 rounded-xl border border-purple-100 dark:border-purple-900/30 border-dashed flex flex-col items-center justify-center text-center py-10">
                 <span className="text-3xl mb-2 opacity-50">💳</span>
-                <p className="text-sm font-bold text-purple-500 dark:text-purple-400">Nenhum cartão de crédito ativo.</p>
+                <p className="text-sm font-bold text-purple-500 dark:text-purple-400">{cartoesCredito.length > 0 ? "Nenhum cartão com fatura em aberto." : "Nenhum cartão de crédito ativo."}</p>
               </div>
             )}
           </div>
@@ -1513,6 +1531,15 @@ export default function DashboardPage() {
         {/* ======================================================= */}
         {/* MODAL DE LANÇAMENTO E EDIÇÃO                            */}
         {/* ======================================================= */}
+        {faturaDetalhe && <FaturasClassico
+          key={`${faturaDetalhe.cartaoId}-${faturaDetalhe.competencia}`}
+          nomeCartao={contas.find(c => c.id === faturaDetalhe.cartaoId)?.nome || "Cartão"}
+          historico={calcularFaturas(contas.find(c => c.id === faturaDetalhe.cartaoId), transacoes)}
+          competenciaInicial={faturaDetalhe.competencia}
+          qtdHistorico={qtdFaturasHistorico}
+          mapPerfis={mapPerfis}
+          formatar={(v) => formatarMoeda(v, visibilidade.cartoes)}
+          aoFechar={() => setFaturaDetalhe(null)} />}
         {bancoDetalhe && <DetalheBancoClassico nome={bancoDetalhe.nome} contaIds={bancoDetalhe.ids} transacoes={transacoes} mapPerfis={mapPerfis} aoFechar={() => setBancoDetalhe(null)} />}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:p-6 overflow-y-auto custom-scrollbar">

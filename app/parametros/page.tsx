@@ -25,6 +25,8 @@ export default function ParametrosPage() {
   const [notificarRendimento, setNotificarRendimento] = useState(true);
   const [diasAlerta, setDiasAlerta] = useState(15);
   const [qtdFaturasVisiveis, setQtdFaturasVisiveis] = useState(3);
+  const [qtdFaturasHistorico, setQtdFaturasHistorico] = useState(5);
+  const [apenasCartoesComFatura, setApenasCartoesComFatura] = useState(true);
   const [insightsQtdCategorias, setInsightsQtdCategorias] = useState(5);
   const [insightsExpandirResto, setInsightsExpandirResto] = useState(true);
   const [insightsQtdTop, setInsightsQtdTop] = useState(3);
@@ -58,7 +60,7 @@ export default function ParametrosPage() {
         .from("parametros")
         .select("chave, valor")
         .eq("user_id", uid)
-        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis", "insights_qtd_categorias", "insights_expandir_resto", "insights_qtd_top", "banco_evolucao_dias", "banco_lancamentos_qtd"]);
+        .in("chave", ["notificar_rendimento", "dias_alerta_rendimento", "qtd_faturas_visiveis", "qtd_faturas_historico", "cartoes_apenas_com_fatura", "insights_qtd_categorias", "insights_expandir_resto", "insights_qtd_top", "banco_evolucao_dias", "banco_lancamentos_qtd"]);
 
       if (error) {
         showIsland("Erro ao carregar configurações", "error", "🛑");
@@ -67,6 +69,8 @@ export default function ParametrosPage() {
           if (p.chave === "notificar_rendimento") setNotificarRendimento(p.valor);
           if (p.chave === "dias_alerta_rendimento") setDiasAlerta(Number(p.valor));
           if (p.chave === "qtd_faturas_visiveis") setQtdFaturasVisiveis(Number(p.valor));
+          if (p.chave === "qtd_faturas_historico") setQtdFaturasHistorico(Number(p.valor));
+          if (p.chave === "cartoes_apenas_com_fatura") setApenasCartoesComFatura(p.valor !== false && p.valor !== "false");
           if (p.chave === "insights_qtd_categorias") setInsightsQtdCategorias(Number(p.valor));
           if (p.chave === "insights_expandir_resto") setInsightsExpandirResto(p.valor);
           if (p.chave === "insights_qtd_top") setInsightsQtdTop(Number(p.valor));
@@ -105,8 +109,8 @@ export default function ParametrosPage() {
       return;
     }
 
-    if (qtdFaturasVisiveis < 1) {
-      showIsland("A quantidade de faturas visíveis deve ser maior que zero", "error", "🛑");
+    if (qtdFaturasVisiveis < 1 || qtdFaturasHistorico < 1) {
+      showIsland("As quantidades de faturas devem ser maiores que zero", "error", "🛑");
       setIsSaving(false);
       return;
     }
@@ -127,6 +131,8 @@ export default function ParametrosPage() {
       { user_id: userId, chave: "notificar_rendimento", valor: notificarRendimento },
       { user_id: userId, chave: "dias_alerta_rendimento", valor: diasAlerta },
       { user_id: userId, chave: "qtd_faturas_visiveis", valor: qtdFaturasVisiveis },
+      { user_id: userId, chave: "qtd_faturas_historico", valor: qtdFaturasHistorico },
+      { user_id: userId, chave: "cartoes_apenas_com_fatura", valor: apenasCartoesComFatura },
       { user_id: userId, chave: "insights_qtd_categorias", valor: insightsQtdCategorias },
       { user_id: userId, chave: "insights_expandir_resto", valor: insightsExpandirResto },
       { user_id: userId, chave: "insights_qtd_top", valor: insightsQtdTop },
@@ -261,6 +267,7 @@ export default function ParametrosPage() {
                           if (v === versao) return;
                           definirVersao(v);
                           showIsland(v === "nova" ? "UI Nova ativada!" : "Voltando para a UI Clássica.", "success", v === "nova" ? "✨" : "🔙");
+                          setTimeout(() => router.push(v === "nova" ? "/nova/dashboard" : "/dashboard"), 900);
                         }}
                         className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-wide transition-colors ${
                           versao === v ? "bg-blue-600 text-white shadow-sm" : "text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
@@ -351,6 +358,43 @@ export default function ParametrosPage() {
                       />
                       <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
                     </div>
+                  </div>
+
+                  <div className="mt-6 bg-purple-50/50 dark:bg-purple-900/10 p-5 rounded-2xl border border-purple-100 dark:border-purple-900/50 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <div className="flex-1">
+                      <label htmlFor="qtdFaturasHistorico" className="block text-sm font-bold text-purple-900 dark:text-purple-300 mb-1">Faturas no histórico</label>
+                      <p className="text-xs font-medium text-purple-700/70 dark:text-purple-400/70">Quantas faturas pagas aparecem ao abrir o Histórico de faturas de um cartão. Lá dentro dá para escolher outro mês inicial, mas ao abrir de novo ele volta para este padrão.</p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <input
+                        id="qtdFaturasHistorico"
+                        type="number"
+                        min="1"
+                        max="60"
+                        required
+                        value={qtdFaturasHistorico}
+                        onChange={(e) => setQtdFaturasHistorico(Number(e.target.value))}
+                        className="w-20 text-center rounded-xl border border-purple-200 dark:border-purple-800 bg-white dark:bg-gray-900 p-2.5 text-lg font-black text-purple-900 dark:text-purple-100 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/20"
+                      />
+                      <span className="text-sm font-bold text-purple-800 dark:text-purple-300">faturas</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 bg-purple-50/50 dark:bg-purple-900/10 p-5 rounded-2xl border border-purple-100 dark:border-purple-900/50 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="block text-sm font-bold text-purple-900 dark:text-purple-300 mb-1">Visualizar apenas cartões com fatura</p>
+                      <p className="text-xs font-medium text-purple-700/70 dark:text-purple-400/70">No Dashboard (Clássica e Nova), esconde os cartões que não têm nenhuma fatura em aberto.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setApenasCartoesComFatura(!apenasCartoesComFatura)}
+                      className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-600 focus:ring-offset-2 ${apenasCartoesComFatura ? 'bg-purple-600' : 'bg-gray-300 dark:bg-gray-600'}`}
+                      role="switch"
+                      aria-checked={apenasCartoesComFatura}
+                    >
+                      <span className="sr-only">Visualizar apenas cartões com fatura</span>
+                      <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${apenasCartoesComFatura ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </button>
                   </div>
                 </div>
 

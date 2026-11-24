@@ -216,6 +216,11 @@
 .nova-invoices { display: grid; gap: 7px; }
 .nova-invoice { color: var(--nova-ink-soft); }
 .nova-invoice strong { color: var(--nova-ink); font-weight: 500; }
+.nova-credit-face-clicavel { cursor: pointer; transition: filter .15s ease; }
+.nova-credit-face-clicavel:hover { filter: brightness(1.04); }
+.nova-invoice-button { width: calc(100% + 12px); margin: 0 -6px; padding: 4px 6px; border-radius: 8px; text-align: left; cursor: pointer; }
+.nova-invoice-button:hover { background: rgba(var(--card-tint), .10); }
+.nova-credit-face-clicavel:focus-visible, .nova-invoice-button:focus-visible { outline: 2px solid var(--nova-accent); outline-offset: -2px; }
 .nova-invoice-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-top: 12px; margin-top: 10px; border-top: 1px solid var(--nova-ink-hairline); color: var(--nova-accent); font-size: 11px; font-weight: 600; cursor: pointer; min-height: 44px; }
 @media (max-width: 440px) { .nova-credit-grid { grid-template-columns: minmax(0, 1fr); } .nova-bank-pill { flex: 0 1 auto; } }
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
