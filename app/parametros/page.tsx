@@ -234,7 +234,7 @@ export default function ParametrosPage() {
                   <div>
                     <h4 className="text-base font-bold text-gray-900 dark:text-gray-100">Versão da interface</h4>
                     <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">
-                      A UI Nova está em construção. Hoje o Dashboard e a Insights estão disponíveis nela; as demais telas continuam abrindo na versão Clássica.
+                      A UI Nova está em construção. Hoje o Dashboard, a Insights e a Gestão bancária estão disponíveis nela; as demais telas continuam abrindo na versão Clássica.
                     </p>
                   </div>
                   <div className="flex shrink-0 rounded-full border border-gray-200 dark:border-gray-700 p-1 bg-gray-50 dark:bg-gray-900/40">

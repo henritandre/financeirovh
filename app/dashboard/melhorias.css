@@ -8,12 +8,31 @@
 .classic-root .nova-bank-itau { --card-tint: 220, 126, 48; --bank-mark: #9d4b0d; }
 .classic-root .nova-bank-nubank { --card-tint: 149, 95, 203; --bank-mark: #70409e; }
 .classic-root .nova-bank-inter { --card-tint: 227, 146, 80; --bank-mark: #995218; }
-.classic-root .nova-bank-caixa { --card-tint: 63, 133, 183; --bank-mark: #23628f; }
+.classic-root .nova-bank-caixa { --card-tint: 0, 51, 255; --bank-mark: #0029cc; }
 .classic-root .nova-bank-santander { --card-tint: 199, 86, 86; --bank-mark: #9b353b; }
 .classic-root .nova-bank-mercantil { --card-tint: 76, 123, 190; --bank-mark: #375e99; }
 .classic-root .nova-bank-bradesco { --card-tint: 191, 74, 103; --bank-mark: #983b53; }
 .classic-root .nova-bank-bb { --card-tint: 191, 164, 53; --bank-mark: #786613; }
 .classic-root .nova-bank-carteira { --card-tint: 91, 154, 127; --bank-mark: #326c53; }
+.classic-root .nova-bank-c6 { --card-tint: 36, 36, 36; --bank-mark: #242424; }
+.classic-root .nova-bank-btg { --card-tint: 13, 40, 85; --bank-mark: #0d2855; }
+.classic-root .nova-bank-picpay { --card-tint: 33, 194, 94; --bank-mark: #11a14b; }
+.classic-root .nova-bank-mercadopago { --card-tint: 0, 158, 227; --bank-mark: #0079b3; }
+.classic-root .nova-bank-pagbank { --card-tint: 25, 165, 80; --bank-mark: #128a3e; }
+.classic-root .nova-bank-neon { --card-tint: 0, 181, 232; --bank-mark: #0a8fbd; }
+.classic-root .nova-bank-xp { --card-tint: 30, 30, 30; --bank-mark: #1e1e1e; }
+.classic-root .nova-bank-stone { --card-tint: 0, 166, 80; --bank-mark: #008a42; }
+.classic-root .nova-bank-cora { --card-tint: 254, 60, 110; --bank-mark: #d42a59; }
+.classic-root .nova-bank-safra { --card-tint: 22, 32, 72; --bank-mark: #162048; }
+.classic-root .nova-bank-bmg { --card-tint: 255, 102, 0; --bank-mark: #c24e00; }
+.classic-root .nova-bank-pan { --card-tint: 0, 175, 239; --bank-mark: #0089bd; }
+.classic-root .nova-bank-original { --card-tint: 0, 165, 80; --bank-mark: #007f3d; }
+.classic-root .nova-bank-banrisul { --card-tint: 0, 82, 160; --bank-mark: #00468a; }
+.classic-root .nova-bank-brb { --card-tint: 0, 93, 170; --bank-mark: #004f91; }
+.classic-root .nova-bank-bnb { --card-tint: 180, 22, 40; --bank-mark: #96111f; }
+.classic-root .nova-bank-sicoob { --card-tint: 0, 128, 128; --bank-mark: #00616a; }
+.classic-root .nova-bank-sicredi { --card-tint: 50, 160, 60; --bank-mark: #26782d; }
+.classic-root .nova-bank-unicred { --card-tint: 0, 82, 55; --bank-mark: #004d33; }
 .classic-root .nova-bank-neutro { --card-tint: 112, 140, 174; --bank-mark: #4f6886; }
 .classic-root .nova-bank-avatar { box-shadow: 0 0 0 3px rgba(var(--card-tint), .16); color: var(--bank-mark); background: rgba(var(--card-tint), .16); }
 .classic-root .nova-picker-bank { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; background: linear-gradient(90deg, rgba(var(--card-tint), .22), rgba(var(--card-tint), .07)); color: var(--bank-mark); font-size: 11px; font-weight: 650; letter-spacing: .035em; text-transform: uppercase; }
